@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<Authors>Alcazar Security</Authors>
+		<description>
+			Alcazar.DevExpress.TagHelpers contains tag helpers and other extensions for DevExpress ASP.Net Core controls.
+			This assembly depends on the Alcazar ASP.Net One framework, which is a licensed product.
+			This assembly depends on DevExpress components, which are licensed products, and are not supplied by Alcazar.
+		</description>
+		<Copyright>Copyright © Alcazar 2007-2024</Copyright>
+		<PackageIcon>alcazar-2020-45.png</PackageIcon>
+		<PackageTags>Alcazar Web DevExpress DevExtreme ASP.Net Core</PackageTags>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseFile>alcazar-license.md</PackageLicenseFile>
+		<PackageLicenseExpression></PackageLicenseExpression>
+		<PackageProjectUrl>http://www.alcazarsecurity.com/projects/Alcazar.Web</PackageProjectUrl>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<PackageIconUrl />
+		<PackageId>Alcazar.DevExpress.TagHelpers</PackageId>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensibility\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\A\Alcazar.Web.Base\Alcazar.Web.Base.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="DevExtreme.AspNet.Core">
+      <Version>24.1.6</Version>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="DevExtreme.AspNet.Core">
+      <Version>24.1.6</Version>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
