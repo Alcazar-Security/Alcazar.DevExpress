@@ -191,3 +191,4 @@ ModelManifest.xml
 # Specific exclusions
 /.vs
 *.dtbcache.json
+/Alcazar.DevExpress.TagHelpers/.vs
