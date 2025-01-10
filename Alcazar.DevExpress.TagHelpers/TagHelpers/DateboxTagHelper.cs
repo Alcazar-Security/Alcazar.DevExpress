@@ -91,20 +91,6 @@ namespace Alcazar.Web.Extensibility
 
 			//builder = builder.DateSerializationFormat();
 
-			// Set the label text (From LabelText, For, Name, in that order)
-			string labelText = null;
-			if (!string.IsNullOrEmpty(LabelText))
-				labelText = TranslateToProp(LabelText, ViewContext);
-
-			if (string.IsNullOrEmpty(labelText))
-			{
-				if (For != null)
-					labelText = For.Metadata.GetDisplayName();
-			}
-
-			if (string.IsNullOrEmpty(labelText))
-				labelText = Name;
-
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
@@ -152,7 +138,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region CheckboxTagHelper properties: tag helper
+		#region DateboxTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -165,20 +151,7 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the value to be displayed in this control.
 		/// </summary>
 		[HtmlAttributeName("value")]
-		public bool? Value { get; set; }
-
-		/// <summary>
-		/// Get or set the custom text for the label. Defaults to the equivalent of 'DisplayNameFor', with a fallback to <see cref="base.Name"/>.
-		/// The date box control has this property, as the control can include the label.
-		/// </summary>
-		[HtmlAttributeName("label-text")]
-		public string LabelText { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if check box should have three-state behaviour.
-		/// </summary>
-		[HtmlAttributeName("three-state")]
-		public bool ThreeState { get; set; }
+		public DateTime? Value { get; set; }
 
 		#endregion
 	}

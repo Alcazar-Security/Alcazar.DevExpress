@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+
 namespace Alcazar.Playpen.Razor
 {
 	public class Program
@@ -6,8 +8,11 @@ namespace Alcazar.Playpen.Razor
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
+			// Add template-standard services to the container.
 			builder.Services.AddRazorPages();
+
+			// Add additional services to the container.
+			builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
 			var app = builder.Build();
 

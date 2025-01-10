@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -346,7 +347,7 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Type = type;
 			childHelper.Name = Name;
 			childHelper.For = For;
-			childHelper.Value = Value as bool?;
+			childHelper.Value = Value as DateTime?;
 			childHelper.Title = Title;
 			childHelper.HelpText = HelpText;
 			childHelper.Placeholder = Placeholder;

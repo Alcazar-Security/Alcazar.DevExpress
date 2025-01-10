@@ -1,0 +1,112 @@
+﻿@page
+@model DateboxModel
+@{
+	ViewData["Title"] = "Date box";
+
+	DateTime dateValue = new DateTime(2000, 2, 14);
+	var model = Model;
+}
+
+<div class="text-left">
+	<h1 class="display-4">Date box</h1>
+	<p>
+		This page demonstrates the use of a DX date box.
+	</p>
+	<hr />
+
+	<form asp-antiforgery="true">
+		<div asp-validation-summary="ModelOnly" />
+	
+		@* Standard fields *@
+		<h3 class="display-6">Standard fields</h3>
+		<p class="note note-info">Typically, the date control will be used within a form, using standard fields. Standard fields create the editor control, a label, and a validation element in one go. </p>
+		<div class="row">
+			<div class="col-md-6">
+				<dx-field type="date" name="Simple date field" title="Simple date field" help="help" clear="true" />
+				<dx-field type="date" name="Disabled date field" title="Disabled date field" help="help" clear="true" disabled="true" />
+			</div>
+			<div class="col-md-6">
+				<dx-field type="datetime" name="Simple date/time field" title="Simple date/time field" help="help" clear="true" />
+				<dx-field type="time" name="Simple time field" title="Simple time field" help="help" clear="true" />
+			</div>
+		</div>
+		<hr />
+
+		@* Standard controls *@
+		<h3 class="display-6">Standard controls</h3>
+		<p class="note note-info">If more layout control is required, the label, control, and validation element can be declared separately. </p>
+		<div class="row">
+			<div class="col-md-6">
+				<div class="dx-field">
+					<standard-label name="Simple date field" />
+					<dx-control type="date" name="Simple date control" title="Simple date control" help="help" clear="true" />
+				</div>
+			</div>
+			<div class="col-md-6">
+			</div>
+		</div>
+		<hr />
+
+		@* Manual layout *@
+		<h3 class="display-6">Manual layout</h3>
+		<p class="note note-info">For full control over all properties, the control can be explicitely declared. </p>
+		<div class="row">
+			<div class="col-md-6">
+				<p class="note note-info">Simple date and time fields. </p>
+				<div class="dx-field">
+					<standard-label name="Simple date" />
+					<dx-date type="Date" name="Simple date" value="dateValue" title="Simple date" help="help" />
+				</div>
+				<div class="dx-field">
+					<standard-label name="Simple time" />
+					<dx-date type="Time" name="Simple time" value="dateValue" title="Simple time" help="help" />
+				</div>
+				<div class="dx-field">
+					<standard-label name="Simple date/time" />
+					<dx-date type="DateTime" name="Simple date/time" value="dateValue" title="Simple date/time" help="help" />
+				</div>
+			</div>
+			<div class="col-md-6">
+				<p class="note note-info">Simple date and time fields. </p>
+				<div class="dx-field">
+					<standard-label name="Named editor control" />
+					<dx-date name="named1" type="Date" />
+				</div>
+				<div class="dx-field">
+					<standard-label name="Model-bound editor control" />
+					<dx-date asp-for="Date1" type="Date" />
+				</div>
+			</div>
+		</div>
+		<hr />
+
+		@* Control options *@
+		<h4 class="display-6">Control options</h4>
+		<p class="note note-info">The control offers a number of options to be selected. </p>
+		<div class="row">
+			<div class="col-md-6">
+				<p class="note note-info">State options. </p>
+				<div class="dx-field">
+					<standard-label name="Read-only date" />
+					<dx-date name="Readonly date" type="Date" placeholder="Read-only date" title="Read-only date" help="Read-only date" readonly="true" />
+				</div>
+				<div class="dx-field">
+					<standard-label name="Disabled date" />
+					<dx-date name="Disabled date" type="Date" placeholder="Disabled date" title="Disabled date" help="Disabled date" disabled="true" />
+				</div>
+			</div>
+			<div class="col-md-6">
+				<p class="note note-info">Layout options. </p>
+				<div class="dx-field">
+					<standard-label name="Specified width" />
+					<dx-date name="Date with width" type="Date" width="200px" />
+				</div>
+			</div>
+		</div>
+		<hr />
+
+		<div class="form-actions">
+			<button type="submit" asp-page-handler="submit" class="btn btn-primary">Submit</button>
+		</div>
+	</form>
+</div>
