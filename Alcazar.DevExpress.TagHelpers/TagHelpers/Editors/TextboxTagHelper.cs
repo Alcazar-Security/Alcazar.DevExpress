@@ -12,13 +12,14 @@ using System.Threading.Tasks;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
+using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="TextboxTagHelper"/> type implements a simple text box.
-	/// </summary>
-	[HtmlTargetElement("dx-textbox")]
+    /// <summary>
+    /// The <see cref="TextboxTagHelper"/> type implements a simple text box.
+    /// </summary>
+    [HtmlTargetElement("dx-textbox")]
 	public class TextboxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

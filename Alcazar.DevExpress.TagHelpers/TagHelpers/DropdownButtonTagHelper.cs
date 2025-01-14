@@ -5,17 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
 using System.Collections.Generic;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Alcazar.Web.Extensibility
 {
+	/// <summary>
+	/// The <see cref="DropdownButtonTagHelper"/> implements a dropdown button.
+	/// A dropdown button is a DX control, which consists of a button and a dropdown menu with menu items.
+	/// </summary>
 	[HtmlTargetElement("dx-dropdown-button")]
-	public class DropdownButtonTagHelper : TagHelperBase
+	public class DropdownButtonTagHelper : ControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DropdownButtonTagHelper costruction
+		#region DropdownButtonTagHelper construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		public DropdownButtonTagHelper(IHtmlHelper htmlHelper, HtmlEncoder htmlEncoder, IViewComponentHelper viewComponentHelper)
@@ -51,6 +57,9 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a drop down button
 			DropDownButtonBuilder builder = _htmlHelper.DevExtreme().DropDownButton();
 
+			// Process common functionality for editors
+			builder = ProcessCommon(builder);
+
 			// Make it a split button (where the button itself can be clicked too)
 			if (IsSplit)
 				builder = builder.SplitButton(true);
@@ -71,6 +80,8 @@ namespace Alcazar.Web.Extensibility
 			// Process children of the card tag, the header, footer, and my body will need them 
 			IHtmlContent content = await output.GetChildContentAsync();
 
+			builder = ItemClick(builder);
+
 			// Set the item template
 			if (itemsContext.ItemTemplateContent != null)
 				builder = builder.ItemTemplate(ToString(itemsContext.ItemTemplateContent));
@@ -85,13 +96,63 @@ namespace Alcazar.Web.Extensibility
 			else if (Items != null)
 				builder = builder.DataSource(Items);
 
-			// Set layout options
-			// builder = builder.DropDownOptions(options => options.Width(230))
-			builder = builder.Width(200);
+			// Process dropdown-button specific properties
+			if (!string.IsNullOrEmpty(KeyExpression))
+				builder = builder.KeyExpr(KeyExpression);
+			if (!string.IsNullOrEmpty(DisplayExpression))
+				builder = builder.DisplayExpr(DisplayExpression);
+
+			// Event handlers
+			builder = ItemClick(builder);
 
 			// Render the builder
 			IHtmlContent result = builder;
 			output.Content.SetHtmlContent(result);
+		}
+
+		private DropDownButtonBuilder ProcessCommon(DropDownButtonBuilder builder)
+		{
+			// Set the ID to a random value
+			string idValue = ID ?? Guid.NewGuid().ToString();
+			builder = builder.ID(idValue);
+
+			// Set the width and height
+			if (!string.IsNullOrEmpty(Width))
+				builder = builder.Width(Width);
+
+			return builder;
+		}
+
+		/// <summary>
+		/// Set the action to be executed when a dropdown item is clicked.
+		/// </summary>
+		/// <param name="builder"></param>
+		private DropDownButtonBuilder ItemClick(DropDownButtonBuilder builder)
+		{
+			switch (OnItemClick)
+			{
+				// An empty action indicates no action, do not set OnItemClick
+				case null:
+				case "":
+					break;
+
+				// Any other value, use the value as JS method name 
+				default:
+					builder.OnItemClick(OnItemClick);
+					break;
+
+				// rb: TODO
+				case "rb":
+					// builder.OnItemClick(RazorBlock(null));
+					break;
+
+				// href: the item includes a href, use it by calling a default method
+				case "href":
+					builder.OnItemClick("dx_dropdown_itemclick");
+					break;
+			}
+
+			return builder;
 		}
 
 		#endregion
@@ -128,105 +189,24 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("items")]
 		public System.Collections.IEnumerable Items { get; set; }
 
-		#endregion
-	}
+		/// <summary>
+		/// Get or set the name of the item property to be used as dropdown item key.
+		/// </summary>
+		[HtmlAttributeName("key-expr")]
+		public string KeyExpression { get; set; }
 
+		/// <summary>
+		/// Get or set the name of the item property to be used as dropdown item display text.
+		/// </summary>
+		[HtmlAttributeName("display-expr")]
+		public string DisplayExpression { get; set; }
 
-	[HtmlTargetElement("item-content", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ItemContentTagHelper : TagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemContentTagHelper overrides
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-		{
-			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemsContext = GetContextSafe<ItemsChildrenContext>(context);
-
-			string hrefValue = GetAttrValue(output.Attributes["href"]);
-			string textValue = TranslateToProp(output.Attributes["text"], ViewContext);
-			string beforeValue = TranslateToProp(output.Attributes["before"], ViewContext);
-
-			dynamic item = new
-			{
-				href = hrefValue,
-				text = textValue,
-				before = beforeValue,
-			};
-
-			itemsContext.Items.Add(item);
-
-			output.SuppressOutput();
-		}
+		/// <summary>
+		/// Get or set the action to be executed when a dropdown item is clicked.
+		/// </summary>
+		[HtmlAttributeName("item-click")]
+		public string OnItemClick { get; set; }
 
 		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemContentTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
-		#endregion
-	}
-
-
-	[HtmlTargetElement("item-separator", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ItemSeparatorTagHelper : TagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemSeparatorTagHelper overrides
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-		{
-			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemsContext = GetContextSafe<ItemsChildrenContext>(context);
-
-			dynamic item = new
-			{
-				sep = true,
-				template = "<hr style='margin: unset' />",
-				disabled = true,
-			};
-
-			itemsContext.Items.Add(item);
-
-			output.SuppressOutput();
-		}
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemSeparatorTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		#endregion
-	}
-
-	public class ItemsChildrenContext
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemsChildrenContext properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public IHtmlContent TemplateContent { get; set; }
-		public IHtmlContent ItemTemplateContent { get; set; }
-		public IList<dynamic> Items { get; } = new List<dynamic>();
-
-		#endregion
-	}
-
-	public class ItemWrapper
-	{
-		public string ID { get; set; }
-		public object Value { get; set; }
-		public string href { get; set; }
-		public string icon { get; set; }
-		public string text_before { get; set; }
-		public string text { get; set; }
 	}
 }

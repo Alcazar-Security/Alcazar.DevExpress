@@ -21,13 +21,14 @@ using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.Extensions.Options;
 using System.Dynamic;
 using Amaqele.Common.Collections;
+using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="AutocompleteTagHelper"/> type implements a autocomplete typeahead dropdown.
-	/// </summary>
-	[HtmlTargetElement("dx-autocomplete")]
+    /// <summary>
+    /// The <see cref="AutocompleteTagHelper"/> type implements a autocomplete typeahead dropdown.
+    /// </summary>
+    [HtmlTargetElement("dx-autocomplete")]
 	public class AutocompleteTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

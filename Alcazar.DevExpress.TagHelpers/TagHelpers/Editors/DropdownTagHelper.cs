@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
@@ -10,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="DropdownTagHelper"/> type implements a single or multiple selection dropdown.
-	/// Multiple selection is enabled by the selection mode of the inner content template, the dropdown itself cannot enable multiple selection itself.
-	/// </summary>
-	[HtmlTargetElement("dx-dropdown")]
+    /// <summary>
+    /// The <see cref="DropdownTagHelper"/> type implements a single or multiple selection dropdown.
+    /// Multiple selection is enabled by the selection mode of the inner content template, the dropdown itself cannot enable multiple selection itself.
+    /// </summary>
+    [HtmlTargetElement("dx-dropdown")]
 	public class DropdownTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

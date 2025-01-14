@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
@@ -10,10 +11,13 @@ using System.Reflection;
 
 namespace Alcazar.Web.Extensibility
 {
-	public class EditorTagHelperBase : ControlTagHelperBase
+    /// <summary>
+    /// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
+    /// </summary>
+    public class EditorTagHelperBase : ControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region TextboxTagHelper protected methods
+		#region EditorTagHelperBase protected methods
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		protected object ProcessFor()
@@ -33,10 +37,14 @@ namespace Alcazar.Web.Extensibility
 
 			try
 			{
-				// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
-				// Lsts see if that works for other use cases
 				object value = For.ModelExplorer.Container.ModelType.InvokeMember(Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty, null, For.ModelExplorer.Container.Model, null);
-				return value?.ToString();
+
+				// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
+				// Lets see if that works for other use cases
+				if (For.ModelExplorer.ModelType.IsEnum)
+					return value?.ToString();
+
+				return value;
 			}
 			catch
 			{
@@ -85,7 +93,7 @@ namespace Alcazar.Web.Extensibility
 				controlContext.Name = Name;
 			}
 
-			// Render the builder (into the POST content)
+			// Render the builder (into the HTML content)
 			content.SetHtmlContent(result);
 		}
 
@@ -115,12 +123,6 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("placeholder")]
 		public string Placeholder { get; set; }
-
-		/// <summary>
-		/// Get or set the title to be used for this control. The title is displayed over the control itself, while the help text is displayed over a [?] button.
-		/// </summary>
-		[HtmlAttributeName("title")]
-		public string Title { get; set; }
 
 		/// <summary>
 		/// Get or set the help text to be used for this control. The help text is displayed over a [?] button, while the title is displayed over the control itself.

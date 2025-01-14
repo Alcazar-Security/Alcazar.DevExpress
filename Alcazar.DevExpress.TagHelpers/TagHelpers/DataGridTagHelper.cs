@@ -1,4 +1,5 @@
-﻿using Amaqele.Common.Authn;
+﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using Amaqele.Common.Authn;
 using Amaqele.Common.Collections;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
@@ -23,10 +24,10 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="DataGridTagHelper"/> type implements a data grid.
-	/// </summary>
-	[HtmlTargetElement("dx-datagrid")]
+    /// <summary>
+    /// The <see cref="DataGridTagHelper"/> type implements a data grid.
+    /// </summary>
+    [HtmlTargetElement("dx-datagrid")]
 	public class DataGridTagHelper : RouteTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -378,7 +379,7 @@ namespace Alcazar.Web.Extensibility
 				case PrimitiveTypeCode.Float:
 				case PrimitiveTypeCode.Double:
 				case PrimitiveTypeCode.Decimal: return GridColumnDataType.Number;
-				case PrimitiveTypeCode.Enumeration: return GridColumnDataType.Number;
+				case PrimitiveTypeCode.Enumeration: return GridColumnDataType.String;
 
 				case PrimitiveTypeCode.Bool: return GridColumnDataType.Boolean;
 

@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="TagboxTagHelper"/> type implements a multiple selection dropdown box.
-	/// The tag box supplements the select box implementation, as it can do multiple selection.
-	/// </summary>
-	[HtmlTargetElement("dx-tag")]
+    /// <summary>
+    /// The <see cref="TagboxTagHelper"/> type implements a multiple selection dropdown box.
+    /// The tag box supplements the select box implementation, as it can do multiple selection.
+    /// </summary>
+    [HtmlTargetElement("dx-tag")]
 	public class TagboxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

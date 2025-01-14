@@ -10,22 +10,20 @@ using System.Threading.Tasks;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
-	/// The <see cref="RadioGroupTagHelper"/> type implements a set of radio buttons.
+	/// The <see cref="DateboxTagHelper"/> type implements a date box (with no time component).
 	/// </summary>
-	[HtmlTargetElement("dx-radiogroup")]
-	public class RadioGroupTagHelper : EditorTagHelperBase
+	[HtmlTargetElement("dx-date")]
+	public class DateboxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region RadioGroupTagHelper construction
+		#region DateboxTagHelper construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public RadioGroupTagHelper(IHtmlHelper htmlHelper)
+		public DateboxTagHelper(IHtmlHelper htmlHelper)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
 		}
@@ -35,7 +33,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region RadioGroupTagHelper overrides
+		#region DateboxTagHelper overrides
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -51,8 +49,8 @@ namespace Alcazar.Web.Extensibility
 			// Suppress myself as output, using only the translated UI text.
 			output.SuppressOutput();
 
-			// Create the builder for a radio group
-			RadioGroupBuilder builder = _htmlHelper.DevExtreme().RadioGroup();
+			// Create the builder for a popup
+			DateBoxBuilder builder = _htmlHelper.DevExtreme().DateBox();
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -87,52 +85,35 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Disabled(true);
 			}
 
-			// Process radio-group specific properties
-
-			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
-			ItemContext itemContext = GetOrCreateContext<ItemContext>(context);
-
-			// Process children of the tag, we will need them
-			IHtmlContent content = await output.GetChildContentAsync();
-
-			if (Items != null)
+			// Process text-area specific properties
+			// TODO culture/app specific format
+			// TODO editing of time component
+			// builder = builder.DisplayFormat(Format.ShortDate);
+			//builder = builder.DateSerializationFormat();
+			switch (Type)
 			{
-				// Process server-side supplied string items
-				builder = builder.DataSource(Items);
-			}
-			else if (itemContext.Items.Any())
-			{
-				// Process server-side supplied content items
-				builder = builder.Items(c =>
-				{
-					foreach (var item in itemContext.Items)
-					{
-						c.Add()
-							.Option("name", item.Name)
-							.Option("value", item.Value)
-							.Text(item.Text);
-					}
-				});
-			}
-			else if (sourceContext.Datasource != null)
-			{
-				// Process the (child) data source
-				// Build the data source from the child tag
-				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
-			}
+				// Default is the fill date/time, so that we always see the time component, even if it is 00:00:00
+				default:
+				case DateBoxType.DateTime:
+					builder = builder.DisplayFormat("yyyy-MM-dd HH:mm:ss");
+					break;
 
-			builder = builder.Layout(Orientation);
+				// Expressly requesting date only
+				case DateBoxType.Date:
+					builder = builder.DisplayFormat("yyyy-MM-dd");
+					break;
 
-			if (!string.IsNullOrEmpty(OnValueChanged))
-				builder = builder.OnValueChanged(OnValueChanged);
-			if (!string.IsNullOrEmpty(OnOptionChanged))
-				builder = builder.OnOptionChanged(OnOptionChanged);
+				// Expressly requesting time only
+				case DateBoxType.Time:
+					builder = builder.DisplayFormat("HH:mm:ss");
+					break;
+			}
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
 
-		private RadioGroupBuilder ProcessCommon(RadioGroupBuilder builder)
+		private DateBoxBuilder ProcessCommon(DateBoxBuilder builder)
 		{
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
@@ -145,7 +126,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private RadioGroupBuilder ProcessAttributes(RadioGroupBuilder builder, TagHelperAttributeList attributes)
+		private DateBoxBuilder ProcessAttributes(DateBoxBuilder builder, TagHelperAttributeList attributes)
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
@@ -154,7 +135,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private RadioGroupBuilder ApplyFor(RadioGroupBuilder builder, object value)
+		private DateBoxBuilder ApplyFor(DateBoxBuilder builder, object value)
 		{
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
@@ -163,53 +144,32 @@ namespace Alcazar.Web.Extensibility
 			if (For == null)
 				value = Value;
 
-			builder = builder.Value(value);
+			if (value is DateTime dateValue1)
+			{
+				// Setting the value as direct date
+				builder = builder.Value(dateValue1);
+			}
+
 			return builder;
 		}
 
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region RadioGroupTagHelper properties: tag helper
+		#region DateboxTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the items of this radio group.
-		/// Items are supplied server side, and are an alternative to a data source.
+		/// Get or set the type of the date box.
 		/// </summary>
-		[HtmlAttributeName("asp-items")]
-		public IEnumerable<string> Items { get; set; }
+		[HtmlAttributeName("type")]
+		public DateBoxType Type { get; set; } = DateBoxType.Date;
 
 		/// <summary>
 		/// Get or set the value to be displayed in this control.
 		/// </summary>
 		[HtmlAttributeName("value")]
-		public string Value { get; set; }
-
-		/// <summary>
-		/// Get or set the custom text for the label. Defaults to the equivalent of 'DisplayNameFor', woth a fallback to <see cref="base.Name"/>.
-		/// The check box control has this property, as the control can include the label.
-		/// </summary>
-		[HtmlAttributeName("label-text")]
-		public string LabelText { get; set; }
-
-		/// <summary>
-		/// Get or set the layout orientation of the radio group.
-		/// </summary>
-		[HtmlAttributeName("orientation")]
-		public Orientation Orientation { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the value of the radio group is changed.
-		/// </summary>
-		[HtmlAttributeName("value-changed")]
-		public string OnValueChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the option of the radio group is changed.
-		/// </summary>
-		[HtmlAttributeName("option-changed")]
-		public string OnOptionChanged { get; set; }
+		public DateTime? Value { get; set; }
 
 		#endregion
 	}

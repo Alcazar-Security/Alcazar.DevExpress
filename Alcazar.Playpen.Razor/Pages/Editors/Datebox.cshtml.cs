@@ -12,7 +12,6 @@ namespace Alcazar.Playpen.Razor.Pages
 		public DateboxModel(ILogger<IndexModel> logger)
 		{
 			_logger = logger;
-			Date1 = DateTime.UtcNow;
 		}
 
 		private readonly ILogger<IndexModel> _logger;
@@ -58,7 +57,7 @@ namespace Alcazar.Playpen.Razor.Pages
 		#region DateboxModel model properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		[BindProperty(SupportsGet = true)]
+		[BindProperty]
 		public DateTime Date1 { get; set; }
 
 		#endregion

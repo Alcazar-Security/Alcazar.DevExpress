@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -13,10 +14,10 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-	/// <summary>
-	/// The <see cref="DxFieldTagHelper"/> type implements a standard field using DX.
-	/// </summary>
-	[HtmlTargetElement("dx-field")]
+    /// <summary>
+    /// The <see cref="DxFieldTagHelper"/> type implements a standard field using DX.
+    /// </summary>
+    [HtmlTargetElement("dx-field")]
 	public class DxFieldTagHelper : FieldTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
