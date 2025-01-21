@@ -42,11 +42,22 @@
 						</li>
 						<li class="nav-item dropdown">
 							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+								Forms
+							</a>
+							<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+								<li><a class="dropdown-item" asp-page="/Forms/Fields">Fields and editors</a></li>
+								<li><a class="dropdown-item" asp-page="/Index">Another action</a></li>
+								<li><hr class="dropdown-divider"></li>
+								<li><a class="dropdown-item" href="#">Something else here</a></li>
+							</ul>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 								Editors
 							</a>
 							<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-								<li><a class="dropdown-item" asp-area="" asp-page="/Editors/Datebox">Date box</a></li>
-								<li><a class="dropdown-item" asp-area="" asp-page="/Index">Another action</a></li>
+								<li><a class="dropdown-item" asp-page="/Editors/Datebox">Date box</a></li>
+								<li><a class="dropdown-item" asp-page="/Index">Another action</a></li>
 								<li><hr class="dropdown-divider"></li>
 								<li><a class="dropdown-item" href="#">Something else here</a></li>
 							</ul>
@@ -58,6 +69,18 @@
 	</header>
 	<div class="container">
 		<main role="main" class="pb-3">
+			@{
+				IEnumerable<string> partialMessages = TempData["MessageObject-List"] as IEnumerable<string>;
+			}
+
+			@if (partialMessages != null)
+			{
+				foreach (string message in partialMessages)
+				{
+					<p class="note note-info">@Html.Raw(message)</p>
+				}
+			}
+
 			@RenderBody()
 		</main>
 	</div>

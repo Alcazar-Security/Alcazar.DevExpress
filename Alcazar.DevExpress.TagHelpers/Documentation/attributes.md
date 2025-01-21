@@ -1,4 +1,8 @@
-﻿Attributes
+﻿---
+uid: attributes
+---
+
+Attributes
 ==========
 
 
@@ -56,9 +60,11 @@ function dx_dropdown_itemclick(dx) {
 		// Redirect to a url, if we have one
 		window.location.href = href;
 	}
-}```
+}
+```
 
 #### Custom event handlers
 Custom event handlers can be used for use cases which are not covered 
+
 #### Examples
 * DropdownButtonTagHelper

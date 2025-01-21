@@ -1,0 +1,86 @@
+﻿@page
+@model FieldsModel
+@{
+	ViewData["Title"] = "Fields";
+
+	IEnumerable<SelectListItem> schemes = ViewBag.AuthenticationSchemes;
+}
+
+<div class="text-left">
+	<h1 class="display-4">Fields and editor properties</h1>
+	<p>
+		This page demonstrates layout choices for form fields and editor-specific properties.
+	</p>
+	<hr />
+
+	<form asp-antiforgery="true">
+		<div asp-validation-summary="ModelOnly" />
+
+		@* Standard fields *@
+		<h3 class="display-6">Standard fields</h3>
+		<p class="note note-info">Standard fields are the simplest layout option, creating the editor control, a label, and a validation element in one go. They are only suitable for editors which do not have editor-specific properties. </p>
+		<div class="row">
+			<div class="col-md-6">
+				<dx-field name="Simple text field" title="Simple text field" help="help" clear="true" />
+				<dx-field name="Disabled text field" title="Disabled text field" help="help" clear="true" disabled="true" />
+			</div>
+			<div class="col-md-6">
+			</div>
+		</div>
+		<hr />
+
+		@* Standard fields with explicit control *@
+		<h3 class="display-6">Standard fields with explicit editors</h3>
+		<p class="note note-info">Explicit editors are used when an editor requires an editor-specific property which cannot be set by the `dx-field` tag. Editor-agnostic properties are still passed from the `dx-field` to the editor.</p>
+		<div class="row">
+			<div class="col-md-6">
+				<dx-field asp-for="Scheme" asp-items="schemes" placeholder="Select a scheme" />
+				<dx-field asp-for="SchemesArray" title="Multi-select tag box" help="Multi-select tag box for an array value">
+					<dx-tag asp-items="schemes" key="Value" value-expr="Value" display-expr="Text" placeholder="Select array schemes" />
+				</dx-field>
+				<dx-field asp-for="SchemesFlags" title="Multi-select tag box" help="Multi-select tag box for a [Flags] value">
+					<dx-tag asp-items="schemes" key="Value" value-expr="Value" display-expr="Text" placeholder="Select flag schemes" />
+				</dx-field>
+			</div>
+			<div class="col-md-6">
+			</div>
+		</div>
+		<hr />
+
+		@* Standard fields with explicit control *@
+		<h3 class="display-6">Standard controls with explicit editors</h3>
+		<p class="note note-info">Explicit editors are used when an editor requires an editor-specific property which cannot be set by the `dx-control` tag. Editor-agnostic properties are still passed from the `dx-control` to the editor.</p>
+		<div class="row">
+			<div class="col-md-6">
+				<div class="dx-field">
+					<div class="dx-field-label">
+						<standard-label name="Schemes in array (2)" />
+					</div>
+					<div class="dx-field-value">
+						<dx-control asp-for="SchemesArray2" title="Multi-select tag box" help="Multi-select tag box for an array value">
+							<dx-tag asp-items="schemes" key="Value" value-expr="Value" display-expr="Text" placeholder="Select array schemes" />
+						</dx-control>
+					</div>
+				</div>
+
+				<div class="dx-field">
+					<div class="dx-field-label">
+						<standard-label name="Schemes as flags (2)" />
+					</div>
+					<div class="dx-field-value">
+						<dx-control asp-for="SchemesFlags2" title="Multi-select tag box" help="Multi-select tag box for an array value">
+						<dx-tag asp-items="schemes" key="Value" value-expr="Value" display-expr="Text" placeholder="Select array schemes" />
+					</dx-control>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-6">
+			</div>
+		</div>
+		<hr />
+
+		<div class="form-actions">
+			<button type="submit" asp-page-handler="submit" class="btn btn-primary">Submit</button>
+		</div>
+	</form>
+</div>

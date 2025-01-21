@@ -62,6 +62,11 @@ namespace Alcazar.Web.Extensibility
 			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
 			_controlContext = GetOrCreateContext<ControlContext>(context);
 
+			// Before processing an inner control, pass in any properties from the dx-field to the editor. 
+			// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
+			_controlContext.For = For;
+			_controlContext.Name = Name;
+
 			// Process children of the standard-field tag
 			// Any content would be attributed to the control or the label
 			IHtmlContent content = await output.GetChildContentAsync();
@@ -162,6 +167,9 @@ namespace Alcazar.Web.Extensibility
 			return labelDiv;
 		}
 
+		/// <summary>
+		/// Generate the div containing the control, and the control itself.
+		/// </summary>
 		protected async Task<IHtmlContent> GenerateControlDiv(TagHelperContext context, TagHelperOutput output)
 		{
 			IHtmlContent controlContent;
@@ -173,6 +181,7 @@ namespace Alcazar.Web.Extensibility
 			else
 			{
 				// The dx-field has all control information irself, generate the control 
+				// This method is only called if there is no embedded control directly inside the 'dx-field'
 				controlContent = await GenerateControl(context, output);
 			}
 
@@ -185,19 +194,14 @@ namespace Alcazar.Web.Extensibility
 			return controlDiv;
 		}
 
-		protected async Task<IHtmlContent> GenerateControl(TagHelperContext context, TagHelperOutput output)
+		/// <summary>
+		/// Generate the control.
+		/// This method is only called if there is no embedded control directly inside the 'dx-field'
+		/// </summary>
+		private async Task<IHtmlContent> GenerateControl(TagHelperContext context, TagHelperOutput output)
 		{
-			// Determine if we are a select box
-			// bool isSelect2 = context.AllAttributes.TryGetAttribute("data-control", out TagHelperAttribute dcAttr);
-
 			// Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
 			List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
-			//if (For == null && !string.IsNullOrEmpty(Name))
-			//	contextAttributes.Add(new TagHelperAttribute("Name", Name));
-
-			// Pass on the data-control attribute if present, the child tag needs this to determine if it is a select2 control
-			//if (isSelect2 && dcAttr != null)
-			//	contextAttributes.Add(dcAttr);
 
 			// Output attributes are all non-helper attributes on the output tag. We want to pass on ALL these attributes to the control, it probably needs several of them.
 			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>(output.Attributes);
@@ -208,9 +212,6 @@ namespace Alcazar.Web.Extensibility
 			TagHelperOutput helperOutput = new TagHelperOutput("standard-control", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
 
 			DxControlTagHelper childHelper = new DxControlTagHelper(_htmlHelper, null, null);
-
-			// Using the default style for DX only (for now)
-			// childHelper.Style = StandardFieldStyles.Default8;
 
 			childHelper.For = For;
 			childHelper.Name = Name;
@@ -230,13 +231,13 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Height = Height;
 			childHelper.Items = Items;
 
-			// Select box specific
-			childHelper.ValueExpression = ValueExpression;
-			childHelper.DisplayExpression = DisplayExpression;
-			childHelper.MinSearchLength = MinSearchLength;
-			childHelper.SearchTimeout = SearchTimeout;
-			if (_searchMode.HasValue)
-				childHelper.SearchMode = _searchMode.Value;
+			// Select box (and other) specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
+			// childHelper.ValueExpression = ValueExpression;
+			// childHelper.DisplayExpression = DisplayExpression;
+			// childHelper.MinSearchLength = MinSearchLength;
+			// childHelper.SearchTimeout = SearchTimeout;
+			// if (_searchMode.HasValue)
+			//	childHelper.SearchMode = _searchMode.Value;
 
 			childHelper.ViewContext = ViewContext;
 
@@ -338,22 +339,22 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the <c>a-required</c> attribute - for a model element that is NOT [Required] to show as required on the page.
 		/// </summary>
-		[HtmlAttributeName("a-required")]
+		[HtmlAttributeName("required")]
 		public bool IsRequired { get; set; }
 
 		/// <summary>
 		/// Get or set the <c>a-not-required</c> attribute - for a model element that is [Required] to show as NOT required on the page.
 		/// </summary>
-		[HtmlAttributeName("a-not-required")]
+		[HtmlAttributeName("not-required")]
 		public bool IsNotRequired { get; set; }
 
-		[HtmlAttributeName("a-label-class")]
+		[HtmlAttributeName("label-class")]
 		public string LabelClass { get; set; }
 
 		/// <summary>
 		/// Required for core?
 		/// </summary>
-		[HtmlAttributeName("a-label-div-class")]
+		[HtmlAttributeName("label-div-class")]
 		public string LabelDivClass { get; set; } = "dx-field-label";
 
 		/// <summary>
@@ -387,11 +388,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("readonly")]
 		public bool IsReadonly { get; set; }
 
-		/// <summary>
-		/// Get or set an indicator if the control is read-only. Defaults to <see langword="false"/>.
-		/// </summary>
-		[HtmlAttributeName("is-readonly")]
-		public bool IsReadonly_xxx { get; set; }
 
 		[HtmlAttributeName("control-div-class")]
 		public string ControlDivClass { get; set; } = "dx-field-value";
@@ -444,58 +440,13 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DxFieldTagHelper properties: control info - select
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the name of the item propertry to be used as dropdown item value.
-		/// </summary>
-		[HtmlAttributeName("value-expr")]
-		public string ValueExpression { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the item propertry to be used to display dropdown items.
-		/// </summary>
-		[HtmlAttributeName("display-expr")]
-		public string DisplayExpression { get; set; }
-
-		/// <summary>
-		/// Get or set the search mode used by the control. Setting the search mode enables searching.
-		/// </summary>
-		[HtmlAttributeName("search")]
-		public DropDownSearchMode SearchMode
-		{
-			get { return _searchMode ?? DropDownSearchMode.StartsWith; }
-			set { _searchMode = value; }
-		}
-
-		// Require the private fields so that we dont have to fully qualify the mode in cshtml (DropDownSearchMode.StartsWith)
-		private DropDownSearchMode? _searchMode;
-
-		/// <summary>
-		/// Get or set the number of characters to enter before the lookup starts.
-		/// This value may also be set in the data source, but the select box needs it to know when it should retrieve data from the data source.
-		/// </summary>
-		[HtmlAttributeName("min-length")]
-		public int MinSearchLength { get; set; }
-
-		/// <summary>
-		/// Get or set the search timeout (in ms) for calling the datasource.
-		/// This value may also be set in the data source, but the select box needs it to know when it should retrieve data from the data source.
-		/// </summary>
-		[HtmlAttributeName("timeout")]
-		public int SearchTimeout { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DxFieldTagHelper properties: validation info
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
 		/// Get or set an indicator if the control validation tag is to be created. Defaults to <see langword="true"/>.
 		/// </summary>
-		[HtmlAttributeName("valide")]
+		[HtmlAttributeName("valid")]
 		public bool IsValidation { get; set; } = true;
 
 		[HtmlAttributeName("validation-class")]

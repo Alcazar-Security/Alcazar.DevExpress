@@ -9,12 +9,12 @@ namespace Alcazar.Playpen.Razor.Pages
 		#region DateboxModel construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public DateboxModel(ILogger<IndexModel> logger)
+		public DateboxModel(ILogger<DateboxModel> logger)
 		{
 			_logger = logger;
 		}
 
-		private readonly ILogger<IndexModel> _logger;
+		private readonly ILogger<DateboxModel> _logger;
 
 		#endregion
 

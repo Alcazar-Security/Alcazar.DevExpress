@@ -50,6 +50,12 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a popup
 			TagBoxBuilder builder = _htmlHelper.DevExtreme().TagBox();
 
+			ControlContext controlContext = GetContextSafe<ControlContext>(context);
+			if (controlContext != null)
+			{
+				ApplyControlContext(controlContext);
+			}
+
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
 
@@ -57,8 +63,7 @@ namespace Alcazar.Web.Extensibility
 			builder = ProcessAttributes(builder, output.Attributes);
 
 			// Process the For attribute, if it is set
-			object value = ProcessFor();
-			System.Collections.IEnumerable values = value as System.Collections.IEnumerable;
+			System.Collections.IEnumerable values = ProcessForMultiEnums(ProcessFor());
 
 			// Apply the For attribute, or the corresponding direct values
 			builder = ApplyFor(builder, values);
@@ -178,17 +183,14 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private TagBoxBuilder ApplyFor(TagBoxBuilder builder, System.Collections.IEnumerable value)
+		private TagBoxBuilder ApplyFor(TagBoxBuilder builder, System.Collections.IEnumerable values)
 		{
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
 
-			// Apply the value, but only if the asp-for is not set (else the asp-for drives the value)
-			// TODO if (For == null)
-			//	value = Value;
-			
-			if (value != null)
-				builder = builder.Value(value);
+			// Apply the values, even if the asp-for is set (possibly only needed for enums?)
+			if (values != null)
+				builder = builder.Value(values);
 			
 			if (!string.IsNullOrEmpty(Placeholder))
 			{

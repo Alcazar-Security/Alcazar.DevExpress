@@ -1,10 +1,12 @@
 ﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -61,6 +63,7 @@ namespace Alcazar.Web.Extensibility
 
 			// Process the For attribute, if it is set
 			object value = ProcessFor();
+			value = ProcessForEnums(value);
 
 			// Apply the For attribute, or the corresponding direct values
 			builder = ApplyFor(builder, value);
@@ -80,6 +83,8 @@ namespace Alcazar.Web.Extensibility
 				// Process server-side supplied items
 				builder = builder.DataSource(Items);
 
+				// Process known item types
+				builder = ProcessItemTypes(builder, Items);
 			}
 			else if (sourceContext.Datasource != null)
 			{
@@ -140,11 +145,6 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.ValueExpr(ValueExpression);
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
-
-			if (value != null)
-			{
-				//builder = builder.Value(value);
-			}
 
 			if (!string.IsNullOrEmpty(OnSelectionChanged))
 				builder = builder.OnSelectionChanged(OnSelectionChanged);
@@ -209,6 +209,22 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private SelectBoxBuilder ProcessItemTypes(SelectBoxBuilder builder, IEnumerable items)
+		{
+			Type elementType = TypeHelper.GetEnumerableElementType(items);
+			if (elementType  == typeof(SelectListItem))
+			{
+				// For SelectListItems, use 'Value' and 'Text'
+				if (string.IsNullOrEmpty(ValueExpression))
+					ValueExpression = ValueString;
+				if (string.IsNullOrEmpty(DisplayExpression))
+					DisplayExpression = TextString;
+			}
+
+			return builder;
+		}
+
+
 		private SelectBoxBuilder ProcessTitle(SelectBoxBuilder builder)
 		{
 			if (!string.IsNullOrEmpty(Title))
@@ -244,6 +260,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("clear")]
 		public bool AllowClear { get; set; } = true;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region SelectBoxTagHelper properties: not inherited
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		// If any of these properties are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
 
 		/// <summary>
 		/// Get or set the name of the item property to be used as dropdown item value.
@@ -283,6 +306,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("timeout")]
 		public int SearchTimeout { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region SelectBoxTagHelper events: not inherited
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		// If any of these events are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
 
 		/// <summary>
 		/// Get or set the Javascript method to be called when the selection in the control changes.

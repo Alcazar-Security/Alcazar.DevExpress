@@ -52,17 +52,35 @@ namespace Alcazar.Web.Extensibility
 			// Create the contexts, so that we can pass them to child tag helpers
 			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
 			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
+			_controlContext = GetOrCreateContext<ControlContext>(context);
+
+			// Before processing an inner control, pass in any properties from the dx-field to the editor. 
+			// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
+			_controlContext.For = For;
+			_controlContext.Name = Name;
 
 			// Process children of the tag, we will need them
 			IHtmlContent content = await output.GetChildContentAsync();
 
 			// Generate the control
-			IHtmlContent controlContent = await GenerateControl(context, output);
-
+			IHtmlContent controlContent;
+			if (_controlContext.ControlContent != null)
+			{
+				// We have an inner dx-control, use it
+				controlContent = _controlContext.ControlContent;
+			}
+			else
+			{
+				// The dx-field has all control information irself, generate the control 
+				// This method is only called if there is no embedded control directly inside the 'dx-field'
+				controlContent = await GenerateControl(context, output);
+			}
 			// Suppress my own output, just use the output from the child label
 			output.SuppressOutput();
 			output.Content.SetHtmlContent(controlContent);
 		}
+
+		private ControlContext _controlContext;
 
 		#endregion
 
@@ -166,15 +184,14 @@ namespace Alcazar.Web.Extensibility
 			childHelper.AllowClear = AllowClear;
 			childHelper.IsReadonly = IsReadonly;
 			childHelper.IsDisabled = IsDisabled;
-			//childHelper.Format = Format;
-			//childHelper.InputTypeName = InputTypeName;
-			// Select box specific
-			childHelper.ValueExpression = ValueExpression;
-			childHelper.DisplayExpression = DisplayExpression;
-			childHelper.MinSearchLength = MinSearchLength;
-			childHelper.SearchTimeout = SearchTimeout;
-			if (_searchMode.HasValue)
-				childHelper.SearchMode = _searchMode.Value;
+
+			// Select box specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
+			// childHelper.ValueExpression = ValueExpression;
+			// childHelper.DisplayExpression = DisplayExpression;
+			// childHelper.MinSearchLength = MinSearchLength;
+			// childHelper.SearchTimeout = SearchTimeout;
+			// if (_searchMode.HasValue)
+			//	childHelper.SearchMode = _searchMode.Value;
 
 			childHelper.ViewContext = ViewContext;
 			childHelper.Init(helperContext);
@@ -216,8 +233,8 @@ namespace Alcazar.Web.Extensibility
 			//childHelper.Format = Format;
 			//childHelper.InputTypeName = InputTypeName;
 
-			// Autocomplete specific
-			childHelper.ValueExpression = ValueExpression;
+			// Autocomplete specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
+			// childHelper.ValueExpression = ValueExpression;
 
 			childHelper.ViewContext = ViewContext;
 			childHelper.Init(helperContext);
@@ -553,51 +570,6 @@ namespace Alcazar.Web.Extensibility
 		/// if <see cref="InputTypeName"/> is "radio". Must not be <c>null</c> in that case. 
 		/// </remarks> 
 		public object Value { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties: control info - select
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the name of the item propertry to be used as dropdown item value.
-		/// </summary>
-		[HtmlAttributeName("value-expr")]
-		public string ValueExpression { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the item propertry to be used to display dropdown items.
-		/// </summary>
-		[HtmlAttributeName("display-expr")]
-		public string DisplayExpression { get; set; }
-
-		/// <summary>
-		/// Get or set the search mode used by the control. Setting the search mode enables searching.
-		/// </summary>
-		[HtmlAttributeName("search")]
-		public DropDownSearchMode SearchMode
-		{
-			get { return _searchMode ?? DropDownSearchMode.StartsWith; }
-			set { _searchMode = value; }
-		}
-
-		// Require the private fields so that we dont have to fully qualify the mode in cshtml (DropDownSearchMode.StartsWith)
-		private DropDownSearchMode? _searchMode;
-
-		/// <summary>
-		/// Get or set the number of characters to enter before the lookup starts.
-		/// This value may also be set in the data source, but the select box needs it to know when it should retrieve data from the data source.
-		/// </summary>
-		[HtmlAttributeName("min-length")]
-		public int MinSearchLength { get; set; }
-
-		/// <summary>
-		/// Get or set the search timeout (in ms) for calling the datasource.
-		/// This value may also be set in the data source, but the select box needs it to know when it should retrieve data from the data source.
-		/// </summary>
-		[HtmlAttributeName("timeout")]
-		public int SearchTimeout { get; set; }
 
 		#endregion
 	}

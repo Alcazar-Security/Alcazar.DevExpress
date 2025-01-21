@@ -229,6 +229,13 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("dropdown")]
 		public bool ShowDropDown { get; set; }
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region AutocompleteTagHelper properties: not inherited
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		// If any of these properties are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
+
 		/// <summary>
 		/// Get or set the name of the item property to be used as autocomplete item value.
 		/// </summary>
