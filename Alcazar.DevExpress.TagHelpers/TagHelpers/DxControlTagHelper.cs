@@ -333,8 +333,7 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Placeholder = Placeholder;
 			childHelper.IsReadonly = IsReadonly;
 			childHelper.IsDisabled = IsDisabled;
-			//childHelper.Format = Format;
-			//childHelper.InputTypeName = InputTypeName;
+			childHelper.LabelText = LabelText;
 			childHelper.ViewContext = ViewContext;
 			childHelper.Init(helperContext);
 
@@ -462,12 +461,25 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties: control info
+		#region StandardControlTagHelper properties:
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		[ViewContext]
 		[HtmlAttributeNotBound]
 		public ViewContext ViewContext { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region StandardControlTagHelper properties: label info
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the custom text for the label. Defaults to the equivalent of 'DisplayNameFor'.
+		/// The label text on the control is only required for controls which supply their own label (such as a checkbox).
+		/// </summary>
+		[HtmlAttributeName("label-text")]
+		public string LabelText { get; set; }
 
 		#endregion
 

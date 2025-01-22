@@ -70,7 +70,7 @@ namespace Alcazar.Web.Extensibility
 		{
 			// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
 			// Lets see if that works for other use cases
-			if (For.ModelExplorer.ModelType.IsEnum)
+			if (For != null && For.ModelExplorer.ModelType.IsEnum)
 			{
 				// Our bound property is an enum
 				// Convert to a string

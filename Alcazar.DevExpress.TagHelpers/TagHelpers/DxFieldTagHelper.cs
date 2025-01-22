@@ -230,7 +230,7 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Width = Width;
 			childHelper.Height = Height;
 			childHelper.Items = Items;
-
+			childHelper.LabelText = LabelText;
 			// Select box (and other) specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
 			// childHelper.ValueExpression = ValueExpression;
 			// childHelper.DisplayExpression = DisplayExpression;
