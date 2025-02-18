@@ -1,25 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
+﻿using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Mvc.Builders;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
-using DevExtreme.AspNet.Mvc.Builders;
-using DevExtreme.AspNet.Mvc;
-using Microsoft.AspNetCore.Html;
 using System.Collections.Generic;
 using System.Linq;
-using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="RadioGroupTagHelper"/> type implements a set of radio buttons.
-    /// </summary>
-    [HtmlTargetElement("dx-radiogroup")]
+	/// <summary>
+	/// The <see cref="RadioGroupTagHelper"/> type implements a set of radio buttons.
+	/// </summary>
+	[HtmlTargetElement("dx-radiogroup")]
 	public class RadioGroupTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -98,6 +92,7 @@ namespace Alcazar.Web.Extensibility
 
 			if (Items != null)
 			{
+				// TODO maybe convert to datasource a la DxGrid
 				// Process server-side supplied string items
 				builder = builder.DataSource(Items);
 			}
@@ -118,7 +113,6 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 

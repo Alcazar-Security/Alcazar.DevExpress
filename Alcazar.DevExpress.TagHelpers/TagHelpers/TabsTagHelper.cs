@@ -78,7 +78,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 

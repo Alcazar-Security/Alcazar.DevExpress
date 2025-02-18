@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Alcazar.DevExpress.TagHelpers.TagHelpers.Contained
+namespace Alcazar.Web.Extensibility
 {
-    [HtmlTargetElement("button", ParentTag = "dx-autocomplete", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("button", ParentTag = "dx-autocomplete", TagStructure = TagStructure.NormalOrSelfClosing)]
     [HtmlTargetElement("button", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
     public class ContainedButtonTagHelper : TagHelperBase
     {

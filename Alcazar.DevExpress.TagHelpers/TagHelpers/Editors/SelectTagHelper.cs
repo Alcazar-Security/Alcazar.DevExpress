@@ -1,5 +1,4 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Types;
+﻿using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
@@ -12,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="SelectBoxTagHelper"/> type implements a single selection dropdown box.
-    /// The select box can do anything except multiple selection, therefor it is chosen over the DropdownBox and Lookup.
-    /// The other implemented chouces are:
-    /// * Autocomplete for lookups
-    /// * Tag box for multiple select
-    /// </summary>
-    [HtmlTargetElement("dx-select")]
+	/// <summary>
+	/// The <see cref="SelectBoxTagHelper"/> type implements a single selection dropdown box.
+	/// The select box can do anything except multiple selection, therefor it is chosen over the DropdownBox and Lookup.
+	/// The other implemented chouces are:
+	/// * Autocomplete for lookups
+	/// * Tag box for multiple select
+	/// </summary>
+	[HtmlTargetElement("dx-select")]
 	public class SelectBoxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -89,7 +88,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 

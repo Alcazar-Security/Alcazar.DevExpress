@@ -1,34 +1,37 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Authn;
+﻿using Amaqele.Common.Base;
 using Amaqele.Common.Collections;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
+using DevExtreme.AspNet.Mvc.Builders.DataSources;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using static DevExpress.Data.Filtering.Helpers.SubExprHelper.ThreadHoppingFiltering;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="DataGridTagHelper"/> type implements a data grid.
-    /// </summary>
-    [HtmlTargetElement("dx-datagrid")]
-	public class DataGridTagHelper : RouteTagHelperBase
+	/// <summary>
+	/// The <see cref="DataGridTagHelper"/> type implements a data grid.
+	/// </summary>
+	[HtmlTargetElement("dx-datagrid")]
+	public class DataGridTagHelper : DataSourceTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataGridTagHelper construction
@@ -71,7 +74,7 @@ namespace Alcazar.Web.Extensibility
 			// Suppress myself as output, using only the translated UI text.
 			output.SuppressOutput();
 
-			MethodInfo method = typeof(DataGridTagHelper).GetMethod("BuildDateGridAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+			MethodInfo method = typeof(DataGridTagHelper).GetMethod("BuildDataGridAsync", BindingFlags.Instance | BindingFlags.NonPublic);
 			if (method.IsGenericMethod)
 				method = method.MakeGenericMethod(RecordType);
 
@@ -83,7 +86,7 @@ namespace Alcazar.Web.Extensibility
 			output.Content.SetHtmlContent(content);
 		}
 
-		private async Task<IHtmlContent> BuildDateGridAsync<T>(TagHelperContext context, TagHelperOutput output)
+		private async Task<IHtmlContent> BuildDataGridAsync<T>(TagHelperContext context, TagHelperOutput output)
 		{
 			// Create the builder for a popup
 			DataGridBuilder<T> builder = _htmlHelper.DevExtreme().DataGrid<T>();
@@ -113,13 +116,29 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.FilterRow(f => f.Visible(true));
 			builder = builder.HeaderFilter(f => f.Visible(true));
 
-			builder = builder.Paging(p => p.PageSize(25));
+			builder = builder.Paging(p => p.PageSize(50));
 			builder = builder.Pager(p => p
 				.DisplayMode(GridPagerDisplayMode.Adaptive)
 				.ShowPageSizeSelector(true)
 				.ShowNavigationButtons(true)
 				.AllowedPageSizes(new[] { 25, 50, 100, 250, 500 }));
 
+			// Process selection options
+			if (SelectionMode != SelectionMode.None)
+			{
+				// Selection always sets hover state
+				builder = builder.HoverStateEnabled(true);
+
+				// Set the selection mode
+				// TODO there are a few other options to choose
+				builder = builder.Selection(s => s.Mode(SelectionMode));
+
+				// Set the JS function to execute when the selection changes
+				if (!string.IsNullOrEmpty(OnSelectionChanged))
+					builder = builder.OnSelectionChanged(OnSelectionChanged);
+			}
+
+			// Process editing options
 			builder = builder.Editing(editing =>
 			{
 				// Allow editing options of the corresponding actions are set
@@ -127,67 +146,50 @@ namespace Alcazar.Web.Extensibility
 					.Mode(GridEditMode.Row)
 					.UseIcons(true);
 
-				if (!string.IsNullOrEmpty(InsertAction))
+				if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
 					editing.AllowAdding(true);
-				if (!string.IsNullOrEmpty(UpdateAction))
+				if (!string.IsNullOrEmpty(UpdateAction) || !string.IsNullOrEmpty(OnUpdating) || !string.IsNullOrEmpty(OnUpdated))
 					editing.AllowUpdating(true);
-				if (!string.IsNullOrEmpty(DeleteAction))
+				if (!string.IsNullOrEmpty(DeleteAction) || !string.IsNullOrEmpty(OnRemoving) || !string.IsNullOrEmpty(OnRemoved))
 					editing.AllowDeleting(true);
 			});
 
-			//builder = builder.OnCellPrepared("onCellPrepared");
+			if (!string.IsNullOrEmpty(OnRowInserting))
+				builder = builder.OnRowInserting(OnRowInserting);
+			if (!string.IsNullOrEmpty(OnRowInserted))
+				builder = builder.OnRowInserted(OnRowInserted);
+
 			//builder = builder.OnCellClick("onCellClick");
 			//builder = builder.OnContentReady("onContentReady");
 
-			// Set the data source
-			if (Items != null)
-			{
-				// Our datasource comes from the model
-				builder = builder.DataSource(Items);
-			}
-			else if (!string.IsNullOrEmpty(LoadAction))
-			{
-				// Our datasource is a web api
-				builder = builder.RemoteOperations( c => { c.Filtering(true); });
-				builder = builder.DataSource(d =>
-				{
-					var options = d.Mvc().LoadMethod(HttpMethod.Post.ToString()).LoadAction(LoadAction);
-
-					// Add load parameters
-					if (LoadParams.Any())
-					{
-						ExpandoObject loadParams = new ExpandoObject();
-						loadParams.AddRange(LoadParams);
-						options = options.LoadParams(loadParams);
-					}
-
-					if (!string.IsNullOrEmpty(Controller))
-						options = options.Controller(Controller);
-					if (!string.IsNullOrEmpty(Area))
-						options = options.Area(Area);
-
-					if (!string.IsNullOrEmpty(Key))
-						options = options.Key(Key);
-
-					// Set editing actions
-					if (!string.IsNullOrEmpty(InsertAction))
-						options = options.InsertAction(InsertAction);
-					if (!string.IsNullOrEmpty(UpdateAction))
-						options = options.UpdateAction(UpdateAction);
-					if (!string.IsNullOrEmpty(DeleteAction))
-						options = options.DeleteAction(DeleteAction);
-
-					return options;
-				});
-			}
-
 			// Create the context, so that we can pass it to child tag helpers
+			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
 			ColumnContext columnContext = GetOrCreateContext<ColumnContext>(context);
 
 			// Process children of the card tag, the header, footer, and my body will need them 
 			IHtmlContent content = await output.GetChildContentAsync();
 
-			// Add buttons, but only if we have some
+			// Set the data source
+			if (sourceContext.Datasource != null)
+			{
+				// First preference, process the (child) data source
+				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
+			}
+			else
+			{
+				// Second preference, process the datasource from my own properties
+				builder = builder.DataSource(d => BuildDatasource(d));
+			}
+
+			// Post process, based on the data source
+			switch (DatasourceType)
+			{
+				case DataSourceTypes.Mvc:
+					builder = builder.RemoteOperations(c => { c.Filtering(true); });
+					break;
+			}
+
+			// Add columns, if we have some
 			if (columnContext.Columns.Any())
 			{
 				builder = builder.Columns(async columns =>
@@ -196,11 +198,13 @@ namespace Alcazar.Web.Extensibility
 					{
 						switch (column.Type)
 						{
+							// A data column displays a property of the model
 							default:
 							case "data":
 								ProcessDataColumn<T>(columns, column);
 								break;
 
+							// A command column displays command buttons which act on the model which is displayed in this row
 							case "command":
 								await ProcessCommandColumnAsync<T>(context, output, columns, column);
 								break;
@@ -214,6 +218,24 @@ namespace Alcazar.Web.Extensibility
 					//		.DisplayExpr("Name"));
 				});
 			}
+
+			// Build the toolbar
+			// The location of the toolbar is not changable, DX says:
+			// The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
+			//builder = builder.Toolbar(toolbar =>
+			//{
+			//	toolbar.Items(i =>
+			//	{
+			//		// If we are inserting, show and customise the ADD toolbar button
+			//		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
+			//		{
+			//			i.Add()
+			//				.Name(DataGridToolbarItem.AddRowButton)
+			//				.Location(ToolbarItemLocation.After)
+			//				.ShowText(ToolbarItemShowTextMode.InMenu);
+			//		}
+			//	});
+			//});
 
 			return builder;
 		}
@@ -254,8 +276,24 @@ namespace Alcazar.Web.Extensibility
 		{
 			if (column.For != null)
 			{
-				// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
-				column.Name = RemoveNoname(column.For.Name);
+				// If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ die to a [JsonProperty] attribute
+				if (string.IsNullOrEmpty(column.Name))
+				{
+					// Check for a [JsonProperty] attribute which renames the field in JSON data and confuses DX
+					if (column.For.Metadata is Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.DefaultModelMetadata mmd && mmd.Attributes.PropertyAttributes != null)
+					{
+						// Use the JSON property name
+						JsonPropertyAttribute attribute = mmd.Attributes.PropertyAttributes.FirstOrDefault((a) => a is JsonPropertyAttribute) as JsonPropertyAttribute;
+						if (attribute != null)
+							column.Name = attribute.PropertyName;
+					}
+
+					if (string.IsNullOrEmpty(column.Name))
+					{
+						// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
+						column.Name = RemoveNoname(column.For.Name);
+					}
+				}
 
 				// Set the label if it is not explicitely set
 				if (string.IsNullOrEmpty(column.Label))
@@ -450,21 +488,11 @@ namespace Alcazar.Web.Extensibility
 		#region DataGridTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
 		/// <summary>
 		/// Get or set the text message to be used for this popup.
 		/// </summary>
 		[HtmlAttributeName("text")]
 		public string Text { get; set; }
-
-		/// <summary>
-		/// Get or set the title to be used for this popup.
-		/// </summary>
-		[HtmlAttributeName("title")]
-		public string Title { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if the clear button should be shown.
@@ -491,6 +519,18 @@ namespace Alcazar.Web.Extensibility
 		public int SearchTimeout { get; set; }
 
 		/// <summary>
+		/// Get or set the selection mode of the data grid.
+		/// </summary>
+		[HtmlAttributeName("select")]
+		public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
+
+		/// <summary>
+		/// Get or set the action to be executed when the selection changes in selection mode.
+		/// </summary>
+		[HtmlAttributeName("onselect")]
+		public string OnSelectionChanged { get; set; }
+
+		/// <summary>
 		/// Get or set the action to be executed when the selection changes.
 		/// </summary>
 		[HtmlAttributeName("onchange")]
@@ -509,6 +549,20 @@ namespace Alcazar.Web.Extensibility
 		public RazorBlock OnChangeAction3 { get; set; }
 
 		/// <summary>
+		/// Get or set the action to be executed when a row is being inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserting"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("onrowinserting")]
+		public string OnRowInserting { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserted"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("onrowinserted")]
+		public string OnRowInserted { get; set; }
+
+		/// <summary>
 		/// An expression to be evaluated against the current model.
 		/// </summary>
 		[HtmlAttributeName("asp-for")]
@@ -521,345 +575,10 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the items to be displayed in the data grid.
-		/// </summary>
-		[HtmlAttributeName("asp-items")]
-		public System.Collections.IEnumerable Items { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the load action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-load")]
-		public string LoadAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the insert action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-insert")]
-		public string InsertAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the update action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-update")]
-		public string UpdateAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the delete action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-delete")]
-		public string DeleteAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the key property of the data record returned by this data source.
-		/// </summary>
-		[HtmlAttributeName("key")]
-		public string Key { get; set; }
-
-		/// <summary>
 		/// Get or set the record type used in this data grid.
 		/// </summary>
 		[HtmlAttributeName("record-type")]
 		public Type RecordType { get; set; }
-
-		/// <summary>
-		/// Get or set parameters used for loading of data records from the data source.
-		/// </summary>
-		[HtmlAttributeName(DictionaryAttributePrefix = "load-param-")]
-		public IDictionary<string, object> LoadParams { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-		#endregion
-	}
-
-	[HtmlTargetElement("column", ParentTag = "dx-datagrid", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ColumnTagHelper : TagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper overrides
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-		{
-			// Suppress the HTML of this tag, it is used for DX button generation only
-			output.SuppressOutput();
-
-			// Create the context, so that we can pass them to child tag helpers
-			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
-
-			// Obtain the context, so that we can use it here
-			ColumnContext columnContext = GetContextSafe<ColumnContext>(context);
-
-			string label = TranslateToProp(Label, ViewContext);
-			string name = TranslateToProp(Name, ViewContext);
-
-			// Process children of the column tag, which becomes the column template
-			IHtmlContent content = await output.GetChildContentAsync();
-			string text = ToString(content);
-
-			// Construct the column model
-			ColumnModel button = new ColumnModel
-			{
-				// Column type
-				Type = Type,
-
-				// Data columns
-				Label = label,
-				Name = name,
-				Alignment = Alignment,
-				DataType = DataType,
-				Format = Format,
-				For = For,
-				Content = text,
-				ContentJS = ContentJS,
-				ContentRZ = ContentRZ,
-				ContentNT = ContentNT,
-				IsVisible = IsVisible,
-				IsReadonly = IsReadonly,
-				FilterType = FilterType,
-				FilterOperation = FilterOperation,
-				FilterValue = FilterValue,
-
-				// Command columns
-				CommandType = CommandType,
-				Buttons = buttonContext.Buttons,
-			};
-
-			columnContext.Columns.Add(button);
-		}
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: column type
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the type of the column: data (default), command
-		/// </summary>
-		[HtmlAttributeName("type")]
-		public string Type { get; set; }
-
-		/// <summary>
-		/// Get or set the field name of the column.
-		/// </summary>
-		[HtmlAttributeName("name")]
-		public string Name { get; set; }
-
-		/// <summary>
-		/// Get or set the header label of the column.
-		/// </summary>
-		[HtmlAttributeName("label")]
-		public string Label { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be visible. Defaults to <see langword="true"/>.
-		/// </summary>
-		[HtmlAttributeName("visible")]
-		public bool IsVisible { get; set; } = true;
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: data column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the data type of the column.
-		/// </summary>
-		[HtmlAttributeName("datatype")]
-		public GridColumnDataType? DataType { get; set; }
-
-		/// <summary>
-		/// Get or set the format of the column.
-		/// </summary>
-		[HtmlAttributeName("format")]
-		public Format? Format { get; set; }
-
-		/// <summary>
-		/// Get or set the alignment of the column.
-		/// </summary>
-		[HtmlAttributeName("align")]
-		public HorizontalAlignment Alignment { get; set; } = HorizontalAlignment.Left;
-
-		/// <summary>
-		/// Get or set the FOR expression of the column.
-		/// </summary>
-		[HtmlAttributeName("asp-for")]
-		public ModelExpression For { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be readonly, and not editable when in edit mode.
-		/// </summary>
-		[HtmlAttributeName("readonly")]
-		public bool IsReadonly { get; set; }
-
-		/// <summary>
-		/// Get or set the filter type of this column.
-		/// </summary>
-		[HtmlAttributeName("filter")]
-		public FilterType? FilterType { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter operation of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-op")]
-		public FilterOperations? FilterOperation { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter value of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-value")]
-		public object FilterValue { get; set; }
-
-		/// <summary>
-		/// Get or set the JS cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-js")]
-		public string ContentJS { get; set; }
-
-		/// <summary>
-		/// Get or set the RazorBlock cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-rz")]
-		public RazorBlock ContentRZ { get; set; }
-
-		/// <summary>
-		/// Get or set the named cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-nt")]
-		public string ContentNT { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: command column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the command column type of this column. Applicable only to command columns.
-		/// </summary>
-		[HtmlAttributeName("command-type")]
-		public GridCommandColumnType CommandType { get; set; }
-
-		/// <summary>
-		/// Get or set the icon of the button.
-		/// </summary>
-		[HtmlAttributeName("icon")]
-		public string Icon { get; set; }
-
-		/// <summary>
-		/// Get or set the text of the button.
-		/// </summary>
-		[HtmlAttributeName("text")]
-		public string Text { get; set; }
-
-		#endregion
-	}
-
-	public class ColumnContext
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnContext properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public IList<ColumnModel> Columns { get; } = new List<ColumnModel>();
-
-		#endregion
-	}
-
-	public class ColumnModel
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: column type
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the type of the column: data (default), command
-		/// </summary>
-		public string Type { get; set; }
-
-		/// <summary>
-		/// Get or set the field name of the column.
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
-		/// Get or set the header label of the column.
-		/// </summary>
-		public string Label { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be visible. Defaults to <see langword="true"/>.
-		/// </summary>
-		public bool IsVisible { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: data column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public GridColumnDataType? DataType { get; set; }
-		public Format? Format { get; set; }
-		public HorizontalAlignment Alignment { get; set; }
-		public ModelExpression For { get; set; }
-		public string Content { get; set; }
-
-		/// <summary>
-		/// Get or set the JS cell template of this column.
-		/// </summary>
-		public string ContentJS { get; set; }
-
-		/// <summary>
-		/// Get or set the RazorBlock cell template of this column.
-		/// </summary>
-		public RazorBlock ContentRZ { get; set; }
-
-		/// <summary>
-		/// Get or set the named cell template of this column.
-		/// </summary>
-		public string ContentNT { get; set; }
-
-		public bool IsReadonly { get; set; }
-
-		public FilterType? FilterType { get; set; }
-		public FilterOperations? FilterOperation { get; set; }
-		public object FilterValue { get; set; }
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: command column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the command column type of this column. Applicable only to command columns.
-		/// </summary>
-		public GridCommandColumnType CommandType { get; set; }
-
-		/// <summary>
-		/// Get or set the icon of the column.
-		/// </summary>
-		public string Icon { get; set; }
-
-		/// <summary>
-		/// Get or set the text of the column.
-		/// </summary>
-		public string Text { get; set; }
-
-		/// <summary>
-		/// Get or set a sequence of buttons of the column.
-		/// </summary>
-		public IEnumerable<ButtonModel> Buttons { get; internal set; }
 
 		#endregion
 	}

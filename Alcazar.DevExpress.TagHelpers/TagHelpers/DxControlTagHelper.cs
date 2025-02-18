@@ -1,5 +1,4 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using DevExtreme.AspNet.Mvc;
+﻿using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="DxControlTagHelper"/> tag helper implements the control (input, etc) for a standard form field <see cref="DxFieldTagHelper"/>.
-    /// </summary>
-    [HtmlTargetElement("dx-control", TagStructure = TagStructure.NormalOrSelfClosing)]
+	/// <summary>
+	/// The <see cref="DxControlTagHelper"/> tag helper implements the control (input, etc) for a standard form field <see cref="DxFieldTagHelper"/>.
+	/// </summary>
+	[HtmlTargetElement("dx-control", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class DxControlTagHelper : FieldTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

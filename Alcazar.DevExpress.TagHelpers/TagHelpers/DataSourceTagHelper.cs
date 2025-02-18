@@ -15,6 +15,7 @@ namespace Alcazar.Web.Extensibility
 	/// The <see cref="DataSourceTagHelper"/> type implements a data source for other tag helpers which do not have all data source properties.
 	/// This tag is always a child of other dx-* tag helpers.
 	/// </summary>
+	[HtmlTargetElement("data-source", ParentTag = "dx-datagrid", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-field", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-control", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-autocomplete", TagStructure = TagStructure.NormalOrSelfClosing)]
@@ -22,7 +23,7 @@ namespace Alcazar.Web.Extensibility
 	[HtmlTargetElement("data-source", ParentTag = "dx-dropdown", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-tag", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-radiogroup", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class DataSourceTagHelper : RouteTagHelperBase
+	public class DataSourceTagHelper : DataSourceTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataSourceTagHelper construction
@@ -55,131 +56,11 @@ namespace Alcazar.Web.Extensibility
 			sourceContext.Datasource = this;
 		}
 
-		/// <summary>
-		/// Build the data source. THis method will typically be called by the parent tag.
-		/// </summary>
-		/// <param name="factory"> The data source factory. </param>
-		/// <returns> The data source builder.</returns>
-		public OptionsOwnerBuilder BuildDatasource(DataSourceFactory factory)
-		{
-			switch (DatasourceType)
-			{
-				default:
-				case DataSourceTypes.None:
-					throw new NotSupportedException($"Cannot apply data source, {DatasourceType} is not implemented.");
-
-				case DataSourceTypes.StaticJson: return BuildStaticJson(factory);
-				case DataSourceTypes.Array: return BuildArray(factory);
-				case DataSourceTypes.Mvc: return BuildMvc(factory);
-				case DataSourceTypes.OData: return BuildOData(factory);
-				case DataSourceTypes.RemoteController: return BuildRemoteController(factory);
-			}
-		}
-
-		private OptionsOwnerBuilder BuildStaticJson(DataSourceFactory factory)
-		{
-			var options = factory.StaticJson();
-
-			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
-
-			return options;
-		}
-
-		private OptionsOwnerBuilder BuildArray(DataSourceFactory factory)
-		{
-			var options = factory.Array();
-
-			options = options.Data(Items);
-
-			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
-			
-			return options;
-		}
-
-		private OptionsOwnerBuilder BuildMvc(DataSourceFactory factory)
-		{
-			var options = factory.Mvc().LoadMethod(HttpMethod).LoadAction(Action);
-
-			// Add load parameters
-			if (LoadParams.Any())
-			{
-				ExpandoObject loadParams = new ExpandoObject();
-				loadParams.AddRange(LoadParams);
-				options = options.LoadParams(loadParams);
-			}
-
-			if (!string.IsNullOrEmpty(Controller))
-				options = options.Controller(Controller);
-			if (!string.IsNullOrEmpty(Area))
-				options = options.Area(Area);
-
-			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
-
-			return options;
-		}
-
-		private OptionsOwnerBuilder BuildOData(DataSourceFactory factory)
-		{
-			var options = factory.OData();
-			return options;
-		}
-
-		private OptionsOwnerBuilder BuildRemoteController(DataSourceFactory factory)
-		{
-			var options = factory.RemoteController();
-			return options;
-		}
-
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataSourceTagHelper properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the text message to be used for this popup.
-		/// </summary>
-		[HtmlAttributeName("type")]
-		public DataSourceTypes DatasourceType { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the key property of datasource items.
-		/// </summary>
-		[HtmlAttributeName("key")]
-		public string Key { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataSourceTagHelper properties: Array
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the sequence of items to be displayed in this control.
-		/// </summary>
-		[HtmlAttributeName("asp-items")]
-		public System.Collections.IEnumerable Items { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataSourceTagHelper properties: MVC
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set parameters used for loading of data records from the data source.
-		/// </summary>
-		[HtmlAttributeName(DictionaryAttributePrefix = "load-param-")]
-		public IDictionary<string, object> LoadParams { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-		/// <summary>
-		/// Get or set the HTTP method to be used for the Web API call.
-		/// </summary>
-		[HtmlAttributeName("method")]
-		public string HttpMethod { get; set; }
 
 		/// <summary>
 		/// Get or set the number of characters to enter before the lookup starts.
@@ -213,11 +94,34 @@ namespace Alcazar.Web.Extensibility
 		#region DataSourceTypes values
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
+		/// <summary>
+		/// Not a valud data source.
+		/// </summary>
 		None,
+
+		/// <summary>
+		/// A data source which received its data from static JSON.
+		/// </summary>
 		StaticJson,
+
+		/// <summary>
+		/// A data source which received its data from an array of model objects.
+		/// </summary>
 		Array,
+
+		/// <summary>
+		/// A data source which received its data from an MVC API call.
+		/// </summary>
 		Mvc,
+
+		/// <summary>
+		/// A data source which received its data from an OData API call.
+		/// </summary>
 		OData,
+
+		/// <summary>
+		/// A data source which received its data from an API call to a remote controller.
+		/// </summary>
 		RemoteController,
 
 		#endregion

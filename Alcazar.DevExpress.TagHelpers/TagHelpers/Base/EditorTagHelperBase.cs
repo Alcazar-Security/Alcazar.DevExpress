@@ -1,13 +1,10 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Types;
-using DevExpress.Data.Helpers;
+﻿using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +12,10 @@ using System.Reflection;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
-    /// </summary>
-    public class EditorTagHelperBase : ControlTagHelperBase
+	/// <summary>
+	/// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
+	/// </summary>
+	public class EditorTagHelperBase : ControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region EditorTagHelperBase protected methods
