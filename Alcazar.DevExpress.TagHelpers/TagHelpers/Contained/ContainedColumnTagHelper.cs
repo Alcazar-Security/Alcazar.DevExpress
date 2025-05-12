@@ -12,9 +12,10 @@ using System.Threading.Tasks;
 namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
-	/// The <see cref="ColumnTagHelper"/> tag helper defines columns of a data grid and other users of data sources.
+	/// The <see cref="ColumnTagHelper"/> tag helper defines columns of a data grid, tree lists, and other users of data sources.
 	/// </summary>
 	[HtmlTargetElement("column", ParentTag = "dx-datagrid", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("column", ParentTag = "dx-treelist", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class ColumnTagHelper : TagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -26,21 +27,31 @@ namespace Alcazar.Web.Extensibility
 			// Suppress the HTML of this tag, it is used for DX button generation only
 			output.SuppressOutput();
 
-			// Create the context, so that we can pass them to child tag helpers
-			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
-
 			// Obtain the context, so that we can use it here
-			ColumnContext columnContext = GetContextSafe<ColumnContext>(context);
+			ColumnsContext columnContext = GetContextSafe<ColumnsContext>(context);
+
+			// Create the contexts, so that we can pass them to child tag helpers
+			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
+			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
+			sourceContext.DataSourceKey = "column-lookup";
+
+			// Process children of the column tag, which becomes the column template
+			IHtmlContent content = await output.GetChildContentAsync();
+
+			DataSourceTagHelper datasource = null;
+			if (sourceContext.Datasources.ContainsKey("column-lookup"))
+				datasource = sourceContext.Datasources["column-lookup"];
+
+			sourceContext.DataSourceKey = null;
+			sourceContext.Datasources.Remove("column-lookup");
+
+			string text = ToString(content);
 
 			string label = TranslateToProp(Label, ViewContext);
 			string name = TranslateToProp(Name, ViewContext);
 
-			// Process children of the column tag, which becomes the column template
-			IHtmlContent content = await output.GetChildContentAsync();
-			string text = ToString(content);
-
 			// Construct the column model
-			ColumnModel button = new ColumnModel
+			ColumnModel column = new ColumnModel
 			{
 				// Column type
 				Type = Type,
@@ -62,12 +73,17 @@ namespace Alcazar.Web.Extensibility
 				FilterOperation = FilterOperation,
 				FilterValue = FilterValue,
 
+				LookupDatasource = datasource,
+				ValueExpression = ValueExpression,
+				DisplayExpression = DisplayExpression,
+				GroupExpression = GroupExpression,
+
 				// Command columns
 				CommandType = CommandType,
 				Buttons = buttonContext.Buttons,
 			};
 
-			columnContext.Columns.Add(button);
+			columnContext.Columns.Add(column);
 		}
 
 		#endregion
@@ -182,6 +198,24 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("content-nt")]
 		public string ContentNT { get; set; }
 
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item value.
+		/// </summary>
+		[HtmlAttributeName("value-expr")]
+		public string ValueExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item display text.
+		/// </summary>
+		[HtmlAttributeName("display-expr")]
+		public string DisplayExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item grouping selector.
+		/// </summary>
+		[HtmlAttributeName("group-expr")]
+		public string GroupExpression { get; set; }
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -210,9 +244,9 @@ namespace Alcazar.Web.Extensibility
 	}
 
 	/// <summary>
-	/// The <see cref="ColumnContext"/> context type confers contained columns to the parent control, such as a data grid.
+	/// The <see cref="ColumnsContext"/> context type confers contained columns to the parent control, such as a data grid.
 	/// </summary>
-	public class ColumnContext
+	public class ColumnsContext
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ColumnContext properties
@@ -284,6 +318,27 @@ namespace Alcazar.Web.Extensibility
 		public FilterType? FilterType { get; set; }
 		public FilterOperations? FilterOperation { get; set; }
 		public object FilterValue { get; set; }
+
+		/// <summary>
+		/// Get or set the tag helper which represents a data source for column lookup.
+		/// </summary>
+		public DataSourceTagHelper LookupDatasource { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item value.
+		/// </summary>
+		public string ValueExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item display text.
+		/// </summary>
+		public string DisplayExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used as lookup dropdown item grouping selector.
+		/// </summary>
+		public string GroupExpression { get; set; }
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

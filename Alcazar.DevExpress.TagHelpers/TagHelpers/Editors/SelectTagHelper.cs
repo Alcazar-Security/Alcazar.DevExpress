@@ -13,8 +13,8 @@ namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
 	/// The <see cref="SelectBoxTagHelper"/> type implements a single selection dropdown box.
-	/// The select box can do anything except multiple selection, therefor it is chosen over the DropdownBox and Lookup.
-	/// The other implemented chouces are:
+	/// The select box can do anything except multiple selection, therefore it is chosen over the DropdownBox and Lookup.
+	/// The other implemented choices are:
 	/// * Autocomplete for lookups
 	/// * Tag box for multiple select
 	/// </summary>

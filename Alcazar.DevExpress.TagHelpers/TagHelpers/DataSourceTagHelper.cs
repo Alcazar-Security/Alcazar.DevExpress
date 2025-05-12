@@ -1,6 +1,7 @@
 ﻿using Amaqele.Common.Collections;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
@@ -23,6 +24,7 @@ namespace Alcazar.Web.Extensibility
 	[HtmlTargetElement("data-source", ParentTag = "dx-dropdown", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-tag", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-radiogroup", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("data-source", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class DataSourceTagHelper : DataSourceTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -48,12 +50,28 @@ namespace Alcazar.Web.Extensibility
 			output.SuppressOutput();
 
 			// Process the buttons tag and remember the content, so that the parent can process it
-			DataSourceContext sourceContext = GetContextSafe<DataSourceContext>(context);
+			DataSourceContext sourceContext = GetDatasourceContext(context);
 			if (sourceContext.Datasource != null)
 				throw new NotSupportedException($"Cannot apply data source {DatasourceType} '{Action}', {sourceContext.Datasource.DatasourceType} '{sourceContext.Datasource.Action}' is already declared.");
 
 			// Declare the data source
-			sourceContext.Datasource = this;
+			SetDataSource(sourceContext);
+		}
+
+		private DataSourceContext GetDatasourceContext(TagHelperContext context)
+		{
+			if (string.IsNullOrEmpty(Usage))
+				return GetContextSafe<DataSourceContext>(context);
+
+			return GetContextSafe<DataSourceContext>(Usage, context);
+		}
+
+		private void SetDataSource(DataSourceContext sourceContext)
+		{
+			if (string.IsNullOrEmpty(sourceContext.DataSourceKey))
+				sourceContext.Datasource = this;
+
+			sourceContext.Datasources[sourceContext.DataSourceKey] = this;
 		}
 
 		#endregion
@@ -61,6 +79,13 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataSourceTagHelper properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the usage indicator of this data source.
+		/// This would allow the tag helper retrieve a different DataSourceContext. Not used.
+		/// </summary>
+		[HtmlAttributeName("usage")]
+		public string Usage { get; set; }
 
 		/// <summary>
 		/// Get or set the number of characters to enter before the lookup starts.
@@ -83,7 +108,21 @@ namespace Alcazar.Web.Extensibility
 		#region DataSourceContext properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public DataSourceTagHelper Datasource { get; set; }
+		/// <summary>
+		/// Get or set the key with which any data source will be stored.
+		/// This allows nested data sources, e.g. tree-list and its columns have their own data sources.
+		/// </summary>
+		public string DataSourceKey { get; set; }
+
+        /// <summary>
+        /// Get or set the tag helper which represents a data source.
+        /// </summary>
+        public DataSourceTagHelper Datasource { get; set; }
+
+		/// <summary>
+		/// Get or set a collection of tag helper which represent data sources.
+		/// </summary>
+		public Dictionary<string, DataSourceTagHelper> Datasources { get; set; } = new Dictionary<string, DataSourceTagHelper>();
 
 		#endregion
 	}

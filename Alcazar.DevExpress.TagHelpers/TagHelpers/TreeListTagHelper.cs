@@ -1,55 +1,45 @@
-﻿using Amaqele.Common.Types;
-using DevExtreme.AspNet.Mvc;
-using DevExtreme.AspNet.Mvc.Builders;
-using DevExtreme.AspNet.Mvc.Factories;
-using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using NLog.Config;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Html;
+using System.Reflection;
+using DevExtreme.AspNet.Mvc.Builders;
+using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Mvc.Factories;
+using DevExpress.Data.Helpers;
 
 namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
-	/// The <see cref="DataGridTagHelper"/> type implements a data grid.
+	/// The <see cref="TreeListTagHelper"/> type implements a tree control, which displays a tree in list format.
 	/// </summary>
-	[HtmlTargetElement("dx-datagrid")]
-	public class DataGridTagHelper : ListControlTagHelperBase
+	[HtmlTargetElement("dx-treelist")]
+	public class TreeListTagHelper : ListControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataGridTagHelper construction
+		#region TreeListTagHelper construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public DataGridTagHelper(IHtmlHelper htmlHelper, IUrlHelperFactory urlHelperFactory, IActionContextAccessor actionContextAccessor, HtmlEncoder htmlEncoder, IViewComponentHelper viewComponentHelper, IHtmlGenerator generator)
+		public TreeListTagHelper(IHtmlHelper htmlHelper)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
-			//_urlHelper = urlHelperFactory.GetUrlHelper(actionContextAccessor.ActionContext);
-			//_htmlEncoder = htmlEncoder;
-			//_viewComponentHelper = viewComponentHelper;
-			//_generator = generator;
-
-			// Apply defaults (of inherited properties)
-			// Width = "100%"; we should do this by CSS
 		}
 
-		//private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
-		//private readonly IUrlHelper _urlHelper;
-		//private readonly HtmlEncoder _htmlEncoder;
-		//private readonly IHtmlGenerator _generator;
 
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataGridTagHelper overrides
+		#region TreeListTagHelper overrides
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -66,7 +56,7 @@ namespace Alcazar.Web.Extensibility
 			output.SuppressOutput();
 
 			// Generate a builder mathod using the record type as generic type
-			MethodInfo method = typeof(DataGridTagHelper).GetMethod(nameof(BuildDataGridAsync), BindingFlags.Instance | BindingFlags.NonPublic);
+			MethodInfo method = typeof(TreeListTagHelper).GetMethod(nameof(BuildTreeListAsync), BindingFlags.Instance | BindingFlags.NonPublic);
 			if (method.IsGenericMethod)
 				method = method.MakeGenericMethod(RecordType);
 
@@ -79,13 +69,13 @@ namespace Alcazar.Web.Extensibility
 		}
 
 		/// <summary>
-		/// Build the data grid. 
+		/// Build the tree list. 
 		/// This method is dynamically generated with a generic type argument and then executed.
 		/// </summary>
-		private async Task<IHtmlContent> BuildDataGridAsync<T>(TagHelperContext context, TagHelperOutput output)
+		private async Task<IHtmlContent> BuildTreeListAsync<T>(TagHelperContext context, TagHelperOutput output)
 		{
 			// Create the builder for a popup
-			DataGridBuilder<T> builder = _htmlHelper.DevExtreme().DataGrid<T>();
+			TreeListBuilder<T> builder = _htmlHelper.DevExtreme().TreeList<T>();
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -136,7 +126,7 @@ namespace Alcazar.Web.Extensibility
 			{
 				// Allow editing options of the corresponding actions are set
 				editing
-					.Mode(GridEditMode.Row)
+					.Mode(EditMode)
 					.UseIcons(true);
 
 				if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
@@ -151,6 +141,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.OnRowInserting(OnRowInserting);
 			if (!string.IsNullOrEmpty(OnRowInserted))
 				builder = builder.OnRowInserted(OnRowInserted);
+			if (!string.IsNullOrEmpty(OnInitNewRow))
+				builder = builder.OnInitNewRow(OnInitNewRow);
 
 			//builder = builder.OnCellClick("onCellClick");
 			//builder = builder.OnContentReady("onContentReady");
@@ -197,43 +189,35 @@ namespace Alcazar.Web.Extensibility
 								ProcessDataColumn<T>(columns, column);
 								break;
 
-							// A command column displays command buttons which act on the model which is displayed in this row
-							case "command":
-								await ProcessCommandColumnAsync<T>(context, output, columns, column);
-								break;
+								// A command column displays command buttons which act on the model which is displayed in this row
+								// TODO LATER
+								//case "command":
+								//	await ProcessCommandColumnAsync<T>(context, output, columns, column);
+								//	break;
 						}
 					}
-
-					//columns.AddFor(m => m.Tenant.Name)
-					//	.Lookup(lookup => lookup
-					//		.DataSource(d => d.Mvc().Controller("Data").LoadAction("GetTenant").Key("pkTenantID"))
-					//		.ValueExpr("fkTenantID")
-					//		.DisplayExpr("Name"));
 				});
 			}
 
-			// Build the toolbar
-			// The location of the toolbar is not changable, DX says:
-			// The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
-			//builder = builder.Toolbar(toolbar =>
-			//{
-			//	toolbar.Items(i =>
-			//	{
-			//		// If we are inserting, show and customise the ADD toolbar button
-			//		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
-			//		{
-			//			i.Add()
-			//				.Name(DataGridToolbarItem.AddRowButton)
-			//				.Location(ToolbarItemLocation.After)
-			//				.ShowText(ToolbarItemShowTextMode.InMenu);
-			//		}
-			//	});
-			//});
+			// Set state-storing
+			if (!string.IsNullOrEmpty(StorageKey))
+			{
+				builder.StateStoring(s => s
+					.Enabled(true)
+					.Type(StateStoringType.SessionStorage)
+					.StorageKey(StorageKey)
+				);
+			}
+
+			// Set tree hierarchy properties
+			builder = builder.ParentIdExpr(ParentIDExpr);
+			builder = builder.HasItemsExpr(HasItemsExpr);
+			builder = builder.RootValue(RootValue);
 
 			return builder;
 		}
 
-		private DataGridBuilder<T> ProcessCommon<T>(DataGridBuilder<T> builder)
+		private TreeListBuilder<T> ProcessCommon<T>(TreeListBuilder<T> builder)
 		{
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
@@ -246,7 +230,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private DataGridBuilder<T> ProcessAttributes<T>(DataGridBuilder<T> builder, TagHelperAttributeList attributes)
+		private TreeListBuilder<T> ProcessAttributes<T>(TreeListBuilder<T> builder, TagHelperAttributeList attributes)
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
@@ -255,7 +239,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
+		private CollectionFactory<TreeListColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<TreeListColumnBuilder<T>> columns, ColumnModel column)
 		{
 			if (column.For != null)
 			{
@@ -288,7 +272,7 @@ namespace Alcazar.Web.Extensibility
 				column.DataType = ToDataType(column.For.Metadata.ModelType);
 			}
 
-			DataGridColumnBuilder<T> builder = columns.Add()
+			TreeListColumnBuilder<T> builder = columns.Add()
 				.DataField(column.Name)
 				.Caption(column.Label)
 				.Alignment(column.Alignment)
@@ -297,6 +281,21 @@ namespace Alcazar.Web.Extensibility
 				.Visible(column.IsVisible);
 
 			//.SortOrder(SortOrder.Asc);
+			if (column.LookupDatasource != null)
+			{
+				//builder.EditorOptions(?);
+				//builder.ShowEditorAlways(true);
+				builder = builder.Lookup(lookup =>
+				{
+					// Process the (column) data source
+					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
+					
+					// Not supported for trees? lookup = lookup.Grouped(true);
+					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
+					lookup = lookup.ValueExpr(column.ValueExpression);
+					lookup = lookup.DisplayExpr(column.DisplayExpression);
+				});
+			}
 
 			if (column.DataType.HasValue)
 				builder = builder.DataType(column.DataType.Value);
@@ -333,128 +332,50 @@ namespace Alcazar.Web.Extensibility
 			return columns;
 		}
 
-		private async Task<CollectionFactory<DataGridColumnBuilder<T>>> ProcessCommandColumnAsync<T>(TagHelperContext context, TagHelperOutput output, CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
-		{
-			// Get the context, so that we can use it here
-			// ButtonContext buttonContext = GetContextSafe<ButtonContext>(context);
-
-			// Process children of the tag, we will need them
-			IHtmlContent content = await output.GetChildContentAsync();
-
-			DataGridColumnBuilder<T> builder = columns.Add()
-				.Type(column.CommandType)
-				.Caption(column.Label)
-				.Visible(column.IsVisible);
-
-			// Add buttons, but only if we have some
-			if (column.Buttons != null)
-			{
-				// We have buttons, add them, also the clear button if needed (otherwise if there are any buttons, the clear button gets lost)
-				builder = builder.Buttons(buttons =>
-				{
-					// Add the clear button, but only if there are other buttons
-					if (!string.IsNullOrEmpty(UpdateAction))
-						buttons.Add().Name("edit");
-
-					foreach (ButtonModel button in column.Buttons)
-					{
-						var builder2 = buttons.Add()
-							.Name(button.Name)
-							// Seemingly can only display icon OR text
-							//.Text(button.Text)
-							.Icon(button.Icon)
-							.Hint(button.Title)
-							//.Template("<span>xxx</span>")
-							.OnClick(button.OnClickAction);
-
-						// Not used currently
-						// if (button.Content != null)
-						//	builder2 = builder2.Template(ToString(button.Content));
-					}
-				});
-			}
-			else
-			{
-				// We have NO buttons, but check for the clear button
-				// So we should not have a custom column in the first place, nothing to do
-			}
-
-			return columns;
-		}
-
-		private void todo(DataGridBuilder<object> builder)
-		{
-			builder = builder.RowAlternationEnabled(true);
-
-			builder = builder.SearchPanel(s => s
-				.Visible(true)
-				.HighlightCaseSensitive(true));
-
-			//builder = builder.OnContentReady("contentReady");
-			builder = builder.GroupPanel(g => g.Visible(true));
-			builder = builder.Grouping(g => g.AutoExpandAll(false));
-
-			BulletBuilder builder2 = _htmlHelper.DevExtreme().Bullet()
-				.Value(new JS("value * 100"))
-				.Size(s => s
-					.Height(35)
-					.Width(150))
-				.Margin(m => m
-					.Top(5)
-					.Bottom(0)
-					.Left(5))
-				.ShowTarget(false)
-				.ShowZeroLevel(true)
-				.StartScaleValue(0)
-				.EndScaleValue(100)
-				.Tooltip(t => t
-					.Enabled(true)
-					.Font(f => f.Size(18))
-					.PaddingTopBottom(2)
-					/*.CustomizeTooltip("customizeTooltip")*/);
-		}
-
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataGridTagHelper properties: tag helper
+		#region TreeListTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the text message to be used for this popup.
-		/// </summary>
-		[HtmlAttributeName("text")]
-		public string Text { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if the clear button should be shown.
-		/// </summary>
-		[HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; }
-
-		/// <summary>
-		/// Get or set an placeholder to be shown in the control.
-		/// </summary>
-		[HtmlAttributeName("placeholder")]
-		public string Placeholder { get; set; }
-
-		/// <summary>
-		/// Get or set the number of characters to enter before the lookup starts.
-		/// </summary>
-		[HtmlAttributeName("min-length")]
-		public int MinSearchLength { get; set; }
-
-		/// <summary>
-		/// Get or set the search timeout (in ms) for calling the datasource.
-		/// </summary>
-		[HtmlAttributeName("timeout")]
-		public int SearchTimeout { get; set; }
-
-		/// <summary>
-		/// Get or set the selection mode of the data grid.
+		/// Get or set the selection mode of the tree list.
 		/// </summary>
 		[HtmlAttributeName("select")]
 		public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
+
+		/// <summary>
+		/// Get or set the edit mode to be used for this control.
+		/// Defaults to <see cref="GridEditMode.Row"/>
+		/// </summary>
+		[HtmlAttributeName("edit-mode")]
+		public GridEditMode EditMode { get; set; } = GridEditMode.Row;
+
+		/// <summary>
+		/// Get or set the expression for the parent ID.
+		/// </summary>
+		[HtmlAttributeName("parent-expr")]
+		public string ParentIDExpr { get; set; }
+
+		/// <summary>
+		/// Get or set the expression for the has-items indicator.
+		/// </summary>
+		[HtmlAttributeName("items-expr")]
+		public string HasItemsExpr { get; set; }
+
+		/// <summary>
+		/// Get or set the root value for the parent ID.
+		/// This is the value of the parent ID when starting at root level.
+		/// </summary>
+		[HtmlAttributeName("root")]
+		public string RootValue { get; set; }
+
+		/// <summary>
+		/// Get or set the key for state persistence storage.
+		/// IF this value is set, state persistence is enabled and defaults to session storage.
+		/// </summary>
+		[HtmlAttributeName("storage")]
+		public string StorageKey { get; set; }
 
 		/// <summary>
 		/// Get or set the action to be executed when the selection changes in selection mode.
@@ -463,47 +384,29 @@ namespace Alcazar.Web.Extensibility
 		public string OnSelectionChanged { get; set; }
 
 		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange")]
-		public string OnChangeAction { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange2")]
-		public JS OnChangeAction2 { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange3")]
-		public RazorBlock OnChangeAction3 { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when a row is being inserted.
+		/// Get or set the JS method to be executed when a row is being inserted.
 		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserting"/> for an array datasource is called.
 		/// </summary>
 		[HtmlAttributeName("onrowinserting")]
 		public string OnRowInserting { get; set; }
 
 		/// <summary>
-		/// Get or set the action to be executed when a row has been inserted.
+		/// Get or set the JS method to be executed when a row has been inserted.
 		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserted"/> for an array datasource is called.
 		/// </summary>
 		[HtmlAttributeName("onrowinserted")]
 		public string OnRowInserted { get; set; }
 
 		/// <summary>
-		/// An expression to be evaluated against the current model.
+		/// Get or set the JS method to be executed when a new row must be initialised.
 		/// </summary>
-		[HtmlAttributeName("asp-for")]
-		public ModelExpression For { get; set; }
+		[HtmlAttributeName("oninitnew")]
+		public string OnInitNewRow { get; set; }
 
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataGridTagHelper properties: data source
+		#region TreeListTagHelper properties: data source
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>

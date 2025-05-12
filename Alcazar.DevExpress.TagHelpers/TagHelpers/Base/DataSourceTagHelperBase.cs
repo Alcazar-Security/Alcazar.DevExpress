@@ -1,17 +1,15 @@
 ﻿using Amaqele.Common.Collections;
+using Amaqele.Common.Types;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Builders.DataSources;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
@@ -82,10 +80,12 @@ namespace Alcazar.Web.Extensibility
 				options = options.OnInserting(OnInserting);
 			if (!string.IsNullOrEmpty(OnInserted))
 				options = options.OnInserted(OnInserted);
+
 			if (!string.IsNullOrEmpty(OnUpdating))
 				options = options.OnUpdating(OnUpdating);
 			if (!string.IsNullOrEmpty(OnUpdated))
 				options = options.OnUpdated(OnUpdated);
+
 			if (!string.IsNullOrEmpty(OnRemoving))
 				options = options.OnRemoving(OnRemoving);
 			if (!string.IsNullOrEmpty(OnRemoved))
@@ -258,6 +258,67 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("asp-delete")]
 		public string DeleteAction { get; set; }
+
+		#endregion
+	}
+
+	public class ListControlTagHelperBase : DataSourceTagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ListControlTagHelperBase protected methods
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		protected string RemoveNoname(string value)
+		{
+			// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
+			string[] parts = value.Split('.');
+
+			// If the string starts with noType.Name, remove that first part
+			if (parts.Length > 1 && parts[0].StartsWith("no"))
+				return string.Join('.', parts.Skip(1));
+
+			return value;
+		}
+
+		protected GridColumnDataType? ToDataType(Type type)
+		{
+			PrimitiveTypeCode code = PrimitiveType.FromNullableType(type);
+			switch (code)
+			{
+				default:
+				case PrimitiveTypeCode.None: return null;
+
+				case PrimitiveTypeCode.Int8:
+				case PrimitiveTypeCode.UInt8:
+				case PrimitiveTypeCode.Int16:
+				case PrimitiveTypeCode.UInt16:
+				case PrimitiveTypeCode.Int32:
+				case PrimitiveTypeCode.UInt32:
+				case PrimitiveTypeCode.Int64:
+				case PrimitiveTypeCode.UInt64:
+				case PrimitiveTypeCode.Float:
+				case PrimitiveTypeCode.Double:
+				case PrimitiveTypeCode.Decimal: return GridColumnDataType.Number;
+				case PrimitiveTypeCode.Enumeration: return GridColumnDataType.String;
+
+				case PrimitiveTypeCode.Bool: return GridColumnDataType.Boolean;
+
+				case PrimitiveTypeCode.Char: return GridColumnDataType.String;
+				case PrimitiveTypeCode.String: return GridColumnDataType.String;
+				case PrimitiveTypeCode.Binary: return GridColumnDataType.String;
+				case PrimitiveTypeCode.Base64Binary: return GridColumnDataType.String;
+				case PrimitiveTypeCode.HexBinary: return GridColumnDataType.String;
+				case PrimitiveTypeCode.Guid: return GridColumnDataType.String;
+
+				case PrimitiveTypeCode.Date: return GridColumnDataType.Date;
+
+				case PrimitiveTypeCode.Time:
+				case PrimitiveTypeCode.Timestamp:
+				case PrimitiveTypeCode.Timespan: return GridColumnDataType.DateTime;
+
+				case PrimitiveTypeCode.Object: return GridColumnDataType.Object;
+			}
+		}
 
 		#endregion
 	}
