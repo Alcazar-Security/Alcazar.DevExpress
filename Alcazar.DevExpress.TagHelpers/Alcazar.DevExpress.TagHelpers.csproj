@@ -22,6 +22,7 @@
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageIconUrl />
 		<PackageId>Alcazar.DevExpress.TagHelpers</PackageId>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +31,17 @@
 
   <ItemGroup>
     <Folder Include="Extensibility\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\A\_solution\alcazar-2020-45.png" Link="alcazar-2020-45.png">
+      <PackagePath></PackagePath>
+      <Pack>True</Pack>
+    </None>
+    <None Include="..\..\A\_solution\alcazar-license.md" Link="alcazar-license.md">
+      <PackagePath></PackagePath>
+      <Pack>True</Pack>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

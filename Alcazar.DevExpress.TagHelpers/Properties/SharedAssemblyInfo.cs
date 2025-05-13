@@ -10,9 +10,9 @@ using System.Runtime.InteropServices;
 // Set your InformationalVersion to the full Semantic Version of {major}.{minor}.{patch}-{tag}+{BuildRevision}.{BuildDate:yyyyMMdd} - increment for every deployment
 
 [assembly: AssemblyVersion("1.0.0")]
-[assembly: AssemblyFileVersion("1.0.0")]
+[assembly: AssemblyFileVersion("1.0.1")]
 #if DEBUG
-[assembly: AssemblyInformationalVersion("1.0.0-20241201")]
+[assembly: AssemblyInformationalVersion("1.0.1-20250512")]
 #else
-[assembly: AssemblyInformationalVersion("1.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.1")]
 #endif

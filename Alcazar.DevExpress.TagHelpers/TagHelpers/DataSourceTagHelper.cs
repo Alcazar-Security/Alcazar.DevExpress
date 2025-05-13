@@ -70,8 +70,8 @@ namespace Alcazar.Web.Extensibility
 		{
 			if (string.IsNullOrEmpty(sourceContext.DataSourceKey))
 				sourceContext.Datasource = this;
-
-			sourceContext.Datasources[sourceContext.DataSourceKey] = this;
+			else
+				sourceContext.Datasources[sourceContext.DataSourceKey] = this;
 		}
 
 		#endregion
