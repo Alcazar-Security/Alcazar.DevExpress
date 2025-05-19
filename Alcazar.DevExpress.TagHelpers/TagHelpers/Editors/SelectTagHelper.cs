@@ -135,9 +135,10 @@ namespace Alcazar.Web.Extensibility
 				// Set the search mode and its properties
 				builder = builder.SearchEnabled(true);
 				builder = builder.SearchMode(_searchMode.Value);
-				//builder = builder.SearchExpr("searchex");
 				builder = builder.SearchTimeout(SearchTimeout);
 				builder = builder.MinSearchLength(MinSearchLength);
+				if (!string.IsNullOrEmpty(ValueExpression))
+					builder = builder.SearchExpr(SearchExpression);
 			}
 
 			if (!string.IsNullOrEmpty(ValueExpression))
@@ -177,7 +178,7 @@ namespace Alcazar.Web.Extensibility
 
 		private SelectBoxBuilder ProcessAttributes(SelectBoxBuilder builder, TagHelperAttributeList attributes)
 		{
-			// We are choosing to place the attributes on the element, not the imput
+			// We are choosing to place the attributes on the element, not the input tag
 			foreach (var attr in attributes)
 			{
 				if (attr.Value != null)	
@@ -288,6 +289,12 @@ namespace Alcazar.Web.Extensibility
 			get { return _searchMode ?? DropDownSearchMode.StartsWith; }
 			set { _searchMode = value; }
 		}
+
+		/// <summary>
+		/// Get or set the name of the item property to be used when searching for items.
+		/// </summary>
+		[HtmlAttributeName("search-expr")]
+		public string SearchExpression { get; set; }
 
 		// Require the private fields so that we dont have to fully qualify the mode in cshtml (DropDownSearchMode.StartsWith)
 		private DropDownSearchMode? _searchMode;

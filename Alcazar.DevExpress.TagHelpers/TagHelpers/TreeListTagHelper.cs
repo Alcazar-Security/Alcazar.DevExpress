@@ -277,8 +277,12 @@ namespace Alcazar.Web.Extensibility
 				.Caption(column.Label)
 				.Alignment(column.Alignment)
 				.AllowSorting(true)
-				.AllowEditing(!column.IsReadonly)
-				.Visible(column.IsVisible);
+				.AllowEditing(!column.IsReadonly);
+
+			if (!string.IsNullOrEmpty(column.IsVisibleAction))
+				builder = builder.Visible(new JS(column.IsVisibleAction));
+			else
+				builder = builder.Visible(column.IsVisible);
 
 			//.SortOrder(SortOrder.Asc);
 			if (column.LookupDatasource != null)

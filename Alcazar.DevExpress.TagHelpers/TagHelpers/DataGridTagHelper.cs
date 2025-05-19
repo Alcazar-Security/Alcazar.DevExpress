@@ -1,4 +1,5 @@
-﻿using Amaqele.Common.Types;
+﻿using Amaqele.Common.Base;
+using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
@@ -203,14 +204,11 @@ namespace Alcazar.Web.Extensibility
 								break;
 						}
 					}
-
-					//columns.AddFor(m => m.Tenant.Name)
-					//	.Lookup(lookup => lookup
-					//		.DataSource(d => d.Mvc().Controller("Data").LoadAction("GetTenant").Key("pkTenantID"))
-					//		.ValueExpr("fkTenantID")
-					//		.DisplayExpr("Name"));
 				});
 			}
+
+			if (!string.IsNullOrEmpty(OnInitializedAction))
+				builder = builder.OnInitialized(OnInitializedAction);
 
 			// Build the toolbar
 			// The location of the toolbar is not changable, DX says:
@@ -293,8 +291,12 @@ namespace Alcazar.Web.Extensibility
 				.Caption(column.Label)
 				.Alignment(column.Alignment)
 				.AllowSorting(true)
-				.AllowEditing(!column.IsReadonly)
-				.Visible(column.IsVisible);
+				.AllowEditing(!column.IsReadonly);
+
+			if (!string.IsNullOrEmpty(column.IsVisibleAction))
+				builder = builder.Visible(new JS(column.IsVisibleAction));
+			else
+				builder = builder.Visible(column.IsVisible);
 
 			//.SortOrder(SortOrder.Asc);
 
@@ -321,6 +323,7 @@ namespace Alcazar.Web.Extensibility
 					.AllowFiltering(false);
 			}
 
+			// Set the child content or templates
 			if (!string.IsNullOrWhiteSpace(column.Content))
 				builder = builder.CellTemplate(column.Content);
 			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
@@ -343,8 +346,12 @@ namespace Alcazar.Web.Extensibility
 
 			DataGridColumnBuilder<T> builder = columns.Add()
 				.Type(column.CommandType)
-				.Caption(column.Label)
-				.Visible(column.IsVisible);
+				.Caption(column.Label);
+
+			if (!string.IsNullOrEmpty(column.IsVisibleAction))
+				builder = builder.Visible(new JS(column.IsVisibleAction));
+			else
+				builder = builder.Visible(column.IsVisible);
 
 			// Add buttons, but only if we have some
 			if (column.Buttons != null)
@@ -358,18 +365,9 @@ namespace Alcazar.Web.Extensibility
 
 					foreach (ButtonModel button in column.Buttons)
 					{
-						var builder2 = buttons.Add()
-							.Name(button.Name)
-							// Seemingly can only display icon OR text
-							//.Text(button.Text)
-							.Icon(button.Icon)
-							.Hint(button.Title)
-							//.Template("<span>xxx</span>")
-							.OnClick(button.OnClickAction);
+						DataGridColumnButtonBuilder buttonBuilder = buttons.Add();
 
-						// Not used currently
-						// if (button.Content != null)
-						//	builder2 = builder2.Template(ToString(button.Content));
+						BuildButton<T>(buttonBuilder, button);
 					}
 				});
 			}
@@ -379,7 +377,56 @@ namespace Alcazar.Web.Extensibility
 				// So we should not have a custom column in the first place, nothing to do
 			}
 
+			// Set the child content or templates
+			// This is challenged here, since the custom template overwrites the button content AND behaviour, eg a delete no longer deletes
+			if (!string.IsNullOrWhiteSpace(column.Content))
+				builder = builder.CellTemplate(column.Content);
+			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
+				builder = builder.CellTemplate(new JS(column.ContentJS));
+			else if (column.ContentRZ != null)
+				builder = builder.CellTemplate(column.ContentRZ);
+			else if (column.ContentNT != null)
+				builder = builder.CellTemplate(new TemplateName(column.ContentNT));
+
 			return columns;
+		}
+
+		private void BuildButton<T>(DataGridColumnButtonBuilder buttonBuilder, ButtonModel button)
+		{
+			if (!string.IsNullOrEmpty(button.Name))
+				buttonBuilder = buttonBuilder.Name(button.Name);
+
+			// Seemingly can only display icon OR text
+			if (!string.IsNullOrEmpty(button.Icon))
+				buttonBuilder = buttonBuilder.Icon(button.Icon);
+			else if (!string.IsNullOrEmpty(button.Text))
+			{
+				string text = TranslateToProp(button.Text, ViewContext);
+				buttonBuilder = buttonBuilder.Text(text);
+			}
+
+			if (!string.IsNullOrEmpty(button.Title))
+			{
+				string title = TranslateToProp(button.Title, ViewContext);
+				buttonBuilder = buttonBuilder.Hint(title);
+			}
+
+			if (!string.IsNullOrEmpty(button.IsVisibleAction))
+				buttonBuilder = buttonBuilder.Visible(new JS(button.IsVisibleAction));
+			else
+				buttonBuilder = buttonBuilder.Visible(button.IsVisible);
+
+			if (!string.IsNullOrEmpty(button.OnClickAction))
+				buttonBuilder = buttonBuilder.OnClick(button.OnClickAction);
+
+			// Set the class
+			if (!string.IsNullOrEmpty(button.Class))
+				buttonBuilder = buttonBuilder.CssClass(button.Class);
+
+			// Not used currently
+			//.Template("<span>xxx</span>")
+			// if (button.Content != null)
+			//	builder2 = builder2.Template(ToString(button.Content));
 		}
 
 		private void todo(DataGridBuilder<object> builder)
@@ -493,6 +540,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("onrowinserted")]
 		public string OnRowInserted { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the datagrid has been initialised
+		/// </summary>
+		[HtmlAttributeName("oninitialized")]
+		public string OnInitializedAction { get; set; }
 
 		/// <summary>
 		/// An expression to be evaluated against the current model.

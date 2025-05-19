@@ -112,9 +112,11 @@ namespace Alcazar.Web.Extensibility
 
 			// Process text-box specific properties
 			//                     .Mask("+1 (X00) 000-0000")
-			builder = builder
-				.OnSelectionChanged("onTabsChanged")
-				.OnInitialized("onTabsInitialized");
+			if (!string.IsNullOrEmpty(OnSelectionChanged))
+				builder = builder.OnSelectionChanged(OnSelectionChanged);
+
+			if (!string.IsNullOrEmpty(OnInitializedAction))
+				builder = builder.OnInitialized(OnInitializedAction);
 
 			// Render the builder (into the content)
 			output.Content.SetHtmlContent(builder);
@@ -169,6 +171,18 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("selected-index")]
 		public int SelectedIndex { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the tabs are initialised.
+		/// </summary>
+		[HtmlAttributeName("initialized")]
+		public string OnInitializedAction { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the tab selection has changed.
+		/// </summary>
+		[HtmlAttributeName("selectionchanged")]
+		public string OnSelectionChanged { get; set; }
 
 		/// <summary>
 		/// Get or set the items of this dropdown box.

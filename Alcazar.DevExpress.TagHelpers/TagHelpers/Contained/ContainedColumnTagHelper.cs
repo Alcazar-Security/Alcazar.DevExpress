@@ -68,6 +68,7 @@ namespace Alcazar.Web.Extensibility
 				ContentRZ = ContentRZ,
 				ContentNT = ContentNT,
 				IsVisible = IsVisible,
+				IsVisibleAction = IsVisibleAction,
 				IsReadonly = IsReadonly,
 				FilterType = FilterType,
 				FilterOperation = FilterOperation,
@@ -125,6 +126,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("visible")]
 		public bool IsVisible { get; set; } = true;
+
+		/// <summary>
+		/// Get or set an JS method to determine if this column should be visible.
+		/// </summary>
+		[HtmlAttributeName("visible-js")]
+		public string IsVisibleAction { get; set; }
 
 		#endregion
 
@@ -285,6 +292,11 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set an indicator if this column should be visible. Defaults to <see langword="true"/>.
 		/// </summary>
 		public bool IsVisible { get; set; }
+
+		/// <summary>
+		/// Get or set an JS method to determine if this column should be visible.
+		/// </summary>
+		public string IsVisibleAction { get; set; }
 
 		#endregion
 
