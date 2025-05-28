@@ -139,8 +139,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -181,7 +182,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the JS method to be executed when the tab selection has changed.
 		/// </summary>
-		[HtmlAttributeName("selectionchanged")]
+		[HtmlAttributeName("selection-changed")]
 		public string OnSelectionChanged { get; set; }
 
 		/// <summary>

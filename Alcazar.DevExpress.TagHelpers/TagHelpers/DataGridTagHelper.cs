@@ -4,6 +4,8 @@ using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,9 +14,11 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using NLog.Config;
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
@@ -43,6 +47,7 @@ namespace Alcazar.Web.Extensibility
 
 		//private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
+
 		//private readonly IUrlHelper _urlHelper;
 		//private readonly HtmlEncoder _htmlEncoder;
 		//private readonly IHtmlGenerator _generator;
@@ -137,7 +142,7 @@ namespace Alcazar.Web.Extensibility
 			{
 				// Allow editing options of the corresponding actions are set
 				editing
-					.Mode(GridEditMode.Row)
+					.Mode(EditMode)
 					.UseIcons(true);
 
 				if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
@@ -155,6 +160,7 @@ namespace Alcazar.Web.Extensibility
 
 			//builder = builder.OnCellClick("onCellClick");
 			//builder = builder.OnContentReady("onContentReady");
+			// builder = builder.OnOptionChanged("onOptionChanged");
 
 			// Create the context, so that we can pass it to child tag helpers
 			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
@@ -207,8 +213,12 @@ namespace Alcazar.Web.Extensibility
 				});
 			}
 
+			// Event handlers
 			if (!string.IsNullOrEmpty(OnInitializedAction))
 				builder = builder.OnInitialized(OnInitializedAction);
+
+			if (!string.IsNullOrEmpty(OnEditorPreparing))
+				builder = builder.OnEditorPreparing(OnEditorPreparing);
 
 			// Build the toolbar
 			// The location of the toolbar is not changable, DX says:
@@ -248,8 +258,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -303,6 +314,7 @@ namespace Alcazar.Web.Extensibility
 			if (column.DataType.HasValue)
 				builder = builder.DataType(column.DataType.Value);
 
+			// Filtering
 			if (column.FilterType.HasValue)
 			{
 				builder = builder
@@ -322,6 +334,74 @@ namespace Alcazar.Web.Extensibility
 				builder = builder
 					.AllowFiltering(false);
 			}
+
+			// Editing of a column
+			if (column.LookupDatasource != null)
+			{
+				//builder.EditorOptions(?);
+				//builder.ShowEditorAlways(true);
+				builder = builder.Lookup(lookup =>
+				{
+					// Process the (column) data source
+					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
+
+					// Not supported for trees? lookup = lookup.Grouped(true);
+					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
+					lookup = lookup.ValueExpr(column.ValueExpression);
+					lookup = lookup.DisplayExpr(column.DisplayExpression);
+				});
+			}
+
+			// Set the cell value
+			// Thought we need that for cascading editing, but it didnt work
+			if (!string.IsNullOrEmpty(column.SetCellValue))
+				builder = builder.SetCellValue(column.SetCellValue);
+
+			// Column formatting
+			// 1. Specified custom format
+			// 2. Specified format
+			// 3. Format based on the data type
+			if (!string.IsNullOrEmpty(column.CustomFormat))
+			{
+				// 1. Specified custom format
+				builder = builder.Format(column.CustomFormat);
+			}
+			else
+			{
+				Format? format = null;
+				if (column.Format.HasValue)
+				{
+					// 2. Specified format
+					format = column.Format.Value;
+				}
+				else if (column.DataType.HasValue)
+				{
+					// 3. Format based on the data type
+					format = ToFormat(column.DataType.Value);
+				}
+
+				if (format.HasValue)
+				{
+					// We have determined the format of the content, translate it into the current culture
+					// The feature is not available from the constructor, therefore request it here.
+					IRequestCultureFeature requestCultureFeature = ViewContext.HttpContext.Features.Get<IRequestCultureFeature>();
+					CultureInfo cultureInfo = requestCultureFeature?.RequestCulture?.Culture ?? Thread.CurrentThread.CurrentCulture;
+
+					string customFormat = ToCustomFormat(format.Value, Thread.CurrentThread.CurrentCulture);
+					if (!string.IsNullOrEmpty(customFormat))
+						builder = builder.Format(customFormat);
+				}
+			}
+
+			// Set the edit templates
+			if (!string.IsNullOrEmpty(column.EditTemplate))
+				builder = builder.EditCellTemplate(column.EditTemplate);
+			else if (!string.IsNullOrEmpty(column.EditTemplateJS))
+				builder = builder.EditCellTemplate(new JS(column.EditTemplateJS));
+			else if (column.EditTemplateRZ != null)
+				builder = builder.EditCellTemplate(column.EditTemplateRZ);
+			else if (!string.IsNullOrEmpty(column.EditTemplateNT))
+				builder = builder.EditCellTemplate(new TemplateName(column.EditTemplateNT));
 
 			// Set the child content or templates
 			if (!string.IsNullOrWhiteSpace(column.Content))
@@ -429,6 +509,81 @@ namespace Alcazar.Web.Extensibility
 			//	builder2 = builder2.Template(ToString(button.Content));
 		}
 
+		private Format? ToFormat(GridColumnDataType dataType)
+		{
+			switch (dataType)
+			{
+				default:
+				case GridColumnDataType.String:
+				case GridColumnDataType.Boolean:
+				case GridColumnDataType.Object: return null;
+
+				case GridColumnDataType.Number: return Format.Decimal;
+
+				case GridColumnDataType.Date: return Format.ShortDate;
+				case GridColumnDataType.DateTime: return Format.ShortDateShortTime;
+
+			}
+		}
+
+		private string ToCustomFormat(Format format, CultureInfo culture)
+		{
+			switch (format)
+			{
+				// NOT supported
+				default:
+				case Format.Billions:
+				case Format.Currency:
+				case Format.Day:
+				case Format.Millions:
+				case Format.Millisecond:
+				case Format.Month:
+				case Format.MonthAndDay:
+				case Format.MonthAndYear:
+				case Format.Quarter:
+				case Format.QuarterAndYear:
+				case Format.Thousands:
+				case Format.Trillions:
+				case Format.Year:
+				case Format.DayOfWeek:
+				case Format.Hour:
+				case Format.Minute:
+				case Format.Second: return null;
+
+				// Numbers TODO
+				case Format.Decimal: //var x = culture.GetFormat(typeof(int)); return x.ToString();//.NumberFormat.NumberNegativePattern.ToString();
+				case Format.Exponential: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.FixedPoint: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.LargeNumber: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.Percent: return null; //return culture.NumberFormat.PercentPositivePattern.ToString();
+
+				// Date and time
+				case Format.LongDate: return culture.DateTimeFormat.LongDatePattern;
+				case Format.LongTime: return culture.DateTimeFormat.LongTimePattern;
+				case Format.ShortDate: return culture.DateTimeFormat.ShortDatePattern;
+				case Format.ShortTime: return culture.DateTimeFormat.ShortTimePattern;
+				case Format.LongDateLongTime: return $"{culture.DateTimeFormat.LongDatePattern} {culture.DateTimeFormat.LongTimePattern}";
+				case Format.ShortDateShortTime: return $"{culture.DateTimeFormat.ShortDatePattern} {culture.DateTimeFormat.ShortTimePattern}";
+			}
+		}
+
+		private string ToCustomFormat(GridColumnDataType dataType)
+		{
+			switch (dataType)
+			{
+				default:
+				case GridColumnDataType.String:
+				case GridColumnDataType.Boolean:
+				case GridColumnDataType.Object: return null;
+
+				case GridColumnDataType.Number: return "##0.00";
+
+				case GridColumnDataType.Date: return "yyyy-MM-dd";
+				case GridColumnDataType.DateTime: return "yyyy-MM-dd HH:mm";
+
+			}
+		}
+
 		private void todo(DataGridBuilder<object> builder)
 		{
 			builder = builder.RowAlternationEnabled(true);
@@ -506,8 +661,14 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the action to be executed when the selection changes in selection mode.
 		/// </summary>
-		[HtmlAttributeName("onselect")]
+		[HtmlAttributeName("selection-changed")]
 		public string OnSelectionChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when an editor is preparing.
+		/// </summary>
+		[HtmlAttributeName("editor-preparing")]
+		public string OnEditorPreparing { get; set; }
 
 		/// <summary>
 		/// Get or set the action to be executed when the selection changes.
@@ -552,6 +713,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("asp-for")]
 		public ModelExpression For { get; set; }
+
+		/// <summary>
+		/// Get or set the edit mode to be used for this control.
+		/// Defaults to <see cref="GridEditMode.Row"/>
+		/// </summary>
+		[HtmlAttributeName("edit-mode")]
+		public GridEditMode EditMode { get; set; } = GridEditMode.Row;
 
 		#endregion
 

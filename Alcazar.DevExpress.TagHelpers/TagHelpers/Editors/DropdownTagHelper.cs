@@ -49,6 +49,9 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a popup
 			DropDownBoxBuilder builder = _htmlHelper.DevExtreme().DropDownBox();
 
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ApplyControlContext(context);
+
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
 
@@ -139,7 +142,11 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
 		}

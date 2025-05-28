@@ -234,8 +234,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -285,6 +286,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Visible(column.IsVisible);
 
 			//.SortOrder(SortOrder.Asc);
+
+			// Editing of a column
 			if (column.LookupDatasource != null)
 			{
 				//builder.EditorOptions(?);
@@ -384,7 +387,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the action to be executed when the selection changes in selection mode.
 		/// </summary>
-		[HtmlAttributeName("onselect")]
+		[HtmlAttributeName("selection-changed")]
 		public string OnSelectionChanged { get; set; }
 
 		/// <summary>

@@ -62,11 +62,19 @@ namespace Alcazar.Web.Extensibility
 				Alignment = Alignment,
 				DataType = DataType,
 				Format = Format,
+				CustomFormat = CustomFormat,
 				For = For,
+				SetCellValue = SetCellValue,
+
 				Content = text,
 				ContentJS = ContentJS,
 				ContentRZ = ContentRZ,
 				ContentNT = ContentNT,
+				EditTemplate = EditTemplate,
+				EditTemplateJS = EditTemplateJS,
+				EditTemplateRZ = EditTemplateRZ,
+				EditTemplateNT = EditTemplateNT,
+
 				IsVisible = IsVisible,
 				IsVisibleAction = IsVisibleAction,
 				IsReadonly = IsReadonly,
@@ -152,6 +160,12 @@ namespace Alcazar.Web.Extensibility
 		public Format? Format { get; set; }
 
 		/// <summary>
+		/// Get or set the custom format of this column.
+		/// </summary>
+		[HtmlAttributeName("custom-format")]
+		public string CustomFormat { get; set; }
+
+		/// <summary>
 		/// Get or set the alignment of the column.
 		/// </summary>
 		[HtmlAttributeName("align")]
@@ -188,6 +202,12 @@ namespace Alcazar.Web.Extensibility
 		public object FilterValue { get; set; }
 
 		/// <summary>
+		/// Get or set the name of the JS function which sets the cell value after editing this column.
+		/// </summary>
+		[HtmlAttributeName("set-value")]
+		public string SetCellValue { get; set; }
+
+		/// <summary>
 		/// Get or set the JS cell template of this column.
 		/// </summary>
 		[HtmlAttributeName("content-js")]
@@ -204,6 +224,30 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("content-nt")]
 		public string ContentNT { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) edit cell template of this column.
+		/// </summary>
+		[HtmlAttributeName("edit-template")]
+		public string EditTemplate { get; set; }
+
+		/// <summary>
+		/// Get or set the JS edit cell template of this column.
+		/// </summary>
+		[HtmlAttributeName("edit-template-js")]
+		public string EditTemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the RazorBlock edit cell template of this column.
+		/// </summary>
+		[HtmlAttributeName("edit-template-rz")]
+		public RazorBlock EditTemplateRZ { get; set; }
+
+		/// <summary>
+		/// Get or set the named edit cell template of this column.
+		/// </summary>
+		[HtmlAttributeName("edit-template-nt")]
+		public string EditTemplateNT { get; set; }
 
 		/// <summary>
 		/// Get or set the name of the item property to be used as lookup dropdown item value.
@@ -305,9 +349,28 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		public GridColumnDataType? DataType { get; set; }
+
+		/// <summary>
+		/// Get or set the format of this column.
+		/// </summary>
 		public Format? Format { get; set; }
+
+		/// <summary>
+		/// Get or set the custom format of this column.
+		/// </summary>
+		public string CustomFormat { get; set; }
+
 		public HorizontalAlignment Alignment { get; set; }
 		public ModelExpression For { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the JS function which sets the cell value after editing this column.
+		/// </summary>
+		public string SetCellValue { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) cell template of this column.
+		/// </summary>
 		public string Content { get; set; }
 
 		/// <summary>
@@ -324,6 +387,26 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the named cell template of this column.
 		/// </summary>
 		public string ContentNT { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) edit cell template of this column.
+		/// </summary>
+		public string EditTemplate { get; set; }
+
+		/// <summary>
+		/// Get or set the JS edit cell template of this column.
+		/// </summary>
+		public string EditTemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the RazorBlock edit cell template of this column.
+		/// </summary>
+		public RazorBlock EditTemplateRZ { get; set; }
+
+		/// <summary>
+		/// Get or set the named edit cell template of this column.
+		/// </summary>
+		public string EditTemplateNT { get; set; }
 
 		public bool IsReadonly { get; set; }
 

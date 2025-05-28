@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -60,6 +61,9 @@ namespace Alcazar.Web.Extensibility
 
 			// Create the builder for a popup
 			AutocompleteBuilder builder = _htmlHelper.DevExtreme().Autocomplete();
+
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ApplyControlContext(context);
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -133,7 +137,25 @@ namespace Alcazar.Web.Extensibility
 
 			if (!string.IsNullOrEmpty(ValueExpression))
 				builder = builder.ValueExpr(ValueExpression);
-			//builder = builder.SearchExpr(DisplayExpression);
+			if (!string.IsNullOrEmpty(SearchExpression))
+				builder = builder.SearchExpr(SearchExpression);
+
+			// Search options
+			builder = builder.SearchMode(SearchMode);
+
+			// Item counts
+			builder = builder.MaxItemCount(MaxItemCount);
+
+			// This setValue thing is really wierd.
+			// The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
+			if (!string.IsNullOrEmpty(SetValueJS))
+				builder = builder.Option("setValue", new JS(SetValueJS));
+
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnSelectionChanged))
+				builder = builder.OnSelectionChanged(OnSelectionChanged);
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
@@ -161,6 +183,10 @@ namespace Alcazar.Web.Extensibility
 			foreach (var attr in attributes)
 				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
+
 			return builder;
 		}
 
@@ -171,14 +197,18 @@ namespace Alcazar.Web.Extensibility
 
 			// Apply the value, but only if the asp-for is not set (else the asp-for drives the value)
 			if (For == null)
-				value = Value;
-			
+			{
+				if (Value != null)
+					builder = builder.Value(Value.ToString());
+				else if (ValueJS != null)
+					builder = builder.Value(new JS(ValueJS));
+			}
+
 			if (value != null)
 				builder = builder.Value(value.ToString());
-			{
-				string placeholder = TranslateToProp(Placeholder, ViewContext);
-				builder = builder.Placeholder(placeholder);
-			}
+
+			string placeholder = TranslateToProp(Placeholder, ViewContext);
+			builder = builder.Placeholder(placeholder);
 
 			return builder;
 		}
@@ -207,6 +237,18 @@ namespace Alcazar.Web.Extensibility
 		public string Value { get; set; }
 
 		/// <summary>
+		/// Get or set the JS function which sets the value to be displayed in this control.
+		/// </summary>
+		[HtmlAttributeName("value-js")]
+		public string ValueJS { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function which updates the value back into the cell ehich is edited by this control.
+		/// </summary>
+		[HtmlAttributeName("set-value")]
+		public string SetValueJS { get; set; }
+
+		/// <summary>
 		/// Get or set an indicator if the clear button should be shown.
 		/// </summary>
 		[HtmlAttributeName("clear")]
@@ -217,6 +259,39 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("dropdown")]
 		public bool ShowDropDown { get; set; }
+
+		/// <summary>
+		/// Get or set the search mode used by the control. Setting the search mode enables searching.
+		/// </summary>
+		[HtmlAttributeName("search")]
+		public DropDownSearchMode SearchMode
+		{
+			get { return _searchMode ?? DropDownSearchMode.StartsWith; }
+			set { _searchMode = value; }
+		}
+
+		// Require the private fields so that we dont have to fully qualify the mode in cshtml (DropDownSearchMode.StartsWith)
+		private DropDownSearchMode? _searchMode;
+
+		/// <summary>
+		/// Get or set the maximum number of items to be displayed in the dropdown. Defaults to 10, which is also the DX default.
+		/// Zero means unlimited.
+		/// </summary>
+		[HtmlAttributeName("max")]
+		public int MaxItemCount { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when the value of the autocomplete box is changed.
+		/// </summary>
+		[HtmlAttributeName("value-changed")]
+		public string OnValueChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when the selection changes in selection mode.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
+
 
 		#endregion
 
@@ -230,6 +305,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value-expr")]
 		public string ValueExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used when searching for items.
+		/// </summary>
+		[HtmlAttributeName("search-expr")]
+		public string SearchExpression { get; set; }
 
 		#endregion
 	}

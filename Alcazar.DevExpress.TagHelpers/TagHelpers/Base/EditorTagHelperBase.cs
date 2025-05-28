@@ -22,12 +22,23 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Before processing an inner control, pass in any properties from the dx-field to the editor. 
+		/// Before processing an inner control, pass in any properties from the dx-field or dx-control to the editor. 
+		/// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
+		/// </summary>
+		protected void ApplyControlContext(TagHelperContext context)
+		{
+			ControlContext controlContext = GetContextSafe<ControlContext>(context);
+			if (controlContext != null)
+				ApplyControlContext(controlContext);
+		}
+
+		/// <summary>
+		/// Before processing an inner control, pass in any properties from the dx-field or dx-control to the editor. 
 		/// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
 		/// </summary>
 		protected void ApplyControlContext(ControlContext controlContext)
 		{
-			// Apply values which the control context might want to pass into us
+			// Apply values which the control context might want to pass into me, the editor
 			if (Name == null)
 				Name = controlContext.Name;
 			if (For == null)
@@ -205,6 +216,12 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the model type. This property is not set by an attribute.
 		/// </summary>
 		public Type ModelType { get; set; }
+
+		/// <summary>
+		/// Get or set parameters used for loading of data records from the data source.
+		/// </summary>
+		[HtmlAttributeName(DictionaryAttributePrefix = "input-attr-")]
+		public IDictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 		#endregion
 

@@ -326,7 +326,6 @@ namespace Alcazar.Web.Extensibility
 			CheckboxTagHelper childHelper = new CheckboxTagHelper(_htmlHelper, null, null, null, null, null);
 			childHelper.Name = Name;
 			childHelper.For = For;
-			childHelper.Value = Value as bool?;
 			childHelper.Title = Title;
 			childHelper.HelpText = HelpText;
 			childHelper.Placeholder = Placeholder;
@@ -334,6 +333,17 @@ namespace Alcazar.Web.Extensibility
 			childHelper.IsDisabled = IsDisabled;
 			childHelper.LabelText = LabelText;
 			childHelper.ViewContext = ViewContext;
+
+			if (Value is bool boolValue)
+			{
+				childHelper.Value = boolValue;
+			}
+			else if (Value is string stringValue)
+			{
+				bool.TryParse(stringValue, out bool boolValue2);
+				childHelper.Value = boolValue2;
+			}
+
 			childHelper.Init(helperContext);
 
 			await childHelper.ProcessAsync(helperContext, helperOutput);
@@ -363,7 +373,6 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Type = type;
 			childHelper.Name = Name;
 			childHelper.For = For;
-			childHelper.Value = Value as DateTime?;
 			childHelper.Title = Title;
 			childHelper.HelpText = HelpText;
 			childHelper.Placeholder = Placeholder;
@@ -372,6 +381,17 @@ namespace Alcazar.Web.Extensibility
 			//childHelper.Format = Format;
 			//childHelper.InputTypeName = InputTypeName;
 			childHelper.ViewContext = ViewContext;
+
+			if (Value is DateTime dateValue)
+			{
+				childHelper.Value = dateValue;
+			}
+			else if (Value is string stringValue)
+			{
+				DateTime.TryParse(stringValue, out DateTime dateValue2);
+				childHelper.Value = dateValue2;
+			}
+
 			childHelper.Init(helperContext);
 
 			await childHelper.ProcessAsync(helperContext, helperOutput);
