@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Amaqele.Common.Types;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -187,6 +188,17 @@ namespace Alcazar.Web.Extensibility
 		{
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
+
+			if (values == null && Value != null)
+			{
+				if (Value is Enum enumValue)
+				{
+					values = enumValue
+						.GetFlags(false)
+						.Select((v)  => v.ToString())
+						.ToArray();
+				}
+			}
 
 			// Apply the values, even if the asp-for is set (possibly only needed for enums?)
 			if (values != null)

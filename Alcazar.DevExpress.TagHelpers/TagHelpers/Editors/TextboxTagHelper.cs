@@ -195,7 +195,7 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the value to be displayed in this control.
+		/// Get or set the string value to be displayed in this control.
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
