@@ -4,6 +4,7 @@ using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Linq;
@@ -55,7 +56,15 @@ namespace Alcazar.Web.Extensibility
 			SelectBoxBuilder builder = _htmlHelper.DevExtreme().SelectBox();
 
 			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
-			ApplyControlContext(context);
+			ControlContext controlContext = ApplyControlContext(context);
+			if (controlContext != null)
+			{
+				// Apply more from the context
+				if (Value == null)
+					Value = controlContext.Value;
+				if (Items == null)
+					Items = controlContext.Items;
+			}
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -190,6 +199,15 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
+		}
+
+		protected new object ProcessForEnums(object value)
+		{
+			// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
+			if (Value != null && ModelType?.IsEnum == true)
+				return Value = Value.ToString();
+
+			return base.ProcessForEnums(value);
 		}
 
 		private SelectBoxBuilder ApplyFor(SelectBoxBuilder builder, object value)

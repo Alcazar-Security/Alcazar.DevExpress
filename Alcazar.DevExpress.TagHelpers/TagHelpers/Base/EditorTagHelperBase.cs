@@ -5,6 +5,7 @@ using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,11 +26,14 @@ namespace Alcazar.Web.Extensibility
 		/// Before processing an inner control, pass in any properties from the dx-field or dx-control to the editor. 
 		/// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
 		/// </summary>
-		protected void ApplyControlContext(TagHelperContext context)
+		/// <returns> The control context, if any. </returns>
+		protected ControlContext ApplyControlContext(TagHelperContext context)
 		{
 			ControlContext controlContext = GetContextSafe<ControlContext>(context);
 			if (controlContext != null)
 				ApplyControlContext(controlContext);
+
+			return controlContext;
 		}
 
 		/// <summary>
@@ -43,6 +47,14 @@ namespace Alcazar.Web.Extensibility
 				Name = controlContext.Name;
 			if (For == null)
 				For = controlContext.For;
+
+			// These two are of interest for the DxOptionTagHelper
+			// DxOptionTagHelper also wants to set the value, but we cant, Value is defined by the editor itself, not by this base class (it can be a string or an object) 
+			// DxOptionTagHelper also wants to set the items, but we cant, Items is defined only for some editors, not by this base class
+			if (ModelType == null)
+				ModelType = controlContext.ModelType;
+			if (HelpText == null)
+				HelpText = controlContext.HelpText;
 		}
 
 		protected object ProcessFor()

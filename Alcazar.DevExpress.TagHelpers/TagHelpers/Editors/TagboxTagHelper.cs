@@ -51,7 +51,15 @@ namespace Alcazar.Web.Extensibility
 			TagBoxBuilder builder = _htmlHelper.DevExtreme().TagBox();
 
 			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
-			ApplyControlContext(context);
+			ControlContext controlContext = ApplyControlContext(context);
+			if (controlContext != null)
+			{
+				// Apply more from the context
+				if (Value == null)
+					Value = controlContext.Value;
+				if (Items == null)
+					Items = controlContext.Items;
+			}
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -60,7 +68,8 @@ namespace Alcazar.Web.Extensibility
 			builder = ProcessAttributes(builder, output.Attributes);
 
 			// Process the For attribute, if it is set
-			System.Collections.IEnumerable values = ProcessForMultiEnums(ProcessFor());
+			object value = ProcessFor();
+			System.Collections.IEnumerable values = ProcessForMultiEnums(value);
 
 			// Apply the For attribute, or the corresponding direct values
 			builder = ApplyFor(builder, values);

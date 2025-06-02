@@ -19,7 +19,7 @@ using Amaqele.Common.Types;
 
 namespace Alcazar.Web.Extensibility
 {
-    [HtmlTargetElement("dx-option", TagStructure = TagStructure.WithoutEndTag)]
+    [HtmlTargetElement("dx-option")]
     public class DxOptionTagHelper : FieldTagHelperBase2
     {
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -54,9 +54,18 @@ namespace Alcazar.Web.Extensibility
             _controlContext.For = For;
             _controlContext.Name = Name;
 
-            // Process children of the standard-field tag
-            // Any content would be attributed to the control or the label
-            IHtmlContent content = await output.GetChildContentAsync();
+			// Process the option, which sets: LabelText, LabelClass, HelpText, ModelType, Value
+			ProcessBefore();
+
+			// Of this, the following are of interest to any embedded control
+			_controlContext.ModelType = ModelType;
+			_controlContext.Value = Value;
+			_controlContext.HelpText = HelpText;
+			_controlContext.Items = Items;
+
+			// Process children of the standard-field tag
+			// Any content would be attributed to the control or the label
+			IHtmlContent content = await output.GetChildContentAsync();
 
             // For now, we only have one style to process
             await ProcessDefaultAsync(context, output);
@@ -74,24 +83,12 @@ namespace Alcazar.Web.Extensibility
             output.Attributes.Clear();
             output.Attributes.Add("class", GroupClass);
 
-            ProcessBefore();
-            SetInputType();
-            SetMoreInputType();
-
             // 1. Generate the control, and add to the output
             IHtmlContent controlDivContent = await GenerateControlDiv(context, output);
 
-            // 2. Determine the input type
-            // After the control, it might pass us For/Name information
-            // If we have a control context (from an inner dx-control tag), see if we need its information
-            ///if (For == null)
-            ///    For = _controlContext.For;
-            if (Name == null)
-                Name = _controlContext.Name;
-
-            // 2. Generate the label, unless we are a checkbox, and add to the output
-            // After the control, it might pass us For/Name information
-            IHtmlContent labelContent = null;
+ 			// 2. Generate the label, unless we are a checkbox, and add to the output
+			// After the control, it might pass us For/Name information
+			IHtmlContent labelContent = null;
             if (this.InputTypeName != ControlTypes.Checkbox)
             {
                 labelContent = await GenerateLabel(context);
@@ -111,19 +108,17 @@ namespace Alcazar.Web.Extensibility
             }
         }
 
-        private void SetMoreInputType()
+        override protected void SetInputType()
         {
-            // Nothing to do here if we DONT have a type
+            // Call the base class implementation first
+            base.SetInputType();
+
             // Nothing to do here if we already have a specialised control type
-            if (ModelType == null || InputTypeName != ControlTypes.Text)
+            if (InputTypeName != ControlTypes.Text)
                 return;
 
             if (ModelType.IsEnum)
             {
-                // Create our own choices if we dont have them yet
-                if (Items == null)
-                    Items = Enum.GetNames(ModelType); //ModelType.ToSelectListItems();
-
                 // Set the selected item, if any
                 // It is possible that an enum property has no default value, and is not set, therefore the value could be null, test for that
                 if (Value != null)
@@ -131,27 +126,11 @@ namespace Alcazar.Web.Extensibility
                     // Just in case, if the value comes in as int and not as enum (as it nicely happens for Culture.NumberFormat.NumberNegativePattern)
                     //if (Enum.IsDefined(ModelType, Value))
                     //    Value = Enum.ToObject(ModelType, Value).ToString();
-
-                    foreach (var item in Items)
-                    {
-                        // TODO
-                        // if (item.Value == Value)
-                        //   item.Selected = true;
-                    }
                 }
 
-                if (ModelType.GetCustomAttribute<FlagsAttribute>() != null)
-                {
-                    //var enums = Enums.Aggregate(ModelType, Value as string);
-
-                    // Use a (multi-select) dropdown list
-                    InputTypeName = ControlTypes.MultiSelect;
-                }
-                else
-                {
-                    // Use a (single-select) dropdown list
-                    InputTypeName = ControlTypes.Select;
-                }
+				// An enum always leads to a select
+				// If a multi-select is desired, the dx-option tag can use a dx-tag embedded control.
+				InputTypeName = ControlTypes.Select;
             }
         }
 
@@ -231,6 +210,13 @@ namespace Alcazar.Web.Extensibility
                 // The model type is mandatory for option-fields, the input type determination depends on it
                 if (ModelType == null)
                     ModelType = typeof(string);
+
+                if (ModelType.IsEnum)
+                {
+                    // Create our own choices if we dont have them yet
+                    if (Items == null)
+                        Items = Enum.GetNames(ModelType); //ModelType.ToSelectListItems();
+                }
             }
             catch (Exception ex)
             {
@@ -271,7 +257,7 @@ namespace Alcazar.Web.Extensibility
             return new string(chars.ToArray());
         }
 
-        private const string _propertyWithValueClass = "text-primary fw-bolder";
+        private const string _propertyWithValueClass = "text-primary";
         private const string _propertyNotExists = "text-danger fw-bold";
 
         #endregion
@@ -354,12 +340,33 @@ namespace Alcazar.Web.Extensibility
             {
                 // We have an inner dx-control, use it
                 controlContent = _controlContext.ControlContent;
-            }
-            else
+
+				// 2. Determine the input type
+				// After the control, it might pass us For/Name information
+				// If we have a control context (from an inner dx-control tag), see if we need its information
+				if (For == null)
+					For = _controlContext.For;
+				if (Name == null)
+					Name = _controlContext.Name;
+
+				// These four are of interest for the DxOptionTagHelper, but we are trying them out here too
+				if (ModelType == null)
+					ModelType = _controlContext.ModelType;
+				if (HelpText == null)
+					HelpText = _controlContext.HelpText;
+				if (Value == null)
+					Value = _controlContext.Value;
+				if (Items == null)
+					Items = _controlContext.Items;
+			}
+			else
             {
-                // The dx-field has all control information itself, generate the control 
-                // This method is only called if there is no embedded control directly inside the 'dx-field'
-                controlContent = await GenerateControl(context, output);
+				// The dx-field has all control information itself, generate the control 
+				// First, let the model type determine the input type
+				SetInputType();
+
+				// This method is only called if there is no embedded control directly inside the 'dx-field'
+				controlContent = await GenerateControl(context, output);
             }
 
             // Generate the control-div as container for the control
@@ -715,16 +722,6 @@ namespace Alcazar.Web.Extensibility
             // 1. Generate the control, and add to the output
             IHtmlContent controlDivContent = await GenerateControlDiv(context, output);
 
-            // 2. Determine the input type
-            // After the control, it might pass us For/Name information
-            // If we have a control context (from an inner dx-control tag), see if we need its information
-            if (For == null)
-                For = _controlContext.For;
-            if (Name == null)
-                Name = _controlContext.Name;
-
-            SetInputType();
-
             // 2. Generate the label, unless we are a checkbox, and add to the output
             // After the control, it might pass us For/Name information
             IHtmlContent labelContent = null;
@@ -769,10 +766,31 @@ namespace Alcazar.Web.Extensibility
         /// </summary>
         public ModelExpression For { get; set; }
 
+		/// <summary>
+		/// Get or set the value to be displayed in this control.
+		/// </summary>
+		public object Value { get; set; }
+		
         /// <summary>
-        /// Get or set the generated content of the input control.
-        /// </summary>
-        public IHtmlContent ControlContent { get; set; }
+		/// Get or set the model type.
+		/// </summary>
+		public Type ModelType { get; set; }
+
+		/// <summary>
+		/// Get or set the help text to be used for this control. The help text is displayed over a [?] button, while the title is displayed over the control itself.
+		/// </summary>
+		public string HelpText { get; set; }
+
+		/// <summary>
+		/// Get or set the items of this dropdown control.
+		/// Items are supplied server side, and are an alternative to a data source.
+		/// </summary>
+		public System.Collections.IEnumerable Items { get; set; }
+		
+        /// <summary>
+		/// Get or set the generated content of the input control.
+		/// </summary>
+		public IHtmlContent ControlContent { get; set; }
 
         #endregion
     }
