@@ -20,7 +20,7 @@ namespace Alcazar.Web.Extensibility
 	/// * Tag box for multiple select
 	/// </summary>
 	[HtmlTargetElement("dx-select")]
-	public class SelectBoxTagHelper : EditorTagHelperBase
+	public class SelectBoxTagHelper : DropdownTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region SelectBoxTagHelper construction
@@ -153,19 +153,33 @@ namespace Alcazar.Web.Extensibility
 					builder = builder.SearchExpr(SearchExpression);
 			}
 
+			// This setValue thing is really wierd.
+			// The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
+			if (!string.IsNullOrEmpty(SetValueJS))
+				builder = builder.Option("setValue", new JS(SetValueJS));
+
 			if (!string.IsNullOrEmpty(ValueExpression))
 				builder = builder.ValueExpr(ValueExpression);
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
 
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
 			if (!string.IsNullOrEmpty(OnSelectionChanged))
 				builder = builder.OnSelectionChanged(OnSelectionChanged);
 			if (!string.IsNullOrEmpty(OnChange))
 				builder = builder.OnChange(OnChange);
+
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+
+			builder = builder.OpenOnFieldClick(IsOpenClick);
 			//builder = builder.OnEnterKey("onMemberAdded");
 			//builder = builder.OnItemClick("onMemberAdded");
 			//builder = builder.OnOptionChanged("onMemberAdded");
-			//builder = builder.OnValueChanged("onMemberAdded");
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
@@ -217,7 +231,12 @@ namespace Alcazar.Web.Extensibility
 
 			// Apply the value, but only if the asp-for is not set (else the asp-for drives the value)
 			if (For == null)
-				value = Value;
+			{
+				if (Value != null)
+					builder = builder.Value(Value.ToString());
+				else if (ValueJS != null)
+					builder = builder.Value(new JS(ValueJS));
+			}
 			
 			if (value != null)
 				builder = builder.Value(value);
@@ -283,6 +302,12 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("clear")]
 		public bool AllowClear { get; set; } = true;
 
+		/// <summary>
+		/// Get or set an indicator if the control should be opened on click. Defaults to false.
+		/// </summary>
+		[HtmlAttributeName("open-click")]
+		public bool IsOpenClick { get; set; } = false;
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -345,14 +370,20 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the Javascript method to be called when the selection in the control changes.
 		/// </summary>
-		[HtmlAttributeName("selection-changed")]
-		public string OnSelectionChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the Javascript method to be called when the selection in the control changes.
-		/// </summary>
 		[HtmlAttributeName("change")]
 		public string OnChange { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control is initialised.
+		/// </summary>
+		[HtmlAttributeName("initialised")]
+		public string OnInitialized { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the content of the control is ready.
+		/// </summary>
+		[HtmlAttributeName("content-ready")]
+		public string OnContentReady { get; set; }
 
 		#endregion
 	}

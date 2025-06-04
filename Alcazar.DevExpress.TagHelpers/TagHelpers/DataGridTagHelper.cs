@@ -153,10 +153,22 @@ namespace Alcazar.Web.Extensibility
 					editing.AllowDeleting(true);
 			});
 
+			if (!string.IsNullOrEmpty(OnInitNewRow))
+				builder = builder.OnInitNewRow(OnInitNewRow);
 			if (!string.IsNullOrEmpty(OnRowInserting))
 				builder = builder.OnRowInserting(OnRowInserting);
 			if (!string.IsNullOrEmpty(OnRowInserted))
 				builder = builder.OnRowInserted(OnRowInserted);
+
+			if (!string.IsNullOrEmpty(OnRowUpdating))
+				builder = builder.OnRowUpdating(OnRowUpdating);
+			if (!string.IsNullOrEmpty(OnRowUpdated))
+				builder = builder.OnRowUpdated(OnRowUpdated);
+
+			if (!string.IsNullOrEmpty(OnRowRemoving))
+				builder = builder.OnRowRemoving(OnRowRemoving);
+			if (!string.IsNullOrEmpty(OnRowRemoved))
+				builder = builder.OnRowRemoved(OnRowRemoved);
 
 			//builder = builder.OnCellClick("onCellClick");
 			//builder = builder.OnContentReady("onContentReady");
@@ -659,56 +671,6 @@ namespace Alcazar.Web.Extensibility
 		public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
 
 		/// <summary>
-		/// Get or set the action to be executed when the selection changes in selection mode.
-		/// </summary>
-		[HtmlAttributeName("selection-changed")]
-		public string OnSelectionChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when an editor is preparing.
-		/// </summary>
-		[HtmlAttributeName("editor-preparing")]
-		public string OnEditorPreparing { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange")]
-		public string OnChangeAction { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange2")]
-		public JS OnChangeAction2 { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange3")]
-		public RazorBlock OnChangeAction3 { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when a row is being inserted.
-		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserting"/> for an array datasource is called.
-		/// </summary>
-		[HtmlAttributeName("onrowinserting")]
-		public string OnRowInserting { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when a row has been inserted.
-		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserted"/> for an array datasource is called.
-		/// </summary>
-		[HtmlAttributeName("onrowinserted")]
-		public string OnRowInserted { get; set; }
-
-		/// <summary>
-		/// Get or set the JS method to be executed when the datagrid has been initialised
-		/// </summary>
-		[HtmlAttributeName("oninitialized")]
-		public string OnInitializedAction { get; set; }
-
-		/// <summary>
 		/// An expression to be evaluated against the current model.
 		/// </summary>
 		[HtmlAttributeName("asp-for")]
@@ -721,6 +683,78 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("edit-mode")]
 		public GridEditMode EditMode { get; set; } = GridEditMode.Row;
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: tag helper events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the action to be executed when the selection changes in selection mode.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when an editor is preparing.
+		/// </summary>
+		[HtmlAttributeName("editor-preparing")]
+		public string OnEditorPreparing { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a new row is initialised.
+		/// </summary>
+		[HtmlAttributeName("row-init")]
+		public string OnInitNewRow { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserting"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-inserting")]
+		public string OnRowInserting { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserted"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-inserted")]
+		public string OnRowInserted { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being updated.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnUpdating"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-updating")]
+		public string OnRowUpdating { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been updated.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnUpdated"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-updated")]
+		public string OnRowUpdated { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being removed.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.Onemoving"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-removing")]
+		public string OnRowRemoving { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been removed.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.Onemoved"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-removed")]
+		public string OnRowRemoved { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the datagrid has been initialised
+		/// </summary>
+		[HtmlAttributeName("initialised")]
+		public string OnInitializedAction { get; set; }
+		
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

@@ -19,7 +19,7 @@ namespace Alcazar.Web.Extensibility
 	/// The <see cref="AutocompleteTagHelper"/> type implements a autocomplete typeahead dropdown.
 	/// </summary>
 	[HtmlTargetElement("dx-autocomplete")]
-	public class AutocompleteTagHelper : EditorTagHelperBase
+	public class AutocompleteTagHelper : DropdownTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region AutocompleteTagHelper construction
@@ -135,6 +135,8 @@ namespace Alcazar.Web.Extensibility
 			// Process text-box specific properties
 			//                     .Mask("+1 (X00) 000-0000")
 
+			// Set the value and search expressions
+			// Autocomplete does NOT have a DisplayExpr, we are keying in something, there is no value/text pair only a value
 			if (!string.IsNullOrEmpty(ValueExpression))
 				builder = builder.ValueExpr(ValueExpression);
 			if (!string.IsNullOrEmpty(SearchExpression))
@@ -207,8 +209,11 @@ namespace Alcazar.Web.Extensibility
 			if (value != null)
 				builder = builder.Value(value.ToString());
 
-			string placeholder = TranslateToProp(Placeholder, ViewContext);
-			builder = builder.Placeholder(placeholder);
+			if (!string.IsNullOrEmpty(Placeholder))
+			{
+				string placeholder = TranslateToProp(Placeholder, ViewContext);
+				builder = builder.Placeholder(placeholder);
+			}
 
 			return builder;
 		}
@@ -235,18 +240,6 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
-
-		/// <summary>
-		/// Get or set the JS function which sets the value to be displayed in this control.
-		/// </summary>
-		[HtmlAttributeName("value-js")]
-		public string ValueJS { get; set; }
-
-		/// <summary>
-		/// Get or set the JS function which updates the value back into the cell ehich is edited by this control.
-		/// </summary>
-		[HtmlAttributeName("set-value")]
-		public string SetValueJS { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if the clear button should be shown.
@@ -279,19 +272,6 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("max")]
 		public int MaxItemCount { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the value of the autocomplete box is changed.
-		/// </summary>
-		[HtmlAttributeName("value-changed")]
-		public string OnValueChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes in selection mode.
-		/// </summary>
-		[HtmlAttributeName("selection-changed")]
-		public string OnSelectionChanged { get; set; }
-
 
 		#endregion
 

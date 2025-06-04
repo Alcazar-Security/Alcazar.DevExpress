@@ -14,6 +14,43 @@ using System.Reflection;
 namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
+	/// The <see cref="DropdownTagHelperBase"/> base type implements properties and methods commonly required by dropdown controls.
+	/// Dropdown controls are editors which can display a dropdown for selection.
+	/// </summary>
+	public class DropdownTagHelperBase : EditorTagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DropdownTagHelperBase properties: tag helper
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the JS function which sets the value to be displayed in this control.
+		/// </summary>
+		[HtmlAttributeName("value-js")]
+		public string ValueJS { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function which updates the value back into the cell ehich is edited by this control.
+		/// </summary>
+		[HtmlAttributeName("set-value")]
+		public string SetValueJS { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be executed when the value of the dropdown box is changed.
+		/// </summary>
+		[HtmlAttributeName("value-changed")]
+		public string OnValueChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be executed when the selection in the control changes.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
+
+		#endregion
+	}
+
+	/// <summary>
 	/// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
 	/// </summary>
 	public class EditorTagHelperBase : ControlTagHelperBase

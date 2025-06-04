@@ -132,14 +132,19 @@ namespace Alcazar.Web.Extensibility
 				options = options.OnInserting(OnInserting);
 			if (!string.IsNullOrEmpty(OnInserted))
 				options = options.OnInserted(OnInserted);
+
 			if (!string.IsNullOrEmpty(OnUpdating))
 				options = options.OnUpdating(OnUpdating);
 			if (!string.IsNullOrEmpty(OnUpdated))
 				options = options.OnUpdated(OnUpdated);
+
 			if (!string.IsNullOrEmpty(OnRemoving))
 				options = options.OnRemoving(OnRemoving);
 			if (!string.IsNullOrEmpty(OnRemoved))
 				options = options.OnRemoved(OnRemoved);
+
+			if (!string.IsNullOrEmpty(OnBeforeSend))
+				options = options.OnBeforeSend(OnBeforeSend);
 
 			return options;
 		}
@@ -186,41 +191,53 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("asp-items")]
 		public System.Collections.IEnumerable Items { get; set; }
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataSourceTagHelper properties: events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
 		/// <summary>
 		/// Get or set the JS function to call when a new item is being inserted.
 		/// </summary>
-		[HtmlAttributeName("oninserting")]
+		[HtmlAttributeName("inserting")]
 		public string OnInserting { get; set; }
 
 		/// <summary>
 		/// Get or set the JS function to call when a new item has been inserted.
 		/// </summary>
-		[HtmlAttributeName("oninserted")]
+		[HtmlAttributeName("inserted")]
 		public string OnInserted { get; set; }
 
 		/// <summary>
 		/// Get or set the JS function to call when an item is being updated.
 		/// </summary>
-		[HtmlAttributeName("onupdating")]
+		[HtmlAttributeName("updating")]
 		public string OnUpdating { get; set; }
 
 		/// <summary>
 		/// Get or set the JS function to call when an item has been updated.
 		/// </summary>
-		[HtmlAttributeName("onupdated")]
+		[HtmlAttributeName("updated")]
 		public string OnUpdated { get; set; }
 
 		/// <summary>
 		/// Get or set the JS function to call when an item is being removed.
 		/// </summary>
-		[HtmlAttributeName("onremoving")]
+		[HtmlAttributeName("removing")]
 		public string OnRemoving { get; set; }
 
 		/// <summary>
 		/// Get or set the JS function to call when an item has been removed.
 		/// </summary>
-		[HtmlAttributeName("onremoved")]
+		[HtmlAttributeName("removed")]
 		public string OnRemoved { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call before a data call is sent.
+		/// </summary>
+		[HtmlAttributeName("before-send")]
+		public string OnBeforeSend { get; set; }
 
 		#endregion
 
