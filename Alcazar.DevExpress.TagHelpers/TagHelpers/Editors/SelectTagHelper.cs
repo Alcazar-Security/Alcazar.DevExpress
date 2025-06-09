@@ -1,10 +1,10 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Types;
+﻿using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Linq;
@@ -12,15 +12,15 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="SelectBoxTagHelper"/> type implements a single selection dropdown box.
-    /// The select box can do anything except multiple selection, therefor it is chosen over the DropdownBox and Lookup.
-    /// The other implemented chouces are:
-    /// * Autocomplete for lookups
-    /// * Tag box for multiple select
-    /// </summary>
-    [HtmlTargetElement("dx-select")]
-	public class SelectBoxTagHelper : EditorTagHelperBase
+	/// <summary>
+	/// The <see cref="SelectBoxTagHelper"/> type implements a single selection dropdown box.
+	/// The select box can do anything except multiple selection, therefore it is chosen over the DropdownBox and Lookup.
+	/// The other implemented choices are:
+	/// * Autocomplete for lookups
+	/// * Tag box for multiple select
+	/// </summary>
+	[HtmlTargetElement("dx-select")]
+	public class SelectBoxTagHelper : DropdownTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region SelectBoxTagHelper construction
@@ -54,6 +54,17 @@ namespace Alcazar.Web.Extensibility
 
 			// Create the builder for a popup
 			SelectBoxBuilder builder = _htmlHelper.DevExtreme().SelectBox();
+
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ControlContext controlContext = ApplyControlContext(context);
+			if (controlContext != null)
+			{
+				// Apply more from the context
+				if (Value == null)
+					Value = controlContext.Value;
+				if (Items == null)
+					Items = controlContext.Items;
+			}
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -89,7 +100,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
@@ -136,24 +147,39 @@ namespace Alcazar.Web.Extensibility
 				// Set the search mode and its properties
 				builder = builder.SearchEnabled(true);
 				builder = builder.SearchMode(_searchMode.Value);
-				//builder = builder.SearchExpr("searchex");
 				builder = builder.SearchTimeout(SearchTimeout);
 				builder = builder.MinSearchLength(MinSearchLength);
+				if (!string.IsNullOrEmpty(ValueExpression))
+					builder = builder.SearchExpr(SearchExpression);
 			}
+
+			// This setValue thing is really wierd.
+			// The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
+			if (!string.IsNullOrEmpty(SetValueJS))
+				builder = builder.Option("setValue", new JS(SetValueJS));
 
 			if (!string.IsNullOrEmpty(ValueExpression))
 				builder = builder.ValueExpr(ValueExpression);
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
 
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
 			if (!string.IsNullOrEmpty(OnSelectionChanged))
 				builder = builder.OnSelectionChanged(OnSelectionChanged);
 			if (!string.IsNullOrEmpty(OnChange))
 				builder = builder.OnChange(OnChange);
+
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+
+			builder = builder.OpenOnFieldClick(IsOpenClick);
 			//builder = builder.OnEnterKey("onMemberAdded");
 			//builder = builder.OnItemClick("onMemberAdded");
 			//builder = builder.OnOptionChanged("onMemberAdded");
-			//builder = builder.OnValueChanged("onMemberAdded");
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
@@ -178,14 +204,24 @@ namespace Alcazar.Web.Extensibility
 
 		private SelectBoxBuilder ProcessAttributes(SelectBoxBuilder builder, TagHelperAttributeList attributes)
 		{
-			// We are choosing to place the attributes on the element, not the imput
+			// We are choosing to place the attributes on the element, not the input tag
 			foreach (var attr in attributes)
-			{
-				if (attr.Value != null)	
-					builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
-			}
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
+		}
+
+		protected new object ProcessForEnums(object value)
+		{
+			// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
+			if (Value != null && ModelType?.IsEnum == true)
+				return Value = Value.ToString();
+
+			return base.ProcessForEnums(value);
 		}
 
 		private SelectBoxBuilder ApplyFor(SelectBoxBuilder builder, object value)
@@ -195,7 +231,12 @@ namespace Alcazar.Web.Extensibility
 
 			// Apply the value, but only if the asp-for is not set (else the asp-for drives the value)
 			if (For == null)
-				value = Value;
+			{
+				if (Value != null)
+					builder = builder.Value(Value.ToString());
+				else if (ValueJS != null)
+					builder = builder.Value(new JS(ValueJS));
+			}
 			
 			if (value != null)
 				builder = builder.Value(value);
@@ -261,6 +302,12 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("clear")]
 		public bool AllowClear { get; set; } = true;
 
+		/// <summary>
+		/// Get or set an indicator if the control should be opened on click. Defaults to false.
+		/// </summary>
+		[HtmlAttributeName("open-click")]
+		public bool IsOpenClick { get; set; } = false;
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -290,6 +337,12 @@ namespace Alcazar.Web.Extensibility
 			set { _searchMode = value; }
 		}
 
+		/// <summary>
+		/// Get or set the name of the item property to be used when searching for items.
+		/// </summary>
+		[HtmlAttributeName("search-expr")]
+		public string SearchExpression { get; set; }
+
 		// Require the private fields so that we dont have to fully qualify the mode in cshtml (DropDownSearchMode.StartsWith)
 		private DropDownSearchMode? _searchMode;
 
@@ -317,14 +370,20 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the Javascript method to be called when the selection in the control changes.
 		/// </summary>
-		[HtmlAttributeName("selection-changed")]
-		public string OnSelectionChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the Javascript method to be called when the selection in the control changes.
-		/// </summary>
 		[HtmlAttributeName("change")]
 		public string OnChange { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control is initialised.
+		/// </summary>
+		[HtmlAttributeName("initialised")]
+		public string OnInitialized { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the content of the control is ready.
+		/// </summary>
+		[HtmlAttributeName("content-ready")]
+		public string OnContentReady { get; set; }
 
 		#endregion
 	}

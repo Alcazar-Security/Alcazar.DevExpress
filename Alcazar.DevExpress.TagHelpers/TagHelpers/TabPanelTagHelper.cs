@@ -78,7 +78,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
@@ -146,8 +146,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// No option for attributes on the input field here
 			return builder;
 		}
 

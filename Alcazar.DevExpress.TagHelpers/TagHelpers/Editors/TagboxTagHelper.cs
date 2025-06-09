@@ -1,4 +1,4 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
+﻿using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="TagboxTagHelper"/> type implements a multiple selection dropdown box.
-    /// The tag box supplements the select box implementation, as it can do multiple selection.
-    /// </summary>
-    [HtmlTargetElement("dx-tag")]
+	/// <summary>
+	/// The <see cref="TagboxTagHelper"/> type implements a multiple selection dropdown box.
+	/// The tag box supplements the select box implementation, as it can do multiple selection.
+	/// </summary>
+	[HtmlTargetElement("dx-tag")]
 	public class TagboxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -50,10 +50,15 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a popup
 			TagBoxBuilder builder = _htmlHelper.DevExtreme().TagBox();
 
-			ControlContext controlContext = GetContextSafe<ControlContext>(context);
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ControlContext controlContext = ApplyControlContext(context);
 			if (controlContext != null)
 			{
-				ApplyControlContext(controlContext);
+				// Apply more from the context
+				if (Value == null)
+					Value = controlContext.Value;
+				if (Items == null)
+					Items = controlContext.Items;
 			}
 
 			// Process common functionality for editors
@@ -63,7 +68,8 @@ namespace Alcazar.Web.Extensibility
 			builder = ProcessAttributes(builder, output.Attributes);
 
 			// Process the For attribute, if it is set
-			System.Collections.IEnumerable values = ProcessForMultiEnums(ProcessFor());
+			object value = ProcessFor();
+			System.Collections.IEnumerable values = ProcessForMultiEnums(value);
 
 			// Apply the For attribute, or the corresponding direct values
 			builder = ApplyFor(builder, values);
@@ -86,7 +92,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
@@ -178,7 +184,11 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
 		}
@@ -187,6 +197,17 @@ namespace Alcazar.Web.Extensibility
 		{
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
+
+			if (values == null && Value != null)
+			{
+				if (Value is Enum enumValue)
+				{
+					values = enumValue
+						.GetFlags(false)
+						.Select((v)  => v.ToString())
+						.ToArray();
+				}
+			}
 
 			// Apply the values, even if the asp-for is set (possibly only needed for enums?)
 			if (values != null)

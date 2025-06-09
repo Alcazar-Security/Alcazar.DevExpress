@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Alcazar.DevExpress.TagHelpers.TagHelpers.Contained
+namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
 	/// The <see cref="ContainedItemTagHelper"/> tag helper implements an item content with a value, text, and other properties.

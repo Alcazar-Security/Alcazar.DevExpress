@@ -30,7 +30,7 @@ but we will certainly strive for enabling a large number of common use cases.
 License note
 ------------
 
-Alcazar Security does not represent DevExpress, not are we a reseller of their products.
+Alcazar Security does not represent DevExpress, nor are we a reseller of their products.
 We are a user of their products and this solution makes extensions to DevExpress available to other interested parties.
 To run this solution, a valid and current license issued by https://www.devexpress.com/ is required.
 No components licensed by DevExpress are published by this repository.

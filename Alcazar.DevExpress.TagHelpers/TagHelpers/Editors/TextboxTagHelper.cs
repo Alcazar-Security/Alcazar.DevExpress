@@ -1,25 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
+﻿using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Mvc.Builders;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
 using System.Linq;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using DevExtreme.AspNet.Mvc.Builders;
-using DevExtreme.AspNet.Mvc;
-using Microsoft.AspNetCore.Html;
-using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="TextboxTagHelper"/> type implements a simple text box.
-    /// </summary>
-    [HtmlTargetElement("dx-textbox")]
+	/// <summary>
+	/// The <see cref="TextboxTagHelper"/> type implements a simple text box.
+	/// </summary>
+	[HtmlTargetElement("dx-textbox")]
 	public class TextboxTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -62,6 +59,9 @@ namespace Alcazar.Web.Extensibility
 
 			// Create the builder for a popup
 			TextBoxBuilder builder = _htmlHelper.DevExtreme().TextBox();
+
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ApplyControlContext(context);
 
 			// Process common functionality for editors
 			ProcessCommon(builder);
@@ -147,7 +147,11 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
 		}
@@ -191,7 +195,7 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the value to be displayed in this control.
+		/// Get or set the string value to be displayed in this control.
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }

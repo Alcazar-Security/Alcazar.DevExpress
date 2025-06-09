@@ -1,6 +1,4 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Types;
-using DevExpress.Data.Helpers;
+﻿using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
@@ -15,26 +13,85 @@ using System.Reflection;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
-    /// </summary>
-    public class EditorTagHelperBase : ControlTagHelperBase
+	/// <summary>
+	/// The <see cref="DropdownTagHelperBase"/> base type implements properties and methods commonly required by dropdown controls.
+	/// Dropdown controls are editors which can display a dropdown for selection.
+	/// </summary>
+	public class DropdownTagHelperBase : EditorTagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DropdownTagHelperBase properties: tag helper
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the JS function which sets the value to be displayed in this control.
+		/// </summary>
+		[HtmlAttributeName("value-js")]
+		public string ValueJS { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function which updates the value back into the cell ehich is edited by this control.
+		/// </summary>
+		[HtmlAttributeName("set-value")]
+		public string SetValueJS { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be executed when the value of the dropdown box is changed.
+		/// </summary>
+		[HtmlAttributeName("value-changed")]
+		public string OnValueChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be executed when the selection in the control changes.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
+
+		#endregion
+	}
+
+	/// <summary>
+	/// The <see cref="EditorTagHelperBase"/> base type implements properties and methods commonly required by editor controls.
+	/// </summary>
+	public class EditorTagHelperBase : ControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region EditorTagHelperBase protected methods
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Before processing an inner control, pass in any properties from the dx-field to the editor. 
+		/// Before processing an inner control, pass in any properties from the dx-field or dx-control to the editor. 
+		/// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
+		/// </summary>
+		/// <returns> The control context, if any. </returns>
+		protected ControlContext ApplyControlContext(TagHelperContext context)
+		{
+			ControlContext controlContext = GetContextSafe<ControlContext>(context);
+			if (controlContext != null)
+				ApplyControlContext(controlContext);
+
+			return controlContext;
+		}
+
+		/// <summary>
+		/// Before processing an inner control, pass in any properties from the dx-field or dx-control to the editor. 
 		/// This is used for properties which are used by more than one of the label, control, and validation, so that the dx-field declares them once and the field parts share them (where an inner control is declared)
 		/// </summary>
 		protected void ApplyControlContext(ControlContext controlContext)
 		{
-			// Apply values which the control context might want to pass into us
+			// Apply values which the control context might want to pass into me, the editor
 			if (Name == null)
 				Name = controlContext.Name;
 			if (For == null)
 				For = controlContext.For;
+
+			// These two are of interest for the DxOptionTagHelper
+			// DxOptionTagHelper also wants to set the value, but we cant, Value is defined by the editor itself, not by this base class (it can be a string or an object) 
+			// DxOptionTagHelper also wants to set the items, but we cant, Items is defined only for some editors, not by this base class
+			if (ModelType == null)
+				ModelType = controlContext.ModelType;
+			if (HelpText == null)
+				HelpText = controlContext.HelpText;
 		}
 
 		protected object ProcessFor()
@@ -208,6 +265,12 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the model type. This property is not set by an attribute.
 		/// </summary>
 		public Type ModelType { get; set; }
+
+		/// <summary>
+		/// Get or set parameters used for loading of data records from the data source.
+		/// </summary>
+		[HtmlAttributeName(DictionaryAttributePrefix = "input-attr-")]
+		public IDictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 		#endregion
 

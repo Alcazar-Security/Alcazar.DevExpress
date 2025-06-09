@@ -1,7 +1,5 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using DevExtreme.AspNet.Mvc;
+﻿using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
-using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -11,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="DropdownTagHelper"/> type implements a single or multiple selection dropdown.
-    /// Multiple selection is enabled by the selection mode of the inner content template, the dropdown itself cannot enable multiple selection itself.
-    /// </summary>
-    [HtmlTargetElement("dx-dropdown")]
+	/// <summary>
+	/// The <see cref="DropdownTagHelper"/> type implements a single or multiple selection dropdown.
+	/// Multiple selection is enabled by the selection mode of the inner content template, the dropdown itself cannot enable multiple selection itself.
+	/// </summary>
+	[HtmlTargetElement("dx-dropdown")]
 	public class DropdownTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -51,6 +49,9 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a popup
 			DropDownBoxBuilder builder = _htmlHelper.DevExtreme().DropDownBox();
 
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ApplyControlContext(context);
+
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
 
@@ -73,35 +74,8 @@ namespace Alcazar.Web.Extensibility
 			// Process children of the tag, we will need them
 			IHtmlContent content = await output.GetChildContentAsync();
 
-			if (IsMultiple)
-			{
-				builder = ProcessMultiple(builder);
-			}
-			else
-			{
-				// Process the content of the dropdown
-				if (Items != null)
-				{
-					// Lets see if this works
-					builder = builder.Items(c =>
-					{
-						c.Add().Text("Read");
-						c.Add().Text("Write");
-					});
-
-					// Convert to an array datasource
-					builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
-
-					// 
-				}
-
-				// Process the (child) data source
-				else if (sourceContext.Datasource != null)
-				{
-					// Build the data source from the child tag
-					builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
-				}
-			}
+			// Set the data source, for single or multiple selection
+			builder = IsMultiple ? ProcessMultiple(builder) : ProcessSingle(builder, sourceContext);
 
 			// Add buttons, but only if we have some
 			if (buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText))
@@ -168,7 +142,11 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+
+			// And we are allowing attributes on the input field also
+			foreach (var attr in InputAttributes)
+				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
 			return builder;
 		}
@@ -181,10 +159,10 @@ namespace Alcazar.Web.Extensibility
 			// Apply the value, but only if the asp-for is not set (else the asp-for drives the value)
 			if (For == null)
 				value = Value;
-			
+
 			if (value != null)
 				builder = builder.Value(value.ToString());
-			
+
 			if (!string.IsNullOrEmpty(Placeholder))
 			{
 				string placeholder = TranslateToProp(Placeholder, ViewContext);
@@ -205,6 +183,34 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private DropDownBoxBuilder ProcessSingle(DropDownBoxBuilder builder, DataSourceContext sourceContext)
+		{
+			// Process the content of the dropdown
+			if (Items != null)
+			{
+				// Lets see if this works
+				builder = builder.Items(c =>
+				{
+					c.Add().Text("Read");
+					c.Add().Text("Write");
+				});
+
+				// WIP
+				// Convert to an array datasource, a la DxGrid
+				// builder = builder.DataSource(d => BuildDatasource(d));
+				// 
+			}
+
+			// Process the (child) data source
+			else if (sourceContext.Datasource != null)
+			{
+				// Build the data source from the child tag
+				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
+			}
+
+			return builder;
+		}
+
 		private DropDownBoxBuilder ProcessMultiple(DropDownBoxBuilder builder)
 		{
 			// Process the content of the dropdown
@@ -219,6 +225,7 @@ namespace Alcazar.Web.Extensibility
 				//});
 				builder = builder.DataSource(Items, Key);
 
+				// WIP
 				// Build a id/text datagrid template, with multiple selection
 				//IHtmlContent simpleTemplate = GetSimpleTemplate();
 				//string content = ToString(simpleTemplate);
@@ -226,22 +233,6 @@ namespace Alcazar.Web.Extensibility
 			}
 
 			return builder;
-		}
-
-		private OptionsOwnerBuilder BuildDatasource(DataSourceFactory factory, System.Collections.IEnumerable items)
-		{
-			//var options2 = factory.StaticJson();
-
-			//options2 = options2.Url("Items");
-			//options2 = options2.Key("Value");
-
-			//return options2;
-			var options = factory.Array();
-
-			options = options.Data(Items);
-			options = options.Key("Value");
-
-			return options;
 		}
 
 		private IHtmlContent GetSimpleTemplate()

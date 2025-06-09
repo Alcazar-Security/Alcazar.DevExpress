@@ -1,34 +1,33 @@
-﻿using Alcazar.DevExpress.TagHelpers.TagHelpers.Contained;
-using Amaqele.Common.Authn;
-using Amaqele.Common.Collections;
+﻿using Amaqele.Common.Base;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using NLog.Config;
 using System;
-using System.Collections.Generic;
-using System.Dynamic;
+using System.Globalization;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
-using System.Runtime.ConstrainedExecution;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
 {
-    /// <summary>
-    /// The <see cref="DataGridTagHelper"/> type implements a data grid.
-    /// </summary>
-    [HtmlTargetElement("dx-datagrid")]
-	public class DataGridTagHelper : RouteTagHelperBase
+	/// <summary>
+	/// The <see cref="DataGridTagHelper"/> type implements a data grid.
+	/// </summary>
+	[HtmlTargetElement("dx-datagrid")]
+	public class DataGridTagHelper : ListControlTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataGridTagHelper construction
@@ -48,6 +47,7 @@ namespace Alcazar.Web.Extensibility
 
 		//private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
+
 		//private readonly IUrlHelper _urlHelper;
 		//private readonly HtmlEncoder _htmlEncoder;
 		//private readonly IHtmlGenerator _generator;
@@ -71,7 +71,8 @@ namespace Alcazar.Web.Extensibility
 			// Suppress myself as output, using only the translated UI text.
 			output.SuppressOutput();
 
-			MethodInfo method = typeof(DataGridTagHelper).GetMethod("BuildDateGridAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+			// Generate a builder mathod using the record type as generic type
+			MethodInfo method = typeof(DataGridTagHelper).GetMethod(nameof(BuildDataGridAsync), BindingFlags.Instance | BindingFlags.NonPublic);
 			if (method.IsGenericMethod)
 				method = method.MakeGenericMethod(RecordType);
 
@@ -83,7 +84,11 @@ namespace Alcazar.Web.Extensibility
 			output.Content.SetHtmlContent(content);
 		}
 
-		private async Task<IHtmlContent> BuildDateGridAsync<T>(TagHelperContext context, TagHelperOutput output)
+		/// <summary>
+		/// Build the data grid. 
+		/// This method is dynamically generated with a generic type argument and then executed.
+		/// </summary>
+		private async Task<IHtmlContent> BuildDataGridAsync<T>(TagHelperContext context, TagHelperOutput output)
 		{
 			// Create the builder for a popup
 			DataGridBuilder<T> builder = _htmlHelper.DevExtreme().DataGrid<T>();
@@ -93,9 +98,6 @@ namespace Alcazar.Web.Extensibility
 
 			// Process non-tag attriubtes
 			builder = ProcessAttributes(builder, output.Attributes);
-
-			// Process the title/hint, if it is set
-			builder = ProcessTitle(builder);
 
 			builder = builder.AllowColumnReordering(true);
 			builder = builder.ShowBorders(false);
@@ -113,81 +115,93 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.FilterRow(f => f.Visible(true));
 			builder = builder.HeaderFilter(f => f.Visible(true));
 
-			builder = builder.Paging(p => p.PageSize(25));
+			builder = builder.Paging(p => p.PageSize(50));
 			builder = builder.Pager(p => p
 				.DisplayMode(GridPagerDisplayMode.Adaptive)
 				.ShowPageSizeSelector(true)
 				.ShowNavigationButtons(true)
 				.AllowedPageSizes(new[] { 25, 50, 100, 250, 500 }));
 
+			// Process selection options
+			if (SelectionMode != SelectionMode.None)
+			{
+				// Selection always sets hover state
+				builder = builder.HoverStateEnabled(true);
+
+				// Set the selection mode
+				// TODO there are a few other options to choose
+				builder = builder.Selection(s => s.Mode(SelectionMode));
+
+				// Set the JS function to execute when the selection changes
+				if (!string.IsNullOrEmpty(OnSelectionChanged))
+					builder = builder.OnSelectionChanged(OnSelectionChanged);
+			}
+
+			// Process editing options
 			builder = builder.Editing(editing =>
 			{
 				// Allow editing options of the corresponding actions are set
 				editing
-					.Mode(GridEditMode.Row)
+					.Mode(EditMode)
 					.UseIcons(true);
 
-				if (!string.IsNullOrEmpty(InsertAction))
+				if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
 					editing.AllowAdding(true);
-				if (!string.IsNullOrEmpty(UpdateAction))
+				if (!string.IsNullOrEmpty(UpdateAction) || !string.IsNullOrEmpty(OnUpdating) || !string.IsNullOrEmpty(OnUpdated))
 					editing.AllowUpdating(true);
-				if (!string.IsNullOrEmpty(DeleteAction))
+				if (!string.IsNullOrEmpty(DeleteAction) || !string.IsNullOrEmpty(OnRemoving) || !string.IsNullOrEmpty(OnRemoved))
 					editing.AllowDeleting(true);
 			});
 
-			//builder = builder.OnCellPrepared("onCellPrepared");
+			if (!string.IsNullOrEmpty(OnInitNewRow))
+				builder = builder.OnInitNewRow(OnInitNewRow);
+			if (!string.IsNullOrEmpty(OnRowInserting))
+				builder = builder.OnRowInserting(OnRowInserting);
+			if (!string.IsNullOrEmpty(OnRowInserted))
+				builder = builder.OnRowInserted(OnRowInserted);
+
+			if (!string.IsNullOrEmpty(OnRowUpdating))
+				builder = builder.OnRowUpdating(OnRowUpdating);
+			if (!string.IsNullOrEmpty(OnRowUpdated))
+				builder = builder.OnRowUpdated(OnRowUpdated);
+
+			if (!string.IsNullOrEmpty(OnRowRemoving))
+				builder = builder.OnRowRemoving(OnRowRemoving);
+			if (!string.IsNullOrEmpty(OnRowRemoved))
+				builder = builder.OnRowRemoved(OnRowRemoved);
+
 			//builder = builder.OnCellClick("onCellClick");
 			//builder = builder.OnContentReady("onContentReady");
-
-			// Set the data source
-			if (Items != null)
-			{
-				// Our datasource comes from the model
-				builder = builder.DataSource(Items);
-			}
-			else if (!string.IsNullOrEmpty(LoadAction))
-			{
-				// Our datasource is a web api
-				builder = builder.RemoteOperations( c => { c.Filtering(true); });
-				builder = builder.DataSource(d =>
-				{
-					var options = d.Mvc().LoadMethod(HttpMethod.Post.ToString()).LoadAction(LoadAction);
-
-					// Add load parameters
-					if (LoadParams.Any())
-					{
-						ExpandoObject loadParams = new ExpandoObject();
-						loadParams.AddRange(LoadParams);
-						options = options.LoadParams(loadParams);
-					}
-
-					if (!string.IsNullOrEmpty(Controller))
-						options = options.Controller(Controller);
-					if (!string.IsNullOrEmpty(Area))
-						options = options.Area(Area);
-
-					if (!string.IsNullOrEmpty(Key))
-						options = options.Key(Key);
-
-					// Set editing actions
-					if (!string.IsNullOrEmpty(InsertAction))
-						options = options.InsertAction(InsertAction);
-					if (!string.IsNullOrEmpty(UpdateAction))
-						options = options.UpdateAction(UpdateAction);
-					if (!string.IsNullOrEmpty(DeleteAction))
-						options = options.DeleteAction(DeleteAction);
-
-					return options;
-				});
-			}
+			// builder = builder.OnOptionChanged("onOptionChanged");
 
 			// Create the context, so that we can pass it to child tag helpers
-			ColumnContext columnContext = GetOrCreateContext<ColumnContext>(context);
+			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
+			ColumnsContext columnContext = GetOrCreateContext<ColumnsContext>(context);
 
 			// Process children of the card tag, the header, footer, and my body will need them 
 			IHtmlContent content = await output.GetChildContentAsync();
 
-			// Add buttons, but only if we have some
+			// Set the data source
+			if (sourceContext.Datasource != null)
+			{
+				// First preference, process the (child) data source
+				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
+			}
+			else
+			{
+				// Second preference, process the datasource from my own properties
+				builder = builder.DataSource(d => BuildDatasource(d));
+			}
+
+			// Post process, based on the data source
+			switch (DatasourceType)
+			{
+				case DataSourceTypes.Mvc:
+					builder = builder.RemoteOperations(c => { c.Filtering(true); });
+					break;
+			}
+
+			// Add columns, if we have some
 			if (columnContext.Columns.Any())
 			{
 				builder = builder.Columns(async columns =>
@@ -196,24 +210,45 @@ namespace Alcazar.Web.Extensibility
 					{
 						switch (column.Type)
 						{
+							// A data column displays a property of the model
 							default:
 							case "data":
 								ProcessDataColumn<T>(columns, column);
 								break;
 
+							// A command column displays command buttons which act on the model which is displayed in this row
 							case "command":
 								await ProcessCommandColumnAsync<T>(context, output, columns, column);
 								break;
 						}
 					}
-
-					//columns.AddFor(m => m.Tenant.Name)
-					//	.Lookup(lookup => lookup
-					//		.DataSource(d => d.Mvc().Controller("Data").LoadAction("GetTenant").Key("pkTenantID"))
-					//		.ValueExpr("fkTenantID")
-					//		.DisplayExpr("Name"));
 				});
 			}
+
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnInitializedAction))
+				builder = builder.OnInitialized(OnInitializedAction);
+
+			if (!string.IsNullOrEmpty(OnEditorPreparing))
+				builder = builder.OnEditorPreparing(OnEditorPreparing);
+
+			// Build the toolbar
+			// The location of the toolbar is not changable, DX says:
+			// The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
+			//builder = builder.Toolbar(toolbar =>
+			//{
+			//	toolbar.Items(i =>
+			//	{
+			//		// If we are inserting, show and customise the ADD toolbar button
+			//		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
+			//		{
+			//			i.Add()
+			//				.Name(DataGridToolbarItem.AddRowButton)
+			//				.Location(ToolbarItemLocation.After)
+			//				.ShowText(ToolbarItemShowTextMode.InMenu);
+			//		}
+			//	});
+			//});
 
 			return builder;
 		}
@@ -235,18 +270,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
-			return builder;
-		}
-
-		private DataGridBuilder<T> ProcessTitle<T>(DataGridBuilder<T> builder)
-		{
-			//if (!string.IsNullOrEmpty(Title))
-			//{
-			//	string title = TranslateToProp(Title, ViewContext);
-			//	builder.Hint(title);
-			//}
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -254,8 +280,25 @@ namespace Alcazar.Web.Extensibility
 		{
 			if (column.For != null)
 			{
-				// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
-				column.Name = RemoveNoname(column.For.Name);
+				// If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ due to a [JsonProperty] attribute
+				if (string.IsNullOrEmpty(column.Name))
+				{
+					// Check for a [JsonProperty] attribute which renames the field in JSON data and confuses DX
+					// 2025-05 UNDO this, we use Newtonsoft attributes, but DX uses System.Text.Json, therefore DX serialises with the original property names
+					//if (column.For.Metadata is Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.DefaultModelMetadata mmd && mmd.Attributes.PropertyAttributes != null)
+					//{
+					//	// Use the JSON property name
+					//	JsonPropertyAttribute attribute = mmd.Attributes.PropertyAttributes.FirstOrDefault((a) => a is JsonPropertyAttribute) as JsonPropertyAttribute;
+					//	if (attribute != null)
+					//		column.Name = attribute.PropertyName;
+					//}
+
+					if (string.IsNullOrEmpty(column.Name))
+					{
+						// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
+						column.Name = RemoveNoname(column.For.Name);
+					}
+				}
 
 				// Set the label if it is not explicitely set
 				if (string.IsNullOrEmpty(column.Label))
@@ -271,14 +314,19 @@ namespace Alcazar.Web.Extensibility
 				.Caption(column.Label)
 				.Alignment(column.Alignment)
 				.AllowSorting(true)
-				.AllowEditing(!column.IsReadonly)
-				.Visible(column.IsVisible);
+				.AllowEditing(!column.IsReadonly);
+
+			if (!string.IsNullOrEmpty(column.IsVisibleAction))
+				builder = builder.Visible(new JS(column.IsVisibleAction));
+			else
+				builder = builder.Visible(column.IsVisible);
 
 			//.SortOrder(SortOrder.Asc);
 
 			if (column.DataType.HasValue)
 				builder = builder.DataType(column.DataType.Value);
 
+			// Filtering
 			if (column.FilterType.HasValue)
 			{
 				builder = builder
@@ -299,6 +347,75 @@ namespace Alcazar.Web.Extensibility
 					.AllowFiltering(false);
 			}
 
+			// Editing of a column
+			if (column.LookupDatasource != null)
+			{
+				//builder.EditorOptions(?);
+				//builder.ShowEditorAlways(true);
+				builder = builder.Lookup(lookup =>
+				{
+					// Process the (column) data source
+					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
+
+					// Not supported for trees? lookup = lookup.Grouped(true);
+					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
+					lookup = lookup.ValueExpr(column.ValueExpression);
+					lookup = lookup.DisplayExpr(column.DisplayExpression);
+				});
+			}
+
+			// Set the cell value
+			// Thought we need that for cascading editing, but it didnt work
+			if (!string.IsNullOrEmpty(column.SetCellValue))
+				builder = builder.SetCellValue(column.SetCellValue);
+
+			// Column formatting
+			// 1. Specified custom format
+			// 2. Specified format
+			// 3. Format based on the data type
+			if (!string.IsNullOrEmpty(column.CustomFormat))
+			{
+				// 1. Specified custom format
+				builder = builder.Format(column.CustomFormat);
+			}
+			else
+			{
+				Format? format = null;
+				if (column.Format.HasValue)
+				{
+					// 2. Specified format
+					format = column.Format.Value;
+				}
+				else if (column.DataType.HasValue)
+				{
+					// 3. Format based on the data type
+					format = ToFormat(column.DataType.Value);
+				}
+
+				if (format.HasValue)
+				{
+					// We have determined the format of the content, translate it into the current culture
+					// The feature is not available from the constructor, therefore request it here.
+					IRequestCultureFeature requestCultureFeature = ViewContext.HttpContext.Features.Get<IRequestCultureFeature>();
+					CultureInfo cultureInfo = requestCultureFeature?.RequestCulture?.Culture ?? Thread.CurrentThread.CurrentCulture;
+
+					string customFormat = ToCustomFormat(format.Value, Thread.CurrentThread.CurrentCulture);
+					if (!string.IsNullOrEmpty(customFormat))
+						builder = builder.Format(customFormat);
+				}
+			}
+
+			// Set the edit templates
+			if (!string.IsNullOrEmpty(column.EditTemplate))
+				builder = builder.EditCellTemplate(column.EditTemplate);
+			else if (!string.IsNullOrEmpty(column.EditTemplateJS))
+				builder = builder.EditCellTemplate(new JS(column.EditTemplateJS));
+			else if (column.EditTemplateRZ != null)
+				builder = builder.EditCellTemplate(column.EditTemplateRZ);
+			else if (!string.IsNullOrEmpty(column.EditTemplateNT))
+				builder = builder.EditCellTemplate(new TemplateName(column.EditTemplateNT));
+
+			// Set the child content or templates
 			if (!string.IsNullOrWhiteSpace(column.Content))
 				builder = builder.CellTemplate(column.Content);
 			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
@@ -321,8 +438,12 @@ namespace Alcazar.Web.Extensibility
 
 			DataGridColumnBuilder<T> builder = columns.Add()
 				.Type(column.CommandType)
-				.Caption(column.Label)
-				.Visible(column.IsVisible);
+				.Caption(column.Label);
+
+			if (!string.IsNullOrEmpty(column.IsVisibleAction))
+				builder = builder.Visible(new JS(column.IsVisibleAction));
+			else
+				builder = builder.Visible(column.IsVisible);
 
 			// Add buttons, but only if we have some
 			if (column.Buttons != null)
@@ -336,18 +457,9 @@ namespace Alcazar.Web.Extensibility
 
 					foreach (ButtonModel button in column.Buttons)
 					{
-						var builder2 = buttons.Add()
-							.Name(button.Name)
-							// Seemingly can only display icon OR text
-							//.Text(button.Text)
-							.Icon(button.Icon)
-							.Hint(button.Title)
-							//.Template("<span>xxx</span>")
-							.OnClick(button.OnClickAction);
+						DataGridColumnButtonBuilder buttonBuilder = buttons.Add();
 
-						// Not used currently
-						// if (button.Content != null)
-						//	builder2 = builder2.Template(ToString(button.Content));
+						BuildButton<T>(buttonBuilder, button);
 					}
 				});
 			}
@@ -357,59 +469,131 @@ namespace Alcazar.Web.Extensibility
 				// So we should not have a custom column in the first place, nothing to do
 			}
 
+			// Set the child content or templates
+			// This is challenged here, since the custom template overwrites the button content AND behaviour, eg a delete no longer deletes
+			if (!string.IsNullOrWhiteSpace(column.Content))
+				builder = builder.CellTemplate(column.Content);
+			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
+				builder = builder.CellTemplate(new JS(column.ContentJS));
+			else if (column.ContentRZ != null)
+				builder = builder.CellTemplate(column.ContentRZ);
+			else if (column.ContentNT != null)
+				builder = builder.CellTemplate(new TemplateName(column.ContentNT));
+
 			return columns;
 		}
 
-		private GridColumnDataType? ToDataType(Type type)
+		private void BuildButton<T>(DataGridColumnButtonBuilder buttonBuilder, ButtonModel button)
 		{
-			PrimitiveTypeCode code = PrimitiveType.FromNullableType(type);
-			switch (code)
+			if (!string.IsNullOrEmpty(button.Name))
+				buttonBuilder = buttonBuilder.Name(button.Name);
+
+			// Seemingly can only display icon OR text
+			if (!string.IsNullOrEmpty(button.Icon))
+				buttonBuilder = buttonBuilder.Icon(button.Icon);
+			else if (!string.IsNullOrEmpty(button.Text))
+			{
+				string text = TranslateToProp(button.Text, ViewContext);
+				buttonBuilder = buttonBuilder.Text(text);
+			}
+
+			if (!string.IsNullOrEmpty(button.Title))
+			{
+				string title = TranslateToProp(button.Title, ViewContext);
+				buttonBuilder = buttonBuilder.Hint(title);
+			}
+
+			if (!string.IsNullOrEmpty(button.IsVisibleAction))
+				buttonBuilder = buttonBuilder.Visible(new JS(button.IsVisibleAction));
+			else
+				buttonBuilder = buttonBuilder.Visible(button.IsVisible);
+
+			if (!string.IsNullOrEmpty(button.OnClickAction))
+				buttonBuilder = buttonBuilder.OnClick(button.OnClickAction);
+
+			// Set the class
+			if (!string.IsNullOrEmpty(button.Class))
+				buttonBuilder = buttonBuilder.CssClass(button.Class);
+
+			// Not used currently
+			//.Template("<span>xxx</span>")
+			// if (button.Content != null)
+			//	builder2 = builder2.Template(ToString(button.Content));
+		}
+
+		private Format? ToFormat(GridColumnDataType dataType)
+		{
+			switch (dataType)
 			{
 				default:
-				case PrimitiveTypeCode.None: return null;
+				case GridColumnDataType.String:
+				case GridColumnDataType.Boolean:
+				case GridColumnDataType.Object: return null;
 
-				case PrimitiveTypeCode.Int8:
-				case PrimitiveTypeCode.UInt8:
-				case PrimitiveTypeCode.Int16:
-				case PrimitiveTypeCode.UInt16:
-				case PrimitiveTypeCode.Int32:
-				case PrimitiveTypeCode.UInt32:
-				case PrimitiveTypeCode.Int64:
-				case PrimitiveTypeCode.UInt64:
-				case PrimitiveTypeCode.Float:
-				case PrimitiveTypeCode.Double:
-				case PrimitiveTypeCode.Decimal: return GridColumnDataType.Number;
-				case PrimitiveTypeCode.Enumeration: return GridColumnDataType.String;
+				case GridColumnDataType.Number: return Format.Decimal;
 
-				case PrimitiveTypeCode.Bool: return GridColumnDataType.Boolean;
+				case GridColumnDataType.Date: return Format.ShortDate;
+				case GridColumnDataType.DateTime: return Format.ShortDateShortTime;
 
-				case PrimitiveTypeCode.Char: return GridColumnDataType.String;
-				case PrimitiveTypeCode.String: return GridColumnDataType.String;
-				case PrimitiveTypeCode.Binary: return GridColumnDataType.String;
-				case PrimitiveTypeCode.Base64Binary: return GridColumnDataType.String;
-				case PrimitiveTypeCode.HexBinary: return GridColumnDataType.String;
-				case PrimitiveTypeCode.Guid: return GridColumnDataType.String;
-
-				case PrimitiveTypeCode.Date: return GridColumnDataType.Date;
-
-				case PrimitiveTypeCode.Time:
-				case PrimitiveTypeCode.Timestamp:
-				case PrimitiveTypeCode.Timespan: return GridColumnDataType.DateTime;
-
-				case PrimitiveTypeCode.Object: return GridColumnDataType.Object;
 			}
 		}
 
-		private string RemoveNoname(string value)
+		private string ToCustomFormat(Format format, CultureInfo culture)
 		{
-			// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
-			string[] parts = value.Split('.');
+			switch (format)
+			{
+				// NOT supported
+				default:
+				case Format.Billions:
+				case Format.Currency:
+				case Format.Day:
+				case Format.Millions:
+				case Format.Millisecond:
+				case Format.Month:
+				case Format.MonthAndDay:
+				case Format.MonthAndYear:
+				case Format.Quarter:
+				case Format.QuarterAndYear:
+				case Format.Thousands:
+				case Format.Trillions:
+				case Format.Year:
+				case Format.DayOfWeek:
+				case Format.Hour:
+				case Format.Minute:
+				case Format.Second: return null;
 
-			// If the string starts with noType.Name, remove that first part
-			if (parts.Length > 1 && parts[0].StartsWith("no"))
-				return string.Join('.', parts.Skip(1));
+				// Numbers TODO
+				case Format.Decimal: //var x = culture.GetFormat(typeof(int)); return x.ToString();//.NumberFormat.NumberNegativePattern.ToString();
+				case Format.Exponential: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.FixedPoint: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.LargeNumber: //return culture.NumberFormat.NumberNegativePattern.ToString();
+				case Format.Percent: return null; //return culture.NumberFormat.PercentPositivePattern.ToString();
 
-			return value;
+				// Date and time
+				case Format.LongDate: return culture.DateTimeFormat.LongDatePattern;
+				case Format.LongTime: return culture.DateTimeFormat.LongTimePattern;
+				case Format.ShortDate: return culture.DateTimeFormat.ShortDatePattern;
+				case Format.ShortTime: return culture.DateTimeFormat.ShortTimePattern;
+				case Format.LongDateLongTime: return $"{culture.DateTimeFormat.LongDatePattern} {culture.DateTimeFormat.LongTimePattern}";
+				case Format.ShortDateShortTime: return $"{culture.DateTimeFormat.ShortDatePattern} {culture.DateTimeFormat.ShortTimePattern}";
+			}
+		}
+
+		private string ToCustomFormat(GridColumnDataType dataType)
+		{
+			switch (dataType)
+			{
+				default:
+				case GridColumnDataType.String:
+				case GridColumnDataType.Boolean:
+				case GridColumnDataType.Object: return null;
+
+				case GridColumnDataType.Number: return "##0.00";
+
+				case GridColumnDataType.Date: return "yyyy-MM-dd";
+				case GridColumnDataType.DateTime: return "yyyy-MM-dd HH:mm";
+
+			}
 		}
 
 		private void todo(DataGridBuilder<object> builder)
@@ -450,21 +634,11 @@ namespace Alcazar.Web.Extensibility
 		#region DataGridTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
 		/// <summary>
 		/// Get or set the text message to be used for this popup.
 		/// </summary>
 		[HtmlAttributeName("text")]
 		public string Text { get; set; }
-
-		/// <summary>
-		/// Get or set the title to be used for this popup.
-		/// </summary>
-		[HtmlAttributeName("title")]
-		public string Title { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if the clear button should be shown.
@@ -491,22 +665,10 @@ namespace Alcazar.Web.Extensibility
 		public int SearchTimeout { get; set; }
 
 		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
+		/// Get or set the selection mode of the data grid.
 		/// </summary>
-		[HtmlAttributeName("onchange")]
-		public string OnChangeAction { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange2")]
-		public JS OnChangeAction2 { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the selection changes.
-		/// </summary>
-		[HtmlAttributeName("onchange3")]
-		public RazorBlock OnChangeAction3 { get; set; }
+		[HtmlAttributeName("select")]
+		public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
 
 		/// <summary>
 		/// An expression to be evaluated against the current model.
@@ -514,6 +676,85 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("asp-for")]
 		public ModelExpression For { get; set; }
 
+		/// <summary>
+		/// Get or set the edit mode to be used for this control.
+		/// Defaults to <see cref="GridEditMode.Row"/>
+		/// </summary>
+		[HtmlAttributeName("edit-mode")]
+		public GridEditMode EditMode { get; set; } = GridEditMode.Row;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: tag helper events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the action to be executed when the selection changes in selection mode.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when an editor is preparing.
+		/// </summary>
+		[HtmlAttributeName("editor-preparing")]
+		public string OnEditorPreparing { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a new row is initialised.
+		/// </summary>
+		[HtmlAttributeName("row-init")]
+		public string OnInitNewRow { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserting"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-inserting")]
+		public string OnRowInserting { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been inserted.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnInserted"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-inserted")]
+		public string OnRowInserted { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being updated.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnUpdating"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-updating")]
+		public string OnRowUpdating { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been updated.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.OnUpdated"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-updated")]
+		public string OnRowUpdated { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row is being removed.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.Onemoving"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-removing")]
+		public string OnRowRemoving { get; set; }
+
+		/// <summary>
+		/// Get or set the action to be executed when a row has been removed.
+		/// This method is also called when <see cref="DataSourceTagHelperBase.Onemoved"/> for an array datasource is called.
+		/// </summary>
+		[HtmlAttributeName("row-removed")]
+		public string OnRowRemoved { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the datagrid has been initialised
+		/// </summary>
+		[HtmlAttributeName("initialised")]
+		public string OnInitializedAction { get; set; }
+		
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -521,345 +762,10 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the items to be displayed in the data grid.
-		/// </summary>
-		[HtmlAttributeName("asp-items")]
-		public System.Collections.IEnumerable Items { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the load action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-load")]
-		public string LoadAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the insert action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-insert")]
-		public string InsertAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the update action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-update")]
-		public string UpdateAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the delete action for a web api data source.
-		/// </summary>
-		[HtmlAttributeName("asp-delete")]
-		public string DeleteAction { get; set; }
-
-		/// <summary>
-		/// Get or set the name of the key property of the data record returned by this data source.
-		/// </summary>
-		[HtmlAttributeName("key")]
-		public string Key { get; set; }
-
-		/// <summary>
 		/// Get or set the record type used in this data grid.
 		/// </summary>
 		[HtmlAttributeName("record-type")]
 		public Type RecordType { get; set; }
-
-		/// <summary>
-		/// Get or set parameters used for loading of data records from the data source.
-		/// </summary>
-		[HtmlAttributeName(DictionaryAttributePrefix = "load-param-")]
-		public IDictionary<string, object> LoadParams { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-
-		#endregion
-	}
-
-	[HtmlTargetElement("column", ParentTag = "dx-datagrid", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ColumnTagHelper : TagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper overrides
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-		{
-			// Suppress the HTML of this tag, it is used for DX button generation only
-			output.SuppressOutput();
-
-			// Create the context, so that we can pass them to child tag helpers
-			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
-
-			// Obtain the context, so that we can use it here
-			ColumnContext columnContext = GetContextSafe<ColumnContext>(context);
-
-			string label = TranslateToProp(Label, ViewContext);
-			string name = TranslateToProp(Name, ViewContext);
-
-			// Process children of the column tag, which becomes the column template
-			IHtmlContent content = await output.GetChildContentAsync();
-			string text = ToString(content);
-
-			// Construct the column model
-			ColumnModel button = new ColumnModel
-			{
-				// Column type
-				Type = Type,
-
-				// Data columns
-				Label = label,
-				Name = name,
-				Alignment = Alignment,
-				DataType = DataType,
-				Format = Format,
-				For = For,
-				Content = text,
-				ContentJS = ContentJS,
-				ContentRZ = ContentRZ,
-				ContentNT = ContentNT,
-				IsVisible = IsVisible,
-				IsReadonly = IsReadonly,
-				FilterType = FilterType,
-				FilterOperation = FilterOperation,
-				FilterValue = FilterValue,
-
-				// Command columns
-				CommandType = CommandType,
-				Buttons = buttonContext.Buttons,
-			};
-
-			columnContext.Columns.Add(button);
-		}
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: column type
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the type of the column: data (default), command
-		/// </summary>
-		[HtmlAttributeName("type")]
-		public string Type { get; set; }
-
-		/// <summary>
-		/// Get or set the field name of the column.
-		/// </summary>
-		[HtmlAttributeName("name")]
-		public string Name { get; set; }
-
-		/// <summary>
-		/// Get or set the header label of the column.
-		/// </summary>
-		[HtmlAttributeName("label")]
-		public string Label { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be visible. Defaults to <see langword="true"/>.
-		/// </summary>
-		[HtmlAttributeName("visible")]
-		public bool IsVisible { get; set; } = true;
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: data column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the data type of the column.
-		/// </summary>
-		[HtmlAttributeName("datatype")]
-		public GridColumnDataType? DataType { get; set; }
-
-		/// <summary>
-		/// Get or set the format of the column.
-		/// </summary>
-		[HtmlAttributeName("format")]
-		public Format? Format { get; set; }
-
-		/// <summary>
-		/// Get or set the alignment of the column.
-		/// </summary>
-		[HtmlAttributeName("align")]
-		public HorizontalAlignment Alignment { get; set; } = HorizontalAlignment.Left;
-
-		/// <summary>
-		/// Get or set the FOR expression of the column.
-		/// </summary>
-		[HtmlAttributeName("asp-for")]
-		public ModelExpression For { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be readonly, and not editable when in edit mode.
-		/// </summary>
-		[HtmlAttributeName("readonly")]
-		public bool IsReadonly { get; set; }
-
-		/// <summary>
-		/// Get or set the filter type of this column.
-		/// </summary>
-		[HtmlAttributeName("filter")]
-		public FilterType? FilterType { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter operation of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-op")]
-		public FilterOperations? FilterOperation { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter value of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-value")]
-		public object FilterValue { get; set; }
-
-		/// <summary>
-		/// Get or set the JS cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-js")]
-		public string ContentJS { get; set; }
-
-		/// <summary>
-		/// Get or set the RazorBlock cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-rz")]
-		public RazorBlock ContentRZ { get; set; }
-
-		/// <summary>
-		/// Get or set the named cell template of this column.
-		/// </summary>
-		[HtmlAttributeName("content-nt")]
-		public string ContentNT { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnTagHelper properties: command column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the command column type of this column. Applicable only to command columns.
-		/// </summary>
-		[HtmlAttributeName("command-type")]
-		public GridCommandColumnType CommandType { get; set; }
-
-		/// <summary>
-		/// Get or set the icon of the button.
-		/// </summary>
-		[HtmlAttributeName("icon")]
-		public string Icon { get; set; }
-
-		/// <summary>
-		/// Get or set the text of the button.
-		/// </summary>
-		[HtmlAttributeName("text")]
-		public string Text { get; set; }
-
-		#endregion
-	}
-
-	public class ColumnContext
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnContext properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public IList<ColumnModel> Columns { get; } = new List<ColumnModel>();
-
-		#endregion
-	}
-
-	public class ColumnModel
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: column type
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the type of the column: data (default), command
-		/// </summary>
-		public string Type { get; set; }
-
-		/// <summary>
-		/// Get or set the field name of the column.
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
-		/// Get or set the header label of the column.
-		/// </summary>
-		public string Label { get; set; }
-
-		/// <summary>
-		/// Get or set an indicator if this column should be visible. Defaults to <see langword="true"/>.
-		/// </summary>
-		public bool IsVisible { get; set; }
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: data column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public GridColumnDataType? DataType { get; set; }
-		public Format? Format { get; set; }
-		public HorizontalAlignment Alignment { get; set; }
-		public ModelExpression For { get; set; }
-		public string Content { get; set; }
-
-		/// <summary>
-		/// Get or set the JS cell template of this column.
-		/// </summary>
-		public string ContentJS { get; set; }
-
-		/// <summary>
-		/// Get or set the RazorBlock cell template of this column.
-		/// </summary>
-		public RazorBlock ContentRZ { get; set; }
-
-		/// <summary>
-		/// Get or set the named cell template of this column.
-		/// </summary>
-		public string ContentNT { get; set; }
-
-		public bool IsReadonly { get; set; }
-
-		public FilterType? FilterType { get; set; }
-		public FilterOperations? FilterOperation { get; set; }
-		public object FilterValue { get; set; }
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: command column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the command column type of this column. Applicable only to command columns.
-		/// </summary>
-		public GridCommandColumnType CommandType { get; set; }
-
-		/// <summary>
-		/// Get or set the icon of the column.
-		/// </summary>
-		public string Icon { get; set; }
-
-		/// <summary>
-		/// Get or set the text of the column.
-		/// </summary>
-		public string Text { get; set; }
-
-		/// <summary>
-		/// Get or set a sequence of buttons of the column.
-		/// </summary>
-		public IEnumerable<ButtonModel> Buttons { get; internal set; }
 
 		#endregion
 	}

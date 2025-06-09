@@ -60,6 +60,9 @@ namespace Alcazar.Web.Extensibility
 			// Create the builder for a popup
 			CheckBoxBuilder builder = _htmlHelper.DevExtreme().CheckBox();
 
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ApplyControlContext(context);
+
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
 
@@ -133,8 +136,16 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+			{
+				if (attr.Name != "class")
+					builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+			}
 
+			// Apply the label class
+			if (!string.IsNullOrEmpty(LabelClass))
+				builder.ElementAttr("class", LabelClass);
+
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -187,10 +198,17 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("label-text")]
 		public string LabelText { get; set; }
 
+        /// <summary>
+        /// Get or set the class to be applied to the label.
+        /// The check box control has this property, as the control can include the label.
+        /// </summary>
+        [HtmlAttributeName("label-class")]
+        public string LabelClass { get; set; }
+        
 		/// <summary>
-		/// Get or set an indicator if check box should have three-state behaviour.
-		/// </summary>
-		[HtmlAttributeName("three-state")]
+        /// Get or set an indicator if check box should have three-state behaviour.
+        /// </summary>
+        [HtmlAttributeName("three-state")]
 		public bool ThreeState { get; set; }
 
 		#endregion

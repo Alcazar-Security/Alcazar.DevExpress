@@ -11,7 +11,7 @@ Event handlers
 
 
 ### OnItemClick
-Item controls, such as the dropdown button, which hosts menu items in the dropdown menu, offer an event hendler when the item is clicked.
+Item controls, such as the dropdown button, which hosts menu items in the dropdown menu, offer an event handler when the item is clicked.
 The tag helper attribute is declared as:
 
 ```C#

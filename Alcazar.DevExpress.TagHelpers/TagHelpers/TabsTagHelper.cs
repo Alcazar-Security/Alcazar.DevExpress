@@ -78,7 +78,7 @@ namespace Alcazar.Web.Extensibility
 			else if (sourceContext.Datasource != null)
 			{
 				// Process the (child) data source
-				// Build the data source from the child tag
+				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
@@ -112,9 +112,11 @@ namespace Alcazar.Web.Extensibility
 
 			// Process text-box specific properties
 			//                     .Mask("+1 (X00) 000-0000")
-			builder = builder
-				.OnSelectionChanged("onTabsChanged")
-				.OnInitialized("onTabsInitialized");
+			if (!string.IsNullOrEmpty(OnSelectionChanged))
+				builder = builder.OnSelectionChanged(OnSelectionChanged);
+
+			if (!string.IsNullOrEmpty(OnInitializedAction))
+				builder = builder.OnInitialized(OnInitializedAction);
 
 			// Render the builder (into the content)
 			output.Content.SetHtmlContent(builder);
@@ -137,8 +139,9 @@ namespace Alcazar.Web.Extensibility
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value.ToString());
+				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
 
+			// No option for attributes on the input field here
 			return builder;
 		}
 
@@ -169,6 +172,18 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("selected-index")]
 		public int SelectedIndex { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the tabs are initialised.
+		/// </summary>
+		[HtmlAttributeName("initialized")]
+		public string OnInitializedAction { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the tab selection has changed.
+		/// </summary>
+		[HtmlAttributeName("selection-changed")]
+		public string OnSelectionChanged { get; set; }
 
 		/// <summary>
 		/// Get or set the items of this dropdown box.

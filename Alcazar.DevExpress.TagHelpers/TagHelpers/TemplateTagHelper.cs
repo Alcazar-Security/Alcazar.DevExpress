@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Razor.TagHelpers;
+﻿using DevExtreme.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
 using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
@@ -44,6 +48,71 @@ namespace Alcazar.Web.Extensibility
 			itemContext.ItemTemplateContent = await output.GetChildContentAsync();
 			output.SuppressOutput();
 		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// The <see cref="TemplateTagHelper"/> type implements a tag helper for DX controls which allow templates.
+	/// Templates are custom HTML content of the control. They can contain embedded Ruby (erb) placeholders.
+	/// </summary>
+	[HtmlTargetElement("dx-namedtemplate", TagStructure = TagStructure.NormalOrSelfClosing)]
+	public class NamedTemplateTagHelper : TagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region NamedTemplateTagHelper construction
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		public NamedTemplateTagHelper(IHtmlHelper htmlHelper)
+		{
+			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
+		}
+
+		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region NamedTemplateTagHelper overrides
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+		{
+			_htmlHelper.Contextualize(ViewContext);
+
+			using (IDisposable disposable = _htmlHelper.DevExtreme().NamedTemplate(Name))
+			{
+				// Cant do, internal!
+				// NamedTemplate namedTemplate = disposable as NamedTemplate;
+
+				var templateContent = await output.GetChildContentAsync();
+
+				// Cant do, no way to set the content
+				// namedTemplate.Content = templateContent;
+			}
+
+			output.SuppressOutput();
+		}
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region NamedTemplateTagHelper properties: data source
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the view context.
+		/// </summary>
+		[ViewContext]
+		[HtmlAttributeNotBound]
+		public ViewContext ViewContext { get; set; }
+
+
+		/// <summary>
+		/// Get or set the name of this named template.
+		/// </summary>
+		[HtmlAttributeName("name")]
+		public string Name { get; set; }
 
 		#endregion
 	}

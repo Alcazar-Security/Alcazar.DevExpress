@@ -105,6 +105,9 @@ namespace Alcazar.Web.Extensibility
 			// Event handlers
 			builder = ItemClick(builder);
 
+			// TODO Text works best for topline dropdown buttons
+			builder = builder.StylingMode(ButtonStylingMode.Text);
+
 			// Render the builder
 			IHtmlContent result = builder;
 			output.Content.SetHtmlContent(result);
