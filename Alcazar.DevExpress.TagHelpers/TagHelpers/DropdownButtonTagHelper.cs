@@ -96,22 +96,6 @@ namespace Alcazar.Web.Extensibility
 			else if (Items != null)
 				builder = builder.DataSource(Items);
 
-			if (itemsContext.Items != null)
-			{
-				// If we have items (from the context), set the convention properties to what the default model offers
-				// TODO we could create *-expr properties to override those
-				builder = builder.Items(config =>
-				{
-					config.Add()
-						.Text("text")
-						.Icon("icon")
-						.Badge("badge")
-						//.Disabled(bool)
-						.Template("template");
-						//.OnClick("dx_dropdown_itemclick");
-				});
-			}
-
 			// Process dropdown-button specific properties
 			if (!string.IsNullOrEmpty(KeyExpression))
 				builder = builder.KeyExpr(KeyExpression);

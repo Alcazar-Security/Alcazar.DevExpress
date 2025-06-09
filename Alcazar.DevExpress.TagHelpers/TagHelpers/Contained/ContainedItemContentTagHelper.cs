@@ -56,14 +56,6 @@ namespace Alcazar.Web.Extensibility
 				href = href,
 			};
 
-			// Process children of the item tag, it may contain the text
-			TagHelperContent content = await output.GetChildContentAsync();
-			if (!content.IsEmptyOrWhiteSpace)
-			{
-				// Overwrite the text with our inner content
-				item.Text = ToString(content);
-			}
-
 			itemsContext.Items.Add(item);
 
 			output.SuppressOutput();
