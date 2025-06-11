@@ -1,4 +1,5 @@
-﻿using Amaqele.Common.Types;
+﻿using Amaqele.Common.Base;
+using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using DevExtreme.AspNet.Mvc.Factories;
@@ -114,7 +115,24 @@ namespace Alcazar.Web.Extensibility
 
 			try
 			{
-				object value = For.ModelExplorer.Container.ModelType.InvokeMember(Name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty, null, For.ModelExplorer.Container.Model, null);
+				var simple = For.ModelExplorer.GetSimpleDisplayText();
+
+				Type modelType = For.ModelExplorer.Container.ModelType;
+				object value = For.ModelExplorer.Container.Model;
+
+				string[] path = Name.SplitSafe('.');
+				foreach (var name in path)
+				{
+					if (value == null || modelType == null)
+						break;
+
+					value = modelType.InvokeMember(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty, null, value, null);
+					modelType = value?.GetType();
+				}
+
+				if (simple as string != value as string)
+				{ }
+
 				return value;
 			}
 			catch
