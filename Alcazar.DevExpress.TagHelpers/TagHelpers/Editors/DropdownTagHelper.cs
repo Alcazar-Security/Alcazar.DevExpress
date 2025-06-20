@@ -229,7 +229,7 @@ namespace Alcazar.Web.Extensibility
 				// Build a id/text datagrid template, with multiple selection
 				//IHtmlContent simpleTemplate = GetSimpleTemplate();
 				//string content = ToString(simpleTemplate);
-				builder = builder.ContentTemplate(new TemplateName("Hannes2"));
+				//builder = builder.ContentTemplate(new TemplateName("Hannes2"));
 			}
 
 			return builder;

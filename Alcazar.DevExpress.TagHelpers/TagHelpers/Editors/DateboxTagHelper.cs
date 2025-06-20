@@ -85,17 +85,20 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Disabled(true);
 			}
 
-			// Process text-area specific properties
-			// TODO culture/app specific format
-			// TODO editing of time component
-			// builder = builder.DisplayFormat(Format.ShortDate);
-			//builder = builder.DateSerializationFormat();
-			switch (Type)
+            // Process text-area specific properties
+            // TODO culture/app specific format
+            // TODO editing of time component
+            // builder = builder.DisplayFormat(Format.ShortDate);
+            //builder = builder.DateSerializationFormat();
+
+			// Setr the type: date, time, datetime
+            builder = builder.Type(Type);
+            switch (Type)
 			{
 				// Default is the fill date/time, so that we always see the time component, even if it is 00:00:00
 				default:
 				case DateBoxType.DateTime:
-					builder = builder.DisplayFormat("yyyy-MM-dd HH:mm:ss");
+                    builder = builder.DisplayFormat("yyyy-MM-dd HH:mm:ss");
 					break;
 
 				// Expressly requesting date only
@@ -109,8 +112,16 @@ namespace Alcazar.Web.Extensibility
 					break;
 			}
 
-			// Render the builder (into the content)
-			Render(context, output.Content, builder);
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
+
+            if (!string.IsNullOrEmpty(OnValueChanged))
+                builder = builder.OnValueChanged(OnValueChanged);
+
+            //builder = builder.ActiveStateEnabled(OnChange);
+
+            // Render the builder (into the content)
+            Render(context, output.Content, builder);
 		}
 
 		private DateBoxBuilder ProcessCommon(DateBoxBuilder builder)
@@ -175,6 +186,18 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("value")]
 		public DateTime? Value { get; set; }
 
-		#endregion
-	}
+        /// <summary>
+        /// Get or set the Javascript method to be called when the value in the control changes.
+        /// </summary>
+        [HtmlAttributeName("change")]
+        public string OnChange { get; set; }
+
+        /// <summary>
+        /// Get or set the Javascript method to be called when the value in the control changes.
+        /// </summary>
+        [HtmlAttributeName("value-changed")]
+        public string OnValueChanged { get; set; }
+
+        #endregion
+    }
 }

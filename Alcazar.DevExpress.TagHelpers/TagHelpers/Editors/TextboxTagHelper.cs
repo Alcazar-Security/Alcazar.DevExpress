@@ -121,7 +121,7 @@ namespace Alcazar.Web.Extensibility
 			if (AllowClear)
 				builder = builder.ShowClearButton(true);
 
-			builder = builder.Mode(Mode);
+            builder = builder.Mode(Mode);
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
@@ -167,8 +167,10 @@ namespace Alcazar.Web.Extensibility
 			
 			if (value != null)
 				builder = builder.Value(value.ToString());
-			
-			if (!string.IsNullOrEmpty(Placeholder))
+			else if (!string.IsNullOrEmpty(ValueJS))
+                builder = builder.Value(new JS(ValueJS));
+
+            if (!string.IsNullOrEmpty(Placeholder))
 			{
 				string placeholder = TranslateToProp(Placeholder, ViewContext);
 				builder = builder.Placeholder(placeholder);
@@ -200,10 +202,16 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
 
+        /// <summary>
+        /// Get or set the JS function which provides the value to be displayed in this control.
+        /// </summary>
+        [HtmlAttributeName("value-js")]
+        public string ValueJS { get; set; }
+        
 		/// <summary>
-		/// Get or set an indicator if the clear button should be shown. Defaults to true.
-		/// </summary>
-		[HtmlAttributeName("clear")]
+        /// Get or set an indicator if the clear button should be shown. Defaults to true.
+        /// </summary>
+        [HtmlAttributeName("clear")]
 		public bool AllowClear { get; set; } = true;
 
 		/// <summary>

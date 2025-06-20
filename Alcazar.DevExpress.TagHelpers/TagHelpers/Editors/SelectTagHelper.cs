@@ -153,9 +153,29 @@ namespace Alcazar.Web.Extensibility
 					builder = builder.SearchExpr(SearchExpression);
 			}
 
-			// This setValue thing is really wierd.
-			// The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
-			if (!string.IsNullOrEmpty(SetValueJS))
+            // Item template
+            if (!string.IsNullOrWhiteSpace(ItemTemplate))
+                builder = builder.ItemTemplate(ItemTemplate);
+            else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
+                builder = builder.ItemTemplate(new JS(ItemTemplateJS));
+            else if (ItemTemplateRZ != null)
+                builder = builder.ItemTemplate(ItemTemplateRZ);
+            else if (ItemTemplateNT != null)
+                builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
+            
+			// Field template
+            if (!string.IsNullOrWhiteSpace(FieldTemplate))
+                builder = builder.FieldTemplate(FieldTemplate);
+            else if (!string.IsNullOrWhiteSpace(FieldTemplateJS))
+                builder = builder.FieldTemplate(new JS(FieldTemplateJS));
+            else if (FieldTemplateRZ != null)
+                builder = builder.FieldTemplate(FieldTemplateRZ);
+            else if (FieldTemplateNT != null)
+                builder = builder.FieldTemplate(new TemplateName(FieldTemplateNT));
+
+            // This setValue thing is really wierd.
+            // The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
+            if (!string.IsNullOrEmpty(SetValueJS))
 				builder = builder.Option("setValue", new JS(SetValueJS));
 
 			if (!string.IsNullOrEmpty(ValueExpression))
@@ -360,17 +380,71 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("timeout")]
 		public int SearchTimeout { get; set; }
 
-		#endregion
+        #endregion
 
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region SelectBoxTagHelper events: not inherited
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		// If any of these events are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+        #region SelectBoxTagHelper properties: templates
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		/// <summary>
-		/// Get or set the Javascript method to be called when the selection in the control changes.
-		/// </summary>
-		[HtmlAttributeName("change")]
+        /// <summary>
+        /// Get or set the (string) field template of this select control.
+        /// </summary>
+        [HtmlAttributeName("field-template")]
+        public string FieldTemplate { get; set; }
+
+        /// <summary>
+        /// Get or set the JS field template of this select control.
+        /// </summary>
+        [HtmlAttributeName("field-template-js")]
+        public string FieldTemplateJS { get; set; }
+
+        /// <summary>
+        /// Get or set the RazorBlock field template of this select control.
+        /// </summary>
+        [HtmlAttributeName("field-template-rz")]
+        public RazorBlock FieldTemplateRZ { get; set; }
+
+        /// <summary>
+        /// Get or set the named field template of this select control.
+        /// </summary>
+        [HtmlAttributeName("field-template-nt")]
+        public string FieldTemplateNT { get; set; }
+
+        /// <summary>
+        /// Get or set the (string) item template of this select control.
+        /// </summary>
+        [HtmlAttributeName("item-template")]
+        public string ItemTemplate { get; set; }
+
+        /// <summary>
+        /// Get or set the JS item template of this select control.
+        /// </summary>
+        [HtmlAttributeName("item-template-js")]
+        public string ItemTemplateJS { get; set; }
+
+        /// <summary>
+        /// Get or set the RazorBlock item template of this select control.
+        /// </summary>
+        [HtmlAttributeName("item-template-rz")]
+        public RazorBlock ItemTemplateRZ { get; set; }
+
+        /// <summary>
+        /// Get or set the named item template of this select control.
+        /// </summary>
+        [HtmlAttributeName("item-template-nt")]
+        public string ItemTemplateNT { get; set; }
+
+        #endregion
+
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+        #region SelectBoxTagHelper events: not inherited
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+        // If any of these events are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
+
+        /// <summary>
+        /// Get or set the Javascript method to be called when the selection in the control changes.
+        /// </summary>
+        [HtmlAttributeName("change")]
 		public string OnChange { get; set; }
 
 		/// <summary>
