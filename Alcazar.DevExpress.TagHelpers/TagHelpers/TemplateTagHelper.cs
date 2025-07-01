@@ -21,7 +21,7 @@ namespace Alcazar.Web.Extensibility
 		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
 		{
 			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemContext = GetContextSafe<ItemsChildrenContext>(context);
+			ItemContext itemContext = GetContextSafe<ItemContext>(context);
 
 			itemContext.TemplateContent = await output.GetChildContentAsync();
 			output.SuppressOutput();
@@ -43,8 +43,8 @@ namespace Alcazar.Web.Extensibility
 
 		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
 		{
-			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemContext = GetContextSafe<ItemsChildrenContext>(context);
+            // Process the card-actions tag and remember the content, so that the parent can inject it into the header
+            ItemContext itemContext = GetContextSafe<ItemContext>(context);
 			itemContext.ItemTemplateContent = await output.GetChildContentAsync();
 			output.SuppressOutput();
 		}

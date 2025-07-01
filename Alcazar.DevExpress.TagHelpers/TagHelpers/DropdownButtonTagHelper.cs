@@ -75,7 +75,7 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Icon(icon);
 
 			// Create the context, so that we can pass it to child tag helpers
-			ItemsChildrenContext itemsContext = GetOrCreateContext<ItemsChildrenContext>(context);
+			ItemContext itemsContext = GetOrCreateContext<ItemContext>(context);
 
 			// Process children of the card tag, the header, footer, and my body will need them 
 			IHtmlContent content = await output.GetChildContentAsync();

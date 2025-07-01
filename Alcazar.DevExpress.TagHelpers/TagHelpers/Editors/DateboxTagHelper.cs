@@ -164,8 +164,14 @@ namespace Alcazar.Web.Extensibility
 				// Setting the value as direct date
 				builder = builder.Value(dateValue1);
 			}
+            else if (value is TimeSpan timespan1)
+            {
+				// Setting the value as direct date
+				DateTime dateValue2 = new DateTime(timespan1.Ticks);
+                builder = builder.Value(dateValue2);
+            }
 
-			return builder;
+            return builder;
 		}
 
 		#endregion

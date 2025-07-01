@@ -177,10 +177,13 @@ namespace Alcazar.Web.Extensibility
                 });
             }
 
+            // Data grid events
+            // Content events
 			if (!string.IsNullOrEmpty(OnContentReady))
 				builder = builder.OnContentReady(OnContentReady);
 
-			if (!string.IsNullOrEmpty(OnInitNewRow))
+            // CRUD events
+            if (!string.IsNullOrEmpty(OnInitNewRow))
 				builder = builder.OnInitNewRow(OnInitNewRow);
 			if (!string.IsNullOrEmpty(OnRowInserting))
                 builder = builder.OnRowInserting(OnRowInserting);
@@ -197,8 +200,18 @@ namespace Alcazar.Web.Extensibility
             if (!string.IsNullOrEmpty(OnRowRemoved))
                 builder = builder.OnRowRemoved(OnRowRemoved);
 
+            // CRUD events
+            if (!string.IsNullOrEmpty(OnEditorPrepared))
+                builder = builder.OnEditorPrepared(OnEditorPrepared);
+            if (!string.IsNullOrEmpty(OnEditingStart))
+                builder = builder.OnEditingStart(OnEditingStart);
+
+            if (!string.IsNullOrEmpty(OnSaving))
+                builder = builder.OnSaving(OnSaving);
+            if (!string.IsNullOrEmpty(OnSaved))
+                builder = builder.OnSaved(OnSaved);
+
             //builder = builder.OnCellClick("onCellClick");
-            //builder = builder.OnContentReady("onContentReady");
             // builder = builder.OnOptionChanged("onOptionChanged");
 
             // Create the context, so that we can pass it to child tag helpers
@@ -224,7 +237,14 @@ namespace Alcazar.Web.Extensibility
             switch (DatasourceType)
             {
                 case DataSourceTypes.Mvc:
-                    builder = builder.RemoteOperations(c => { c.Filtering(true); });
+                    builder = builder.RemoteOperations(c => 
+                    {
+                        c.Filtering(true);              // MVC always does remote filtering
+                        c.Grouping(true);               // MVC never does remote sorting
+                        c.Paging(IsRemotePaging);       // MVC might do remote paging
+                        c.Sorting(false);               // MVC never does remote sorting
+                    });
+
                     break;
             }
 
@@ -305,6 +325,7 @@ namespace Alcazar.Web.Extensibility
 
         private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
         {
+            // Column header
             if (column.For != null)
             {
                 // If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ due to a [JsonProperty] attribute
@@ -373,6 +394,10 @@ namespace Alcazar.Web.Extensibility
                 builder = builder
                     .AllowFiltering(false);
             }
+
+            // Column and grid layout
+            if (!string.IsNullOrEmpty(column.Width))
+                builder = builder.Width(column.Width);
 
             // Editing of a column
             if (column.LookupDatasource != null)
@@ -452,6 +477,8 @@ namespace Alcazar.Web.Extensibility
             else if (!string.IsNullOrEmpty(column.ContentNT))
                 builder = builder.CellTemplate(new TemplateName(column.ContentNT));
 
+            // Column events
+            // There are no events on the column
             return columns;
         }
 
@@ -731,7 +758,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region DataGridTagHelper properties: madter/detail
+		#region DataGridTagHelper properties: master/detail
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -849,11 +876,41 @@ namespace Alcazar.Web.Extensibility
         [HtmlAttributeName("initialised")]
         public string OnInitializedAction { get; set; }
 
+        /// <summary>
+        /// Get or set the JS method to be executed when a data grid editor has been prepared.
+        /// </summary>
+        [HtmlAttributeName("editor-prepared")]
+        public string OnEditorPrepared { get; set; }
+
+        /// <summary>
+        /// Get or set the JS method to be executed when editing starts.
+        /// </summary>
+        [HtmlAttributeName("editing-start")]
+        public string OnEditingStart { get; set; }
+
+        /// <summary>
+        /// Get or set the JS method to be executed when saving.
+        /// </summary>
+        [HtmlAttributeName("saving")]
+        public string OnSaving { get; set; }
+
+        /// <summary>
+        /// Get or set the JS method to be executed when saving.
+        /// </summary>
+        [HtmlAttributeName("saved")]
+        public string OnSaved { get; set; }
+
         #endregion
 
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
         #region DataGridTagHelper properties: data source
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+        /// <summary>
+        /// Get or set if remote paging should be used. Not all data source types will adhere to thi parameter.
+        /// </summary>
+        [HtmlAttributeName("remote-paging")]
+        public bool IsRemotePaging { get; set; }
 
         /// <summary>
         /// Get or set the record type used in this data grid.

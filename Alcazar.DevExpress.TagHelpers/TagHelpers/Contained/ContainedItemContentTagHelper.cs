@@ -10,32 +10,13 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Alcazar.Web.Extensibility
 {
-	public class ItemContentTagHelperBase : TagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemContentTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
-		/// <summary>
-		/// Get or set the ID of this item. Not used anywhere currently.
-		/// </summary>
-		[HtmlAttributeName("id")]
-		public string ID { get; set; }
-
-		#endregion
-	}
-
 	/// <summary>
 	/// The <see cref="ItemContentTagHelper"/> tag helper implements an item content with a value, text, and other properties.
-	/// It can be universally used, but is currently only used for radio buttons within a <see cref="DropdownButtonTagHelper"/>.
-	/// TODO align with ContainedItemTagHelper.
+	/// It can be universally used, but is currently only used for menu items within a <see cref="DropdownButtonTagHelper"/>.
+	/// OBsolete, aligned with ContainedItemTagHelper.
 	/// </summary>
-	[HtmlTargetElement("item-content", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ItemContentTagHelper : ItemContentTagHelperBase
+	[HtmlTargetElement("item-content_", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
+	public class ItemContentTagHelper_ : ContainedItemTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ItemContentTagHelper overrides
@@ -44,16 +25,16 @@ namespace Alcazar.Web.Extensibility
 		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
 		{
 			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemsContext = GetContextSafe<ItemsChildrenContext>(context);
+			ItemContext itemsContext = GetContextSafe<ItemContext>(context);
 
-			MenuItemModel item = new MenuItemModel
-			{
+			ItemModel item = new ItemModel
+            {
 				ID = ID,
 				Value = TranslateToProp(Value, ViewContext),
 				Text = TranslateToProp(Text, ViewContext),
-				icon = TranslateToProp(icon, ViewContext),
-				badge = badge,
-				href = href,
+				Icon = TranslateToProp(icon, ViewContext),
+				Badge = badge,
+				Href = href,
 			};
 
 			itemsContext.Items.Add(item);
@@ -101,43 +82,7 @@ namespace Alcazar.Web.Extensibility
 	}
 
 
-	[HtmlTargetElement("item-separator", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ItemSeparatorTagHelper : ItemContentTagHelperBase
-	{
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemSeparatorTagHelper overrides
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-		{
-			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
-			ItemsChildrenContext itemsContext = GetContextSafe<ItemsChildrenContext>(context);
-
-			MenuSeparatorModel item = new MenuSeparatorModel
-			{
-				ID = ID,
-				template = "<hr style='margin: unset' />",
-			};
-
-			itemsContext.Items.Add(item);
-
-			output.SuppressOutput();
-		}
-
-		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ItemSeparatorTagHelper properties
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		public bool sep { get; set; } = true;
-		public bool disabled { get; set; } = true;
-		public string template { get; set; }
-
-		#endregion
-	}
-
-	public class ItemsChildrenContext
+	public class ItemsChildrenContext_
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ItemsChildrenContext properties
@@ -145,12 +90,12 @@ namespace Alcazar.Web.Extensibility
 
 		public IHtmlContent TemplateContent { get; set; }
 		public IHtmlContent ItemTemplateContent { get; set; }
-		public IList<ItemModelBase> Items { get; } = new List<ItemModelBase>();
+		public IList<ItemModelBase_> Items { get; } = new List<ItemModelBase_>();
 
 		#endregion
 	}
 
-	public class ItemModelBase
+	public class ItemModelBase_
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ItemModelBase properties
@@ -164,7 +109,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 	}
 
-	public class MenuItemModel : ItemModelBase
+	public class MenuItemModel_ : ItemModelBase_
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region MenuItemModel properties
@@ -198,7 +143,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 	}
 
-	public class MenuSeparatorModel : ItemModelBase
+	public class MenuSeparatorModel_ : ItemModelBase_
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region MenuSeparatorModel properties

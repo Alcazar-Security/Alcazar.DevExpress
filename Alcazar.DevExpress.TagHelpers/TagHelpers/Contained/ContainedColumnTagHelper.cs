@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -61,6 +62,7 @@ namespace Alcazar.Web.Extensibility
 				Name = name,
 				Alignment = Alignment,
 				DataType = DataType,
+				Width = Width,
 				Format = Format,
 				CustomFormat = CustomFormat,
 				For = For,
@@ -153,10 +155,16 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("datatype")]
 		public GridColumnDataType? DataType { get; set; }
 
+        /// <summary>
+        /// Get or set the width of this column.
+        /// </summary>
+        [HtmlAttributeName("width")]
+        public string Width { get; set; }
+        
 		/// <summary>
-		/// Get or set the format of the column.
-		/// </summary>
-		[HtmlAttributeName("format")]
+        /// Get or set the format of the column.
+        /// </summary>
+        [HtmlAttributeName("format")]
 		public Format? Format { get; set; }
 
 		/// <summary>
@@ -342,12 +350,17 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		public string IsVisibleAction { get; set; }
 
-		#endregion
+        #endregion
 
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ColumnModel properties: data column
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+        #region ColumnModel properties: data column
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
+        /// <summary>
+        /// Get or set the width of this column.
+        /// </summary>
+        public string Width { get; set; }
+        
 		public GridColumnDataType? DataType { get; set; }
 
 		/// <summary>
