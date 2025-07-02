@@ -90,217 +90,183 @@ namespace Alcazar.Web.Extensibility
         /// This method is dynamically generated with a generic type argument and then executed.
         /// </summary>
         private async Task<IHtmlContent> BuildDataGridAsync<T>(TagHelperContext context, TagHelperOutput output)
-        {
-            // Create the builder for a popup
-            DataGridBuilder<T> builder = _htmlHelper.DevExtreme().DataGrid<T>();
+		{
+			// Create the builder for a popup
+			DataGridBuilder<T> builder = _htmlHelper.DevExtreme().DataGrid<T>();
 
-            // Process common functionality for editors
-            builder = ProcessCommon(builder);
+			// Process common functionality for editors
+			builder = ProcessCommon(builder);
 
-            // Process non-tag attriubtes
-            builder = ProcessAttributes(builder, output.Attributes);
+			// Process non-tag attriubtes
+			builder = ProcessAttributes(builder, output.Attributes);
 
-            builder = builder.AllowColumnReordering(true);
-            builder = builder.ShowBorders(false);
-            builder = builder.ShowRowLines(true);
-            builder = builder.ShowColumnLines(false);
-            builder = builder.ShowColumnHeaders(true);
-            builder = builder.ColumnAutoWidth(true);
-            //builder = builder.ColumnWidth(Mode.Auto);
-            //builder = builder.Scrolling(s => s
-            //	.ColumnRenderingMode(GridColumnRenderingMode.Standard)
-            //	.Mode(GridScrollingMode.Infinite)
-            //	.ShowScrollbar(ShowScrollbarMode.OnHover));
-            //builder = builder.RootOnly(true);
-            
-            // Filter
-            builder = builder.FilterRow(f => f.Visible(IsFilterVisible));
-            builder = builder.HeaderFilter(f => f.Visible(IsHeaderFilterVisible));
-            //builder = builder.FilterBuilder(fb => fb.Option("", ""));
+			builder = builder.AllowColumnReordering(true);
+			builder = builder.ShowBorders(false);
+			builder = builder.ShowRowLines(true);
+			builder = builder.ShowColumnLines(false);
+			builder = builder.ShowColumnHeaders(true);
+			builder = builder.ColumnAutoWidth(true);
+			//builder = builder.ColumnWidth(Mode.Auto);
+			//builder = builder.Scrolling(s => s
+			//	.ColumnRenderingMode(GridColumnRenderingMode.Standard)
+			//	.Mode(GridScrollingMode.Infinite)
+			//	.ShowScrollbar(ShowScrollbarMode.OnHover));
+			//builder = builder.RootOnly(true);
 
-            builder = builder.Paging(p => p.PageSize(50));
-            builder = builder.Pager(p => p
-                .DisplayMode(GridPagerDisplayMode.Adaptive)
-                .ShowPageSizeSelector(true)
-                .ShowNavigationButtons(true)
-                .AllowedPageSizes(new[] { 25, 50, 100, 250, 500 }));
+			// Filter
+			builder = builder.FilterRow(f => f.Visible(IsFilterVisible));
+			builder = builder.HeaderFilter(f => f.Visible(IsHeaderFilterVisible));
+			//builder = builder.FilterBuilder(fb => fb.Option("", ""));
 
-            // Process selection options
-            if (SelectionMode != SelectionMode.None)
-            {
-                // Selection always sets hover state
-                builder = builder.HoverStateEnabled(true);
+			builder = builder.Paging(p => p.PageSize(50));
+			builder = builder.Pager(p => p
+				.DisplayMode(GridPagerDisplayMode.Adaptive)
+				.ShowPageSizeSelector(true)
+				.ShowNavigationButtons(true)
+				.AllowedPageSizes(new[] { 25, 50, 100, 250, 500 }));
 
-                // Set the selection mode
-                // TODO there are a few other options to choose
-                builder = builder.Selection(s => s.Mode(SelectionMode));
+			// Process selection options
+			if (SelectionMode != SelectionMode.None)
+			{
+				// Selection always sets hover state
+				builder = builder.HoverStateEnabled(true);
 
-                // Set the JS function to execute when the selection changes
-                if (!string.IsNullOrEmpty(OnSelectionChanged))
-                    builder = builder.OnSelectionChanged(OnSelectionChanged);
-            }
+				// Set the selection mode
+				// TODO there are a few other options to choose
+				builder = builder.Selection(s => s.Mode(SelectionMode));
 
-            // Process editing options
-            builder = builder.Editing(editing =>
-            {
-                // Allow editing options of the corresponding actions are set
-                editing
-                    .Mode(EditMode)
-                    .UseIcons(true);
+				// Set the JS function to execute when the selection changes
+				if (!string.IsNullOrEmpty(OnSelectionChanged))
+					builder = builder.OnSelectionChanged(OnSelectionChanged);
+			}
 
-                if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
-                    editing.AllowAdding(true);
-                if (!string.IsNullOrEmpty(UpdateAction) || !string.IsNullOrEmpty(OnUpdating) || !string.IsNullOrEmpty(OnUpdated))
-                    editing.AllowUpdating(true);
-                if (!string.IsNullOrEmpty(DeleteAction) || !string.IsNullOrEmpty(OnRemoving) || !string.IsNullOrEmpty(OnRemoved))
-                    editing.AllowDeleting(true);
-            });
+			// Process editing options
+			builder = builder.Editing(editing =>
+			{
+				// Allow editing options of the corresponding actions are set
+				editing
+					.Mode(EditMode)
+					.UseIcons(true);
 
-            // Master/detail
-            bool isDetail = !string.IsNullOrEmpty(DetailTemplate) || !string.IsNullOrEmpty(DetailTemplateJS) || !string.IsNullOrEmpty(DetailTemplateNT) || DetailTemplateRZ != null;
-            if (isDetail)
-            {
-                builder = builder.MasterDetail(md =>
-                {
-                    md = md.Enabled(IsDetailEnabled);
+				if (!string.IsNullOrEmpty(InsertAction) || !string.IsNullOrEmpty(OnInserting) || !string.IsNullOrEmpty(OnInserted))
+					editing.AllowAdding(true);
+				if (!string.IsNullOrEmpty(UpdateAction) || !string.IsNullOrEmpty(OnUpdating) || !string.IsNullOrEmpty(OnUpdated))
+					editing.AllowUpdating(true);
+				if (!string.IsNullOrEmpty(DeleteAction) || !string.IsNullOrEmpty(OnRemoving) || !string.IsNullOrEmpty(OnRemoved))
+					editing.AllowDeleting(true);
+			});
 
-                    if (!string.IsNullOrEmpty(DetailTemplate))
-                        md = md.Template(DetailTemplate);
-                    else if (!string.IsNullOrEmpty(DetailTemplateJS))
-                        md = md.Template(new JS(DetailTemplateJS));
-                    else if (DetailTemplateRZ != null)
-                        md = md.Template(DetailTemplateRZ);
-                    else if (!string.IsNullOrEmpty(DetailTemplateNT))
-                        md = md.Template(new TemplateName(DetailTemplateNT));
+			// Master/detail
+			bool isDetail = !string.IsNullOrEmpty(DetailTemplate) || !string.IsNullOrEmpty(DetailTemplateJS) || !string.IsNullOrEmpty(DetailTemplateNT) || DetailTemplateRZ != null;
+			if (isDetail)
+			{
+				builder = builder.MasterDetail(md =>
+				{
+					md = md.Enabled(IsDetailEnabled);
 
-                    md = md.AutoExpandAll(IsAutoExpandAll);
-                });
-            }
+					if (!string.IsNullOrEmpty(DetailTemplate))
+						md = md.Template(DetailTemplate);
+					else if (!string.IsNullOrEmpty(DetailTemplateJS))
+						md = md.Template(new JS(DetailTemplateJS));
+					else if (DetailTemplateRZ != null)
+						md = md.Template(DetailTemplateRZ);
+					else if (!string.IsNullOrEmpty(DetailTemplateNT))
+						md = md.Template(new TemplateName(DetailTemplateNT));
 
-            // Data grid events
-            // Content events
-			if (!string.IsNullOrEmpty(OnContentReady))
-				builder = builder.OnContentReady(OnContentReady);
+					md = md.AutoExpandAll(IsAutoExpandAll);
+				});
+			}
 
-            // CRUD events
-            if (!string.IsNullOrEmpty(OnInitNewRow))
-				builder = builder.OnInitNewRow(OnInitNewRow);
-			if (!string.IsNullOrEmpty(OnRowInserting))
-                builder = builder.OnRowInserting(OnRowInserting);
-            if (!string.IsNullOrEmpty(OnRowInserted))
-                builder = builder.OnRowInserted(OnRowInserted);
+			// Data grid events
+			builder = ProcessEvents(builder);
 
-            if (!string.IsNullOrEmpty(OnRowUpdating))
-                builder = builder.OnRowUpdating(OnRowUpdating);
-            if (!string.IsNullOrEmpty(OnRowUpdated))
-                builder = builder.OnRowUpdated(OnRowUpdated);
+			// Create the context, so that we can pass it to child tag helpers
+			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
+			ColumnsContext columnContext = GetOrCreateContext<ColumnsContext>(context);
 
-            if (!string.IsNullOrEmpty(OnRowRemoving))
-                builder = builder.OnRowRemoving(OnRowRemoving);
-            if (!string.IsNullOrEmpty(OnRowRemoved))
-                builder = builder.OnRowRemoved(OnRowRemoved);
+			// Process children of the card tag, the header, footer, and my body will need them 
+			IHtmlContent content = await output.GetChildContentAsync();
 
-            // CRUD events
-            if (!string.IsNullOrEmpty(OnEditorPrepared))
-                builder = builder.OnEditorPrepared(OnEditorPrepared);
-            if (!string.IsNullOrEmpty(OnEditingStart))
-                builder = builder.OnEditingStart(OnEditingStart);
+			// Set the data source
+			if (sourceContext.Datasource != null)
+			{
+				// First preference, process the (child) data source
+				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
+			}
+			else
+			{
+				// Second preference, process the datasource from my own properties
+				builder = builder.DataSource(d => BuildDatasource(d));
+			}
 
-            if (!string.IsNullOrEmpty(OnSaving))
-                builder = builder.OnSaving(OnSaving);
-            if (!string.IsNullOrEmpty(OnSaved))
-                builder = builder.OnSaved(OnSaved);
+			// Post process, based on the data source
+			switch (DatasourceType)
+			{
+				case DataSourceTypes.Mvc:
+					builder = builder.RemoteOperations(c =>
+					{
+						c.Filtering(true);              // MVC always does remote filtering
+						c.Grouping(true);               // MVC never does remote sorting
+						c.Paging(IsRemotePaging);       // MVC might do remote paging
+						c.Sorting(false);               // MVC never does remote sorting
+					});
 
-            //builder = builder.OnCellClick("onCellClick");
-            // builder = builder.OnOptionChanged("onOptionChanged");
+					break;
+			}
 
-            // Create the context, so that we can pass it to child tag helpers
-            DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
-            ColumnsContext columnContext = GetOrCreateContext<ColumnsContext>(context);
+			// Add columns, if we have some
+			if (columnContext.Columns.Any())
+			{
+				builder = builder.Columns(async columns =>
+				{
+					foreach (ColumnModel column in columnContext.Columns)
+					{
+						switch (column.Type)
+						{
+							// A data column displays a property of the model
+							default:
+							case "data":
+								ProcessDataColumn<T>(columns, column);
+								break;
 
-            // Process children of the card tag, the header, footer, and my body will need them 
-            IHtmlContent content = await output.GetChildContentAsync();
+							// A command column displays command buttons which act on the model which is displayed in this row
+							case "command":
+								await ProcessCommandColumnAsync<T>(context, output, columns, column);
+								break;
+						}
+					}
+				});
+			}
 
-            // Set the data source
-            if (sourceContext.Datasource != null)
-            {
-                // First preference, process the (child) data source
-                builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
-            }
-            else
-            {
-                // Second preference, process the datasource from my own properties
-                builder = builder.DataSource(d => BuildDatasource(d));
-            }
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnInitializedAction))
+				builder = builder.OnInitialized(OnInitializedAction);
 
-            // Post process, based on the data source
-            switch (DatasourceType)
-            {
-                case DataSourceTypes.Mvc:
-                    builder = builder.RemoteOperations(c => 
-                    {
-                        c.Filtering(true);              // MVC always does remote filtering
-                        c.Grouping(true);               // MVC never does remote sorting
-                        c.Paging(IsRemotePaging);       // MVC might do remote paging
-                        c.Sorting(false);               // MVC never does remote sorting
-                    });
+			if (!string.IsNullOrEmpty(OnEditorPreparing))
+				builder = builder.OnEditorPreparing(OnEditorPreparing);
 
-                    break;
-            }
+			// Build the toolbar
+			// The location of the toolbar is not changable, DX says:
+			// The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
+			//builder = builder.Toolbar(toolbar =>
+			//{
+			//	toolbar.Items(i =>
+			//	{
+			//		// If we are inserting, show and customise the ADD toolbar button
+			//		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
+			//		{
+			//			i.Add()
+			//				.Name(DataGridToolbarItem.AddRowButton)
+			//				.Location(ToolbarItemLocation.After)
+			//				.ShowText(ToolbarItemShowTextMode.InMenu);
+			//		}
+			//	});
+			//});
 
-            // Add columns, if we have some
-            if (columnContext.Columns.Any())
-            {
-                builder = builder.Columns(async columns =>
-                {
-                    foreach (ColumnModel column in columnContext.Columns)
-                    {
-                        switch (column.Type)
-                        {
-                            // A data column displays a property of the model
-                            default:
-                            case "data":
-                                ProcessDataColumn<T>(columns, column);
-                                break;
+			return builder;
+		}
 
-                            // A command column displays command buttons which act on the model which is displayed in this row
-                            case "command":
-                                await ProcessCommandColumnAsync<T>(context, output, columns, column);
-                                break;
-                        }
-                    }
-                });
-            }
-
-            // Event handlers
-            if (!string.IsNullOrEmpty(OnInitializedAction))
-                builder = builder.OnInitialized(OnInitializedAction);
-
-            if (!string.IsNullOrEmpty(OnEditorPreparing))
-                builder = builder.OnEditorPreparing(OnEditorPreparing);
-
-            // Build the toolbar
-            // The location of the toolbar is not changable, DX says:
-            // The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
-            //builder = builder.Toolbar(toolbar =>
-            //{
-            //	toolbar.Items(i =>
-            //	{
-            //		// If we are inserting, show and customise the ADD toolbar button
-            //		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
-            //		{
-            //			i.Add()
-            //				.Name(DataGridToolbarItem.AddRowButton)
-            //				.Location(ToolbarItemLocation.After)
-            //				.ShowText(ToolbarItemShowTextMode.InMenu);
-            //		}
-            //	});
-            //});
-
-            return builder;
-        }
-
-        private DataGridBuilder<T> ProcessCommon<T>(DataGridBuilder<T> builder)
+		private DataGridBuilder<T> ProcessCommon<T>(DataGridBuilder<T> builder)
         {
             // Set the ID to a random value
             string idValue = ID ?? Guid.NewGuid().ToString();
@@ -323,7 +289,76 @@ namespace Alcazar.Web.Extensibility
             return builder;
         }
 
-        private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
+		private DataGridBuilder<T> ProcessEvents<T>(DataGridBuilder<T> builder)
+		{
+			// Content events
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+
+			// CRUD events
+			if (!string.IsNullOrEmpty(OnInitNewRow))
+				builder = builder.OnInitNewRow(OnInitNewRow);
+			if (!string.IsNullOrEmpty(OnRowInserting))
+				builder = builder.OnRowInserting(OnRowInserting);
+			if (!string.IsNullOrEmpty(OnRowInserted))
+				builder = builder.OnRowInserted(OnRowInserted);
+
+			if (!string.IsNullOrEmpty(OnRowUpdating))
+				builder = builder.OnRowUpdating(OnRowUpdating);
+			if (!string.IsNullOrEmpty(OnRowUpdated))
+				builder = builder.OnRowUpdated(OnRowUpdated);
+
+			if (!string.IsNullOrEmpty(OnRowRemoving))
+				builder = builder.OnRowRemoving(OnRowRemoving);
+			if (!string.IsNullOrEmpty(OnRowRemoved))
+				builder = builder.OnRowRemoved(OnRowRemoved);
+
+			// CRUD events
+			if (!string.IsNullOrEmpty(OnEditorPrepared))
+				builder = builder.OnEditorPrepared(OnEditorPrepared);
+			if (!string.IsNullOrEmpty(OnEditingStart))
+				builder = builder.OnEditingStart(OnEditingStart);
+
+			if (!string.IsNullOrEmpty(OnSaving))
+				builder = builder.OnSaving(OnSaving);
+			if (!string.IsNullOrEmpty(OnSaved))
+				builder = builder.OnSaved(OnSaved);
+
+			// Copilot added events
+			if (!string.IsNullOrEmpty(OnCellClick))
+				builder = builder.OnCellClick(OnCellClick);
+			if (!string.IsNullOrEmpty(OnCellDblClick))
+				builder = builder.OnCellDblClick(OnCellDblClick);
+			if (!string.IsNullOrEmpty(OnCellPrepared))
+				builder = builder.OnCellPrepared(OnCellPrepared);
+
+			if (!string.IsNullOrEmpty(OnRowClick))
+				builder = builder.OnRowClick(OnRowClick);
+			if (!string.IsNullOrEmpty(OnRowDblClick))
+				builder = builder.OnRowDblClick(OnRowDblClick);
+			if (!string.IsNullOrEmpty(OnRowPrepared))
+				builder = builder.OnRowPrepared(OnRowPrepared);
+
+			if (!string.IsNullOrEmpty(OnFocusedCellChanged))
+				builder = builder.OnFocusedCellChanged(OnFocusedCellChanged);
+			if (!string.IsNullOrEmpty(OnFocusedRowChanged))
+				builder = builder.OnFocusedRowChanged(OnFocusedRowChanged);
+
+			if (!string.IsNullOrEmpty(OnOptionChanged))
+				builder = builder.OnOptionChanged(OnOptionChanged);
+			if (!string.IsNullOrEmpty(OnToolbarPreparing))
+				builder = builder.OnToolbarPreparing(OnToolbarPreparing);
+
+			if (!string.IsNullOrEmpty(OnDataErrorOccurred))
+				builder = builder.OnDataErrorOccurred(OnDataErrorOccurred);
+
+			if (!string.IsNullOrEmpty(OnContextMenuPreparing))
+				builder = builder.OnContextMenuPreparing(OnContextMenuPreparing);
+
+			return builder;
+		}
+
+		private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
         {
             // Column header
             if (column.For != null)
@@ -900,16 +935,90 @@ namespace Alcazar.Web.Extensibility
         [HtmlAttributeName("saved")]
         public string OnSaved { get; set; }
 
-        #endregion
+		// Add these properties to the "DataGridTagHelper properties: tag helper events" region
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region DataGridTagHelper properties: data source
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		/// <summary>
+		/// Get or set the JS method to be executed when a cell is clicked.
+		/// </summary>
+		[HtmlAttributeName("cell-click")]
+		public string OnCellClick { get; set; }
 
-        /// <summary>
-        /// Get or set if remote paging should be used. Not all data source types will adhere to thi parameter.
-        /// </summary>
-        [HtmlAttributeName("remote-paging")]
+		/// <summary>
+		/// Get or set the JS method to be executed when a cell is double-clicked.
+		/// </summary>
+		[HtmlAttributeName("cell-dbl-click")]
+		public string OnCellDblClick { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when a cell is prepared.
+		/// </summary>
+		[HtmlAttributeName("cell-prepared")]
+		public string OnCellPrepared { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when a row is clicked.
+		/// </summary>
+		[HtmlAttributeName("row-click")]
+		public string OnRowClick { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when a row is double-clicked.
+		/// </summary>
+		[HtmlAttributeName("row-dbl-click")]
+		public string OnRowDblClick { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when a row is prepared.
+		/// </summary>
+		[HtmlAttributeName("row-prepared")]
+		public string OnRowPrepared { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the focused cell changes.
+		/// </summary>
+		[HtmlAttributeName("focused-cell-changed")]
+		public string OnFocusedCellChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the focused row changes.
+		/// </summary>
+		[HtmlAttributeName("focused-row-changed")]
+		public string OnFocusedRowChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when an option is changed.
+		/// </summary>
+		[HtmlAttributeName("option-changed")]
+		public string OnOptionChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the toolbar is being prepared.
+		/// </summary>
+		[HtmlAttributeName("toolbar-preparing")]
+		public string OnToolbarPreparing { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when a data error occurs.
+		/// </summary>
+		[HtmlAttributeName("error-occurred")]
+		public string OnDataErrorOccurred { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when the context menu is being prepared.
+		/// </summary>
+		[HtmlAttributeName("context-menu-preparing")]
+		public string OnContextMenuPreparing { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: data source
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set if remote paging should be used. Not all data source types will adhere to thi parameter.
+		/// </summary>
+		[HtmlAttributeName("remote-paging")]
         public bool IsRemotePaging { get; set; }
 
         /// <summary>
