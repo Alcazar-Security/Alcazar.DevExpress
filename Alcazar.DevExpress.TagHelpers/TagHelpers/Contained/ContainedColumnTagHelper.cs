@@ -56,6 +56,7 @@ namespace Alcazar.Web.Extensibility
 			{
 				// Column type
 				Type = Type,
+				Index = Index,
 
 				// Data columns
 				Label = label,
@@ -80,9 +81,19 @@ namespace Alcazar.Web.Extensibility
 				IsVisible = IsVisible,
 				IsVisibleAction = IsVisibleAction,
 				IsReadonly = IsReadonly,
+
+				// Filtering and sorting
 				FilterType = FilterType,
 				FilterOperation = FilterOperation,
 				FilterValue = FilterValue,
+				IsSorting = IsSorting,
+				SortIndex = SortIndex,
+				SortOrder = SortOrder,
+				SortingMethod = SortingMethod,
+				SortValue = SortValue,
+
+				// Styling
+				CssClass = CssClass,
 
 				LookupDatasource = datasource,
 				ValueExpression = ValueExpression,
@@ -120,6 +131,12 @@ namespace Alcazar.Web.Extensibility
 		public string Type { get; set; }
 
 		/// <summary>
+		/// Get or set the index of the column. Zero denotes the first column.
+		/// </summary>
+		[HtmlAttributeName("index")]
+		public int? Index { get; set; }
+
+		/// <summary>
 		/// Get or set the field name of the column.
 		/// </summary>
 		[HtmlAttributeName("name")]
@@ -155,16 +172,16 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("datatype")]
 		public GridColumnDataType? DataType { get; set; }
 
-        /// <summary>
-        /// Get or set the width of this column.
-        /// </summary>
-        [HtmlAttributeName("width")]
-        public string Width { get; set; }
-        
 		/// <summary>
-        /// Get or set the format of the column.
-        /// </summary>
-        [HtmlAttributeName("format")]
+		/// Get or set the width of this column.
+		/// </summary>
+		[HtmlAttributeName("width")]
+		public string Width { get; set; }
+
+		/// <summary>
+		/// Get or set the format of the column.
+		/// </summary>
+		[HtmlAttributeName("format")]
 		public Format? Format { get; set; }
 
 		/// <summary>
@@ -190,24 +207,6 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("readonly")]
 		public bool IsReadonly { get; set; }
-
-		/// <summary>
-		/// Get or set the filter type of this column.
-		/// </summary>
-		[HtmlAttributeName("filter")]
-		public FilterType? FilterType { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter operation of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-op")]
-		public FilterOperations? FilterOperation { get; set; }
-
-		/// <summary>
-		/// Get or set the initial filter value of this column.
-		/// </summary>
-		[HtmlAttributeName("filter-value")]
-		public object FilterValue { get; set; }
 
 		/// <summary>
 		/// Get or set the name of the JS function which sets the cell value after editing this column.
@@ -274,6 +273,72 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("group-expr")]
 		public string GroupExpression { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnTagHelper properties: filtering and sorting
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the filter type of this column.
+		/// </summary>
+		[HtmlAttributeName("filter")]
+		public FilterType? FilterType { get; set; }
+
+		/// <summary>
+		/// Get or set the initial filter operation of this column.
+		/// </summary>
+		[HtmlAttributeName("filter-op")]
+		public FilterOperations? FilterOperation { get; set; }
+
+		/// <summary>
+		/// Get or set the initial filter value of this column.
+		/// </summary>
+		[HtmlAttributeName("filter-value")]
+		public object FilterValue { get; set; }
+
+		/// <summary>
+		/// Get an indicator if this column can be sorting. Defaults to <see langword="true"/>.
+		/// </summary>
+		[HtmlAttributeName("sorting")]
+		public bool IsSorting { get; set; } = true;
+
+		/// <summary>
+		/// Get or set a sort index of this column.
+		/// </summary>
+		[HtmlAttributeName("sort-index")]
+		public int SortIndex { get; set; }
+
+		/// <summary>
+		/// Get or set a sort order of this column.
+		/// </summary>
+		[HtmlAttributeName("sort-order")]
+		public SortOrder? SortOrder { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method which sorts this column.
+		/// </summary>
+		[HtmlAttributeName("sort-method")]
+		public string SortingMethod { get; set; }
+
+		/// <summary>
+		/// Get or set the calculating sort value.
+		/// </summary>
+		[HtmlAttributeName("sort-value")]
+		public string SortValue { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column styling
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the CSS class to be applied to grid cells of this column.
+		/// </summary>
+		[HtmlAttributeName("cell-class")]
+		public string CssClass { get; set; }
 
 		#endregion
 
@@ -350,17 +415,22 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		public string IsVisibleAction { get; set; }
 
-        #endregion
+		#endregion
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region ColumnModel properties: data column
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        /// <summary>
-        /// Get or set the width of this column.
-        /// </summary>
-        public string Width { get; set; }
-        
+		/// <summary>
+		/// Get or set the width of this column.
+		/// </summary>
+		public string Width { get; set; }
+
+		/// <summary>
+		/// Get or set the index of the column. Zero denotes the first column.
+		/// </summary>
+		public int? Index { get; set; }
+
 		public GridColumnDataType? DataType { get; set; }
 
 		/// <summary>
@@ -423,10 +493,6 @@ namespace Alcazar.Web.Extensibility
 
 		public bool IsReadonly { get; set; }
 
-		public FilterType? FilterType { get; set; }
-		public FilterOperations? FilterOperation { get; set; }
-		public object FilterValue { get; set; }
-
 		/// <summary>
 		/// Get or set the tag helper which represents a data source for column lookup.
 		/// </summary>
@@ -446,6 +512,52 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the name of the item property to be used as lookup dropdown item grouping selector.
 		/// </summary>
 		public string GroupExpression { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column filtering and sorting
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		public FilterType? FilterType { get; set; }
+		public FilterOperations? FilterOperation { get; set; }
+		public object FilterValue { get; set; }
+
+		/// <summary>
+		/// Get an indicator if this column can be sorting.
+		/// </summary>
+		public bool IsSorting { get; set; }
+
+		/// <summary>
+		/// Get or set a sort index of this column.
+		/// </summary>
+		public int SortIndex { get; set; }
+
+		/// <summary>
+		/// Get or set a sort order of this column.
+		/// </summary>
+		public SortOrder? SortOrder { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method which sorts this column.
+		/// </summary>
+		public string SortingMethod { get; set; }
+
+		/// <summary>
+		/// Get or set the calculating sort value.
+		/// </summary>
+		public string SortValue { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column styling
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the CSS class to be applied to grid cells of this column.
+		/// </summary>
+		public string CssClass { get; set; }
 
 		#endregion
 
