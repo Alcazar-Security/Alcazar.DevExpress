@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
@@ -239,12 +241,14 @@ namespace Alcazar.Web.Extensibility
         /// Get or set a badge for this item. This is a DX convention property, and sets a badge for the item.
         /// </summary>
         [HtmlAttributeName("badge")]
-        public string Badge { get; set; }
+		[JsonPropertyName("badge")]
+		public string Badge { get; set; }
 
         /// <summary>
-        /// Get or set a HREF for this item. This sets the href for a page redirect, where the item is used like an <![CDATA[ <a> ]]> HTML anchor.
+        /// Get or set a HREF for this item. This property sets the href for a page redirect, where the item is used like an <![CDATA[ <a> ]]> HTML anchor.
         /// </summary>
         [HtmlAttributeName("href")]
+        [JsonPropertyName("href")]
         public string Href { get; set; }
 
         /// <summary>
