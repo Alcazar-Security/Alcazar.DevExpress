@@ -94,6 +94,9 @@ namespace Alcazar.Web.Extensibility
 			return options;
 		}
 
+		/// <summary>
+		/// Build an MVC datasource, which must reside in the current application.
+		/// </summary>
 		private OptionsOwnerBuilder BuildMvc(DataSourceFactory factory)
 		{
 			// Create options and its method 
@@ -151,14 +154,106 @@ namespace Alcazar.Web.Extensibility
 
 		private OptionsOwnerBuilder BuildOData(DataSourceFactory factory)
 		{
-			var options = factory.OData();
+			ODataSourceBuilder options = factory.OData();
+
+			// TODO NOT here, Add load parameters
+			if (LoadParams.Any())
+			{
+				//ExpandoObject loadParams = new ExpandoObject();
+				//loadParams.AddRange(LoadParams);
+				//options = options.LoadParams(loadParams);
+			}
+
+			if (!string.IsNullOrEmpty(Key))
+				options = options.Key(Key);
+
+			// No Area/Controller set here, it is all included in the ODate URL
+			options = options.Url(BaseUrl);
+
+			// Set editing actions
+			if (!string.IsNullOrEmpty(OnInserting))
+				options = options.OnInserting(OnInserting);
+			if (!string.IsNullOrEmpty(OnInserted))
+				options = options.OnInserted(OnInserted);
+
+			if (!string.IsNullOrEmpty(OnUpdating))
+				options = options.OnUpdating(OnUpdating);
+			if (!string.IsNullOrEmpty(OnUpdated))
+				options = options.OnUpdated(OnUpdated);
+
+			if (!string.IsNullOrEmpty(OnRemoving))
+				options = options.OnRemoving(OnRemoving);
+			if (!string.IsNullOrEmpty(OnRemoved))
+				options = options.OnRemoved(OnRemoved);
+
+			//if (!string.IsNullOrEmpty(OnBeforeSend))
+			//	options = options.OnBeforeSend(OnBeforeSend);
+
 			return options;
 		}
 
+		/// <summary>
+		/// Build a remote datasource, which may reside outside the current application.
+		/// </summary>
 		private OptionsOwnerBuilder BuildRemoteController(DataSourceFactory factory)
 		{
-			var options = factory.RemoteController();
+			// Create options and its method 
+			// Set load action
+			RemoteControllerDataSourceOptionsBuilder options = factory.RemoteController().LoadMethod(Method);
+
+			// Add load parameters
+			if (LoadParams.Any())
+			{
+				ExpandoObject loadParams = new ExpandoObject();
+				loadParams.AddRange(LoadParams);
+				options = options.LoadParams(loadParams);
+			}
+
+			if (!string.IsNullOrEmpty(Key))
+				options = options.Key(Key);
+
+			// No Area/Controller set here, it is all included in the URL, but we may have a BaseUrl
+			// Set load action
+			options = options.LoadUrl(CombineBaseUrl(BaseUrl, Action));
+
+			// Set editing actions
+			if (!string.IsNullOrEmpty(InsertAction))
+				options = options.InsertUrl(CombineBaseUrl(BaseUrl, InsertAction));
+			if (!string.IsNullOrEmpty(UpdateAction))
+				options = options.UpdateUrl(CombineBaseUrl(BaseUrl, UpdateAction));
+			if (!string.IsNullOrEmpty(DeleteAction))
+				options = options.DeleteUrl(CombineBaseUrl(BaseUrl, DeleteAction));
+
+			// Set editing actions
+			if (!string.IsNullOrEmpty(OnInserting))
+				options = options.OnInserting(OnInserting);
+			if (!string.IsNullOrEmpty(OnInserted))
+				options = options.OnInserted(OnInserted);
+
+			if (!string.IsNullOrEmpty(OnUpdating))
+				options = options.OnUpdating(OnUpdating);
+			if (!string.IsNullOrEmpty(OnUpdated))
+				options = options.OnUpdated(OnUpdated);
+
+			if (!string.IsNullOrEmpty(OnRemoving))
+				options = options.OnRemoving(OnRemoving);
+			if (!string.IsNullOrEmpty(OnRemoved))
+				options = options.OnRemoved(OnRemoved);
+
+			if (!string.IsNullOrEmpty(OnBeforeSend))
+				options = options.OnBeforeSend(OnBeforeSend);
+
 			return options;
+		}
+
+		private string CombineBaseUrl(string baseUrl, string action)
+		{
+			// No base URL, just return the action
+			if (string.IsNullOrEmpty(baseUrl))
+				return action;
+
+			// Combine the base URL with the action
+			return baseUrl.EndsWith("/") ? $"{baseUrl}{action}" : $"{baseUrl}/{action}";
 		}
 
 		#endregion
