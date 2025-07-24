@@ -245,29 +245,5 @@ namespace Alcazar.Web.Extensibility
         public ValidationMessageMode ValidationMessageMode { get; set; } = ValidationMessageMode.Auto;
 
 		#endregion
-
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region TextboxTagHelper properties: events
-		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-
-		/// <summary>
-		/// Get or set the JS function to call when the calendar control has been initialised.
-		/// </summary>
-		[HtmlAttributeName("initialised")]
-		public string OnInitialized { get; set; }
-
-		/// <summary>
-		/// Get or set the JS function to call when the value of the calendar control has changed.
-		/// </summary>
-		[HtmlAttributeName("value-changed")]
-        public string OnValueChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the JS function to call when an option of the calendar control has changed.
-		/// </summary>
-		[HtmlAttributeName("option-changed")]
-		public string OnOptionChanged { get; set; }
-
-		#endregion
 	}
 }

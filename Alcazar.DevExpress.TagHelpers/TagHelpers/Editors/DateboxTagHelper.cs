@@ -192,18 +192,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("value")]
 		public DateTime? Value { get; set; }
 
-        /// <summary>
-        /// Get or set the Javascript method to be called when the value in the control changes.
-        /// </summary>
-        [HtmlAttributeName("change")]
-        public string OnChange { get; set; }
-
-        /// <summary>
-        /// Get or set the Javascript method to be called when the value in the control changes.
-        /// </summary>
-        [HtmlAttributeName("value-changed")]
-        public string OnValueChanged { get; set; }
-
         #endregion
     }
 }

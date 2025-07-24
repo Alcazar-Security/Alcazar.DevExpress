@@ -199,18 +199,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("orientation")]
 		public Orientation Orientation { get; set; }
 
-		/// <summary>
-		/// Get or set the action to be executed when the value of the radio group is changed.
-		/// </summary>
-		[HtmlAttributeName("value-changed")]
-		public string OnValueChanged { get; set; }
-
-		/// <summary>
-		/// Get or set the action to be executed when the option of the radio group is changed.
-		/// </summary>
-		[HtmlAttributeName("option-changed")]
-		public string OnOptionChanged { get; set; }
-
 		#endregion
 	}
 }

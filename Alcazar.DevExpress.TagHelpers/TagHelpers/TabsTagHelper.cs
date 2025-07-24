@@ -115,8 +115,8 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(OnSelectionChanged))
 				builder = builder.OnSelectionChanged(OnSelectionChanged);
 
-			if (!string.IsNullOrEmpty(OnInitializedAction))
-				builder = builder.OnInitialized(OnInitializedAction);
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
 
 			// Render the builder (into the content)
 			output.Content.SetHtmlContent(builder);
@@ -177,7 +177,7 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the JS method to be executed when the tabs are initialised.
 		/// </summary>
 		[HtmlAttributeName("initialized")]
-		public string OnInitializedAction { get; set; }
+		public string OnInitialized { get; set; }
 
 		/// <summary>
 		/// Get or set the JS method to be executed when the tab selection has changed.

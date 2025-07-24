@@ -115,8 +115,14 @@ namespace Alcazar.Web.Extensibility
 
 			try
 			{
-				var simple = For.ModelExplorer.GetSimpleDisplayText();
+				// Option 1. Get the value as text
+				string simple = For.ModelExplorer.GetSimpleDisplayText();
 
+				// Option 2. Get the value as object
+				object value2 = For.Model;
+
+				// Option 3. 
+				// Doing something really snazzy here, climbing the tree to get to my value, but we already have the simple value.
 				Type modelType = For.ModelExplorer.Container.ModelType;
 				object value = For.ModelExplorer.Container.Model;
 
@@ -133,7 +139,9 @@ namespace Alcazar.Web.Extensibility
 				if (simple as string != value as string)
 				{ }
 
-				return value;
+				// Use Option 1. simple value, until proven otherwise
+				// Works for WorkflowDefinition.InitialState, where the model is an int, and then the control dies not display the incoming value
+				return simple;
 			}
 			catch
 			{
@@ -289,6 +297,61 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName(DictionaryAttributePrefix = "input-attr-")]
 		public IDictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region EditorTagHelperBase properties: events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		// If any of these events are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control is initialised.
+		/// </summary>
+		[HtmlAttributeName("initialised")]
+		public string OnInitialized { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the content of the control is ready.
+		/// </summary>
+		[HtmlAttributeName("content-ready")]
+		public string OnContentReady { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call when an option of the control has changed.
+		/// </summary>
+		[HtmlAttributeName("option-changed")]
+		public string OnOptionChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the value in the control changes.
+		/// </summary>
+		[HtmlAttributeName("change")]
+		public string OnChange { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the value in the control changes.
+		/// </summary>
+		[HtmlAttributeName("value-changed")]
+		public string OnValueChanged { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the enter key is pressed in the control changes.
+		/// </summary>
+		[HtmlAttributeName("enter")]
+		public string OnEnterKey { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control looses focus.
+		/// </summary>
+		[HtmlAttributeName("focus-out")]
+		public string OnFocusOut { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the imput TODO  control changes.
+		/// </summary>
+		[HtmlAttributeName("input")]
+		public string OnInput { get; set; }
 
 		#endregion
 

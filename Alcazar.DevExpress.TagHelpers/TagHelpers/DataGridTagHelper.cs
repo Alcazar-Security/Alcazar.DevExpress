@@ -246,8 +246,8 @@ namespace Alcazar.Web.Extensibility
 			}
 
 			// Event handlers
-			if (!string.IsNullOrEmpty(OnInitializedAction))
-				builder = builder.OnInitialized(OnInitializedAction);
+			if (!string.IsNullOrEmpty(OnInitialised))
+				builder = builder.OnInitialized(OnInitialised);
 
 			if (!string.IsNullOrEmpty(OnEditorPreparing))
 				builder = builder.OnEditorPreparing(OnEditorPreparing);
@@ -971,7 +971,7 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the JS method to be executed when the datagrid has been initialised
 		/// </summary>
 		[HtmlAttributeName("initialised")]
-		public string OnInitializedAction { get; set; }
+		public string OnInitialised { get; set; }
 
 		/// <summary>
 		/// Get or set the JS method to be executed when a data grid editor has been prepared.

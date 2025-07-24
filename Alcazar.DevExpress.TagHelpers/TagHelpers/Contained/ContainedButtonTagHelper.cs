@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 namespace Alcazar.Web.Extensibility
 {
 	[HtmlTargetElement("button", ParentTag = "dx-autocomplete", TagStructure = TagStructure.NormalOrSelfClosing)]
-    [HtmlTargetElement("button", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("button", ParentTag = "dx-numberbox", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("button", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
     public class ContainedButtonTagHelper : TagHelperBase
     {
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

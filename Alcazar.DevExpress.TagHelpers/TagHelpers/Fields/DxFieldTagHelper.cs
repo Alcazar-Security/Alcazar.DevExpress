@@ -395,7 +395,7 @@ namespace Alcazar.Web.Extensibility
             TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), context.Items, context.UniqueId);
             TagHelperOutput helperOutput = new TagHelperOutput("standard-control", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
 
-            DxControlTagHelper childHelper = new DxControlTagHelper(_htmlHelper, null, null);
+            DxControlTagHelper childHelper = new DxControlTagHelper(_htmlHelper, _generator, null);
 
             childHelper.For = For;
             childHelper.Name = Name;

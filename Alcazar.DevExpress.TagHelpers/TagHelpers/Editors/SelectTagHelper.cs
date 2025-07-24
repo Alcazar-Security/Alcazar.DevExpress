@@ -439,25 +439,6 @@ namespace Alcazar.Web.Extensibility
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
         #region SelectBoxTagHelper events: not inherited
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        // If any of these events are required on a control, it must be declared as an embedded control with in a dx-field or dx-control
-
-        /// <summary>
-        /// Get or set the Javascript method to be called when the selection in the control changes.
-        /// </summary>
-        [HtmlAttributeName("change")]
-		public string OnChange { get; set; }
-
-		/// <summary>
-		/// Get or set the Javascript method to be called when the control is initialised.
-		/// </summary>
-		[HtmlAttributeName("initialised")]
-		public string OnInitialized { get; set; }
-
-		/// <summary>
-		/// Get or set the Javascript method to be called when the content of the control is ready.
-		/// </summary>
-		[HtmlAttributeName("content-ready")]
-		public string OnContentReady { get; set; }
 
 		#endregion
 	}

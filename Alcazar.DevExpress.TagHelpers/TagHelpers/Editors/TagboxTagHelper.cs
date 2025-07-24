@@ -321,12 +321,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("selection-changed")]
 		public string OnSelectionChanged { get; set; }
 
-		/// <summary>
-		/// Get or set the Javascript method to be called when the selection in the control changes.
-		/// </summary>
-		[HtmlAttributeName("change")]
-		public string OnChange { get; set; }
-
 		#endregion
 	}
 }

@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 
 namespace Alcazar.Web.Extensibility
@@ -16,23 +18,22 @@ namespace Alcazar.Web.Extensibility
 	[HtmlTargetElement("dx-control", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class DxControlTagHelper : FieldTagHelperBase
 	{
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region DxControlTagHelper construction
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DxControlTagHelper construction
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        /// <summary> 
-        /// Creates a new <see cref="DxControlTagHelper"/>. 
-        /// </summary> 
-        /// <param name="generator">The <see cref="IHtmlGenerator"/>.</param> 
-        public DxControlTagHelper(IHtmlHelper htmlHelper, IHtmlGenerator generator, IModelMetadataProvider modelMetadataProvider)
-		//	: base(generator)
+		/// <summary> 
+		/// Creates a new <see cref="DxControlTagHelper"/>. 
+		/// </summary> 
+		/// <param name="generator">The <see cref="IHtmlGenerator"/>.</param> 
+		public DxControlTagHelper(IHtmlHelper htmlHelper, IHtmlGenerator generator, IModelMetadataProvider modelMetadataProvider)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
-			//_modelMetadataProvider = modelMetadataProvider;
+			_generator = generator;
 		}
 
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
-		//private IModelMetadataProvider _modelMetadataProvider;
+		private IHtmlGenerator _generator;
 
 		#endregion
 
@@ -74,6 +75,7 @@ namespace Alcazar.Web.Extensibility
 				// This method is only called if there is no embedded control directly inside the 'dx-field'
 				controlContent = await GenerateControl(context, output);
 			}
+
 			// Suppress my own output, just use the output from the child label
 			output.SuppressOutput();
 			output.Content.SetHtmlContent(controlContent);
@@ -91,16 +93,16 @@ namespace Alcazar.Web.Extensibility
 		{
 			IHtmlContent controlContent;
 
-            // Dropdown and select (with select being the default if there are items)
-            if (InputTypeName == ControlTypes.MultiSelect)
-            {
-                controlContent = await GenerateMultiselect(context, output);
-            }
-            else if (InputTypeName == ControlTypes.Autocomplete)
-            {
-                controlContent = await GenerateAutocomplete(context, output);
-            }
-            else if (InputTypeName == ControlTypes.Select || Items != null)
+			// Dropdown and select (with select being the default if there are items)
+			if (InputTypeName == ControlTypes.MultiSelect)
+			{
+				controlContent = await GenerateMultiselect(context, output);
+			}
+			else if (InputTypeName == ControlTypes.Autocomplete)
+			{
+				controlContent = await GenerateAutocomplete(context, output);
+			}
+			else if (InputTypeName == ControlTypes.Select || Items != null)
 			{
 				controlContent = await GenerateSelect(context, output);
 			}
@@ -124,6 +126,11 @@ namespace Alcazar.Web.Extensibility
 			else if (InputTypeName == ControlTypes.Time)
 			{
 				controlContent = await GenerateDate(context, output, DateBoxType.Time);
+				output.Content.SetHtmlContent(controlContent);
+			}
+			else if (InputTypeName == ControlTypes.Timespan)
+			{
+				controlContent = await GenerateTimespan(context, output);
 				output.Content.SetHtmlContent(controlContent);
 			}
 
@@ -155,7 +162,6 @@ namespace Alcazar.Web.Extensibility
 			}
 			else
 			{
-				// <input asp-for="pkEntityID" class="form-control" placeholder="name@example.com" />
 				controlContent = await GenerateInput(context, output, TextBoxMode.Text);
 			}
 
@@ -213,11 +219,11 @@ namespace Alcazar.Web.Extensibility
 			return helperOutput;
 		}
 
-        /// <summary>
-        /// Generate a select (dropdown) control.
-        /// The autocomplete box is suitable for: single-select type-ahead
-        /// </summary>
-        protected async Task<IHtmlContent> GenerateAutocomplete(TagHelperContext context, TagHelperOutput output)
+		/// <summary>
+		/// Generate a select (dropdown) control.
+		/// The autocomplete box is suitable for: single-select type-ahead
+		/// </summary>
+		protected async Task<IHtmlContent> GenerateAutocomplete(TagHelperContext context, TagHelperOutput output)
 		{
 			// Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
 			List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
@@ -260,59 +266,12 @@ namespace Alcazar.Web.Extensibility
 			return helperOutput;
 		}
 
-        /// <summary>
-        /// Generate a multi-select (dropdown) control.
-        /// The tag box is suitable for: single-select type-ahead
-        /// </summary>
-        protected async Task<IHtmlContent> GenerateMultiselect(TagHelperContext context, TagHelperOutput output)
-        {
-            // Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
-            List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
-            contextAttributes.Add(new TagHelperAttribute("type", InputTypeName));
-            if (For != null)
-            {
-                contextAttributes.Add(new TagHelperAttribute("asp-for", For.Name));
-            }
-
-            //if (!string.IsNullOrEmpty(Value))
-            //	contextAttributes.Add(new TagHelperAttribute("value", Value));
-
-            // Output attributes are all non-helper attributes on the output tag
-            List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>(output.Attributes);
-            outputAttributes.Add(new TagHelperAttribute("placeholder", Placeholder));
-
-            TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), context.Items, context.UniqueId);
-            TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
-
-            TagboxTagHelper childHelper = new TagboxTagHelper(_htmlHelper);
-            childHelper.Name = Name;
-            //childHelper.For = For;
-            childHelper.Value = Value;
-			childHelper.Items = Items;
-            childHelper.Title = Title;
-            childHelper.HelpText = HelpText;
-            childHelper.Placeholder = Placeholder;
-            childHelper.AllowClear = AllowClear;
-            childHelper.IsReadonly = IsReadonly;
-            childHelper.IsDisabled = IsDisabled;
-
-            // TagBox specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
-            // childHelper.ValueExpression = ValueExpression;
-
-            childHelper.ViewContext = ViewContext;
-            childHelper.Init(helperContext);
-
-            await childHelper.ProcessAsync(helperContext, helperOutput);
-            return helperOutput;
-        }
-        
 		/// <summary>
-        /// Generate a default input field ('text')
-        /// </summary>
-        protected async Task<IHtmlContent> GenerateInput(TagHelperContext context, TagHelperOutput output, TextBoxMode mode)
+		/// Generate a multi-select (dropdown) control.
+		/// The tag box is suitable for: single-select type-ahead
+		/// </summary>
+		protected async Task<IHtmlContent> GenerateMultiselect(TagHelperContext context, TagHelperOutput output)
 		{
-			// <input asp-for="pkEntityID" class="form-control" placeholder="name@example.com" />
-
 			// Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
 			List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
 			contextAttributes.Add(new TagHelperAttribute("type", InputTypeName));
@@ -323,6 +282,50 @@ namespace Alcazar.Web.Extensibility
 
 			//if (!string.IsNullOrEmpty(Value))
 			//	contextAttributes.Add(new TagHelperAttribute("value", Value));
+
+			// Output attributes are all non-helper attributes on the output tag
+			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>(output.Attributes);
+			outputAttributes.Add(new TagHelperAttribute("placeholder", Placeholder));
+
+			TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), context.Items, context.UniqueId);
+			TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
+
+			TagboxTagHelper childHelper = new TagboxTagHelper(_htmlHelper);
+			childHelper.Name = Name;
+			//childHelper.For = For;
+			childHelper.Value = Value;
+			childHelper.Items = Items;
+			childHelper.Title = Title;
+			childHelper.HelpText = HelpText;
+			childHelper.Placeholder = Placeholder;
+			childHelper.AllowClear = AllowClear;
+			childHelper.IsReadonly = IsReadonly;
+			childHelper.IsDisabled = IsDisabled;
+
+			// TagBox specific - no longer, we must use an embedded control within a dx-field (or dx-control) if any of these are used
+			// childHelper.ValueExpression = ValueExpression;
+
+			childHelper.ViewContext = ViewContext;
+			childHelper.Init(helperContext);
+
+			await childHelper.ProcessAsync(helperContext, helperOutput);
+			return helperOutput;
+		}
+
+		/// <summary>
+		/// Generate a default input field ('text')
+		/// </summary>
+		protected async Task<IHtmlContent> GenerateInput(TagHelperContext context, TagHelperOutput output, TextBoxMode mode)
+		{
+			// <input asp-for="pkEntityID" class="form-control" placeholder="name@example.com" />
+
+			// Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
+			List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
+			contextAttributes.Add(new TagHelperAttribute("type", InputTypeName));
+			if (For != null)
+			{
+				contextAttributes.Add(new TagHelperAttribute("asp-for", For.Name));
+			}
 
 			// Output attributes are all non-helper attributes on the output tag
 			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>(output.Attributes);
@@ -394,9 +397,9 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Placeholder = Placeholder;
 			childHelper.IsReadonly = IsReadonly;
 			childHelper.IsDisabled = IsDisabled;
-            childHelper.LabelText = LabelText;
-            childHelper.LabelClass = LabelClass;
-            childHelper.ViewContext = ViewContext;
+			childHelper.LabelText = LabelText;
+			childHelper.LabelClass = LabelClass;
+			childHelper.ViewContext = ViewContext;
 
 			if (Value is bool boolValue)
 			{
@@ -415,7 +418,7 @@ namespace Alcazar.Web.Extensibility
 		}
 
 		/// <summary>
-		/// Generate a 'checkbox' input field. UNlike the other input generators, this method generates label and input all in one.
+		/// Generate a 'date' input field.
 		/// </summary>
 		protected async Task<IHtmlContent> GenerateDate(TagHelperContext context, TagHelperOutput output, DateBoxType type)
 		{
@@ -493,8 +496,8 @@ namespace Alcazar.Web.Extensibility
 			childHelper.Mode = mode;
 			childHelper.Name = Name;
 			childHelper.For = For;
-            childHelper.Value = Value?.ToString();
-            childHelper.Title = Title;
+			childHelper.Value = Value?.ToString();
+			childHelper.Title = Title;
 			childHelper.HelpText = HelpText;
 			childHelper.Placeholder = Placeholder;
 			childHelper.IsReadonly = IsReadonly;
@@ -506,6 +509,209 @@ namespace Alcazar.Web.Extensibility
 
 			await childHelper.ProcessAsync(helperContext, helperOutput);
 			return helperOutput;
+		}
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region StandardControlTagHelper methods: generate composite controls
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Generate a 'timespan' input field.
+		/// </summary>
+		protected async Task<IHtmlContent> GenerateTimespan(TagHelperContext context, TagHelperOutput output)
+		{
+			// This is not complete
+			// * The hidden input does not generate
+			// * need to create JS to populate the hidden when things change
+
+			// Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
+			List<TagHelperAttribute> contextAttributes = new List<TagHelperAttribute>();
+			//contextAttributes.Add(new TagHelperAttribute("type", InputTypeName));           // Needed, setting childHelper.InputTypeName is not enough!
+			if (For != null)
+			{
+				//contextAttributes.Add(new TagHelperAttribute("asp-for", For.Name));
+			}
+
+			// Output attributes are all non-helper attributes on the output tag
+			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>(output.Attributes);
+
+			// Create the containing flex-div
+			var controlDiv = new TagBuilder("div");
+			controlDiv.AddCssClass("dx-composite d-flex align-items-baseline");
+
+			// Obtain the value
+			object value = null;
+			long? days = null;
+			DateTime? time = null;
+			if (For != null)
+			{
+				if (For.Model is TimeSpan timespan)
+					value = timespan;
+			}
+			else if (Value is TimeSpan timespan)
+				value = timespan;
+
+			if (value is TimeSpan timespan2)
+			{
+				days = timespan2.Days;
+				time = new DateTime(timespan2.Ticks % 864000000000);
+			}
+			else if (value is DateTime datetime2)
+			{
+				days = datetime2.Ticks / 864000000000;
+				time = new DateTime(datetime2.TimeOfDay.Ticks);
+			}
+
+			// And add the control into its div
+			IHtmlContent content0 = await GenerateInputHelper(AppendName("hidden"), context, output);
+			controlDiv.InnerHtml.AppendHtml(content0);
+
+			IHtmlContent content1 = await SetDaysControl(AppendName("days"), context, contextAttributes, days);
+			controlDiv.InnerHtml.AppendHtml(content1);
+
+			IHtmlContent content2 = await SetLabelControl(AppendName("d"), context, contextAttributes);
+			controlDiv.InnerHtml.AppendHtml(content2);
+
+			IHtmlContent content3 = await SetTimeControl(AppendName("time"), context, contextAttributes, time);
+			controlDiv.InnerHtml.AppendHtml(content3);
+
+			return controlDiv;
+		}
+
+		private string AppendName(string postfix)
+		{
+			if (postfix == null)
+				return null;
+
+			string name = For?.Name ?? Name;
+			if (name == null)
+				return null;
+
+			return $"{name}-{postfix}";
+		}
+
+		private async Task<IHtmlContent> GenerateInputHelper(string name, TagHelperContext context, TagHelperOutput output)
+		{
+			if (For != null)
+			{
+				InputTagHelper childHelper = new InputTagHelper(_generator);
+				childHelper.Name = name ?? Name;
+				childHelper.For = For;
+				childHelper.Value = Value?.ToString();
+				childHelper.Format = Format;
+				//childHelper.InputTypeName = "hidden";
+				childHelper.ViewContext = ViewContext;
+
+				// Output attributes are all non-helper attributes on the output tag
+				List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>();
+				outputAttributes.Add(new TagHelperAttribute("type", "hidden"));
+				outputAttributes.Add(new TagHelperAttribute("name", name ?? Name));
+
+				TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(outputAttributes), context.Items, context.UniqueId);
+				TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
+				childHelper.Init(helperContext);
+
+				await childHelper.ProcessAsync(helperContext, helperOutput);
+				return helperOutput.Content;
+			}
+			else
+			{
+				// Requirement of InputTagHelper - must have asp-for
+				// https://github.com/dotnet/aspnetcore/issues/27414
+				// We use our own copy of that tag helper
+				//FieldTagHelper childHelper = new FieldTagHelper(Generator, _modelMetadataProvider);
+				//childHelper.Init(context);
+
+				//childHelper.Name = Name;
+				//childHelper.Value = Value;
+				//childHelper.ModelType = ModelType;
+				//childHelper.Format = Format;
+				//childHelper.InputTypeName = InputTypeName;
+				//childHelper.ViewContext = ViewContext;
+
+				//await childHelper.ProcessAsync(context, helperOutput);
+				return null;
+			}
+		}
+
+		private async Task<IHtmlContent> SetDaysControl(string name, TagHelperContext context, List<TagHelperAttribute> contextAttributes, long? days)
+		{
+			NumberboxTagHelper daysHelper = new NumberboxTagHelper(_htmlHelper);
+			daysHelper.ID = name;
+			daysHelper.Name = name;
+			daysHelper.Value = days;
+			daysHelper.Placeholder = "Days";
+			daysHelper.IsReadonly = IsReadonly;
+			daysHelper.IsDisabled = IsDisabled;
+			daysHelper.Width = "4em";
+			daysHelper.AllowClear = false;
+			daysHelper.ViewContext = ViewContext;
+
+			daysHelper.OnChange = "onDaysChange";
+			daysHelper.OnValueChanged = "onDaysValueChanged";
+
+			// Output attributes are all non-helper attributes on the output tag
+			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>();
+			outputAttributes.Add(new TagHelperAttribute("class", "dx-composite-part"));
+
+			TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), new Dictionary<object,object>(), context.UniqueId);
+			TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
+			daysHelper.Init(helperContext);
+
+			await daysHelper.ProcessAsync(helperContext, helperOutput);
+			return helperOutput.Content;
+
+		}
+
+		private async Task<IHtmlContent> SetLabelControl(string name, TagHelperContext context, List<TagHelperAttribute> contextAttributes)
+		{
+			TextboxTagHelper textHelper = new TextboxTagHelper(_htmlHelper, null, null, null, null, null);
+			textHelper.ID = name;
+			textHelper.Name = name;
+			textHelper.Value = "d";
+			textHelper.IsReadonly = true;
+			textHelper.Width = "2em";
+			textHelper.AllowClear = false;
+			textHelper.ViewContext = ViewContext;
+
+			// Output attributes are all non-helper attributes on the output tag
+			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>();
+			outputAttributes.Add(new TagHelperAttribute("class", "dx-composite-part dx-textbox-borderless"));
+
+			TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), new Dictionary<object,object>(), context.UniqueId);
+			TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
+			textHelper.Init(helperContext);
+
+			await textHelper.ProcessAsync(helperContext, helperOutput);
+			return helperOutput.Content;
+		}
+
+		private async Task<IHtmlContent> SetTimeControl(string name, TagHelperContext context, List<TagHelperAttribute> contextAttributes, DateTime? time)
+		{
+			DateboxTagHelper childHelper = new DateboxTagHelper(_htmlHelper);
+			childHelper.ID = name;
+			childHelper.Name = name;
+			childHelper.Type = DateBoxType.Time;
+			childHelper.Value = time;
+			childHelper.Title = Title;
+			childHelper.HelpText = HelpText;
+			childHelper.Placeholder = Placeholder;
+			childHelper.IsReadonly = IsReadonly;
+			childHelper.IsDisabled = IsDisabled;
+			childHelper.ViewContext = ViewContext;
+
+			// Output attributes are all non-helper attributes on the output tag
+			List<TagHelperAttribute> outputAttributes = new List<TagHelperAttribute>();
+			outputAttributes.Add(new TagHelperAttribute("class", "dx-composite-fill"));
+
+			TagHelperContext helperContext = new TagHelperContext(new TagHelperAttributeList(contextAttributes), context.Items, context.UniqueId);
+			TagHelperOutput helperOutput = new TagHelperOutput("input", new TagHelperAttributeList(outputAttributes), GetChildContentAsync);
+			childHelper.Init(helperContext);
+
+			await childHelper.ProcessAsync(helperContext, helperOutput);
+			return helperOutput.Content;
 		}
 
 		#endregion
@@ -544,7 +750,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties:
+		#region StandardControlTagHelper properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		[ViewContext]
@@ -564,26 +770,26 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("label-text")]
 		public string LabelText { get; set; }
 
-        /// <summary>
-        /// Get or set the class to be applied to the label.
+		/// <summary>
+		/// Get or set the class to be applied to the label.
 		/// The label class on the control is only required for controls which supply their own label (such as a checkbox).
-        /// </summary>
-        [HtmlAttributeName("label-class")]
-        public string LabelClass { get; set; }
-        
+		/// </summary>
+		[HtmlAttributeName("label-class")]
+		public string LabelClass { get; set; }
+
 		#endregion
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region StandardControlTagHelper properties: control info
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region StandardControlTagHelper properties: control info
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        /// <summary> 
-        /// Get or set the ID and name of the input element. <see cref="Name"/> and <see cref="For"/> are mutually exclusive.
-        /// </summary> 
-        /// <remarks> 
-        /// Passed through to the generated HTML in all cases. Also used to determine whether <see cref="For"/> is valid with an empty <see cref="ModelExpression.Name"/>. 
-        /// </remarks> 
-        [HtmlAttributeName("name")]
+		/// <summary> 
+		/// Get or set the ID and name of the input element. <see cref="Name"/> and <see cref="For"/> are mutually exclusive.
+		/// </summary> 
+		/// <remarks> 
+		/// Passed through to the generated HTML in all cases. Also used to determine whether <see cref="For"/> is valid with an empty <see cref="ModelExpression.Name"/>. 
+		/// </remarks> 
+		[HtmlAttributeName("name")]
 		public string Name { get; set; }
 
 		/// <summary>
