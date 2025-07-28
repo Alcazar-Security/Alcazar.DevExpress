@@ -259,12 +259,6 @@ namespace Alcazar.Web.Extensibility
 		public string Key { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if the clear button should be shown. Defaults to true.
-		/// </summary>
-		[HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; } = true;
-
-		/// <summary>
 		/// Get or set an indicator if selected items should be hidden in the dropdown, when opened.
 		/// </summary>
 		[HtmlAttributeName("hide")]

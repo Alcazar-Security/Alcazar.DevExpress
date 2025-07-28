@@ -115,7 +115,7 @@ namespace Alcazar.Web.Extensibility
 
 			try
 			{
-				// Option 1. Get the value as text
+				// Option 1. Get the value as text (this can be a problem, it is a string, which is not suitable for e.g. DateBoxes)
 				string simple = For.ModelExplorer.GetSimpleDisplayText();
 
 				// Option 2. Get the value as object
@@ -141,7 +141,7 @@ namespace Alcazar.Web.Extensibility
 
 				// Use Option 1. simple value, until proven otherwise
 				// Works for WorkflowDefinition.InitialState, where the model is an int, and then the control dies not display the incoming value
-				return simple;
+				return value2;
 			}
 			catch
 			{
@@ -288,6 +288,12 @@ namespace Alcazar.Web.Extensibility
 		public bool IsReadonly { get; set; }
 
 		/// <summary>
+		/// Get or set an indicator if the clear button should be shown. Defaults to true.
+		/// </summary>
+		[HtmlAttributeName("clear")]
+		public bool AllowClear { get; set; } = true;
+
+		/// <summary>
 		/// Get or set the model type. This property is not set by an attribute.
 		/// </summary>
 		public Type ModelType { get; set; }
@@ -297,6 +303,16 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName(DictionaryAttributePrefix = "input-attr-")]
 		public IDictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary>
+		/// Get or set the format of this editor control.
+		/// </summary>
+		public Format? Format { get; set; }
+
+		/// <summary>
+		/// Get or set the custom format of this editor control.
+		/// </summary>
+		public string CustomFormat { get; set; }
 
 		#endregion
 

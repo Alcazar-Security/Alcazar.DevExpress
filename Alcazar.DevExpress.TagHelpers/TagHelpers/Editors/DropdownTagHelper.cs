@@ -292,12 +292,6 @@ namespace Alcazar.Web.Extensibility
 		public bool IsMultiple { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if the clear button should be shown.
-		/// </summary>
-		[HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; }
-
-		/// <summary>
 		/// Get or set an indicator if the dropdown button should be shown.
 		/// </summary>
 		[HtmlAttributeName("dropdown")]

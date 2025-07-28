@@ -1,4 +1,5 @@
-﻿using Amaqele.Common.Collections;
+﻿using Amaqele.Common.Base;
+using Amaqele.Common.Collections;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
@@ -61,7 +62,7 @@ namespace Alcazar.Web.Extensibility
 			var options = factory.StaticJson();
 
 			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
+				options = options.Key(Key.SplitSafe());
 
 			return options;
 		}
@@ -73,7 +74,7 @@ namespace Alcazar.Web.Extensibility
 			options = options.Data(Items);
 
 			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
+				options = options.Key(Key.SplitSafe());
 
 			// Set editing actions
 			if (!string.IsNullOrEmpty(OnInserting))
@@ -117,7 +118,7 @@ namespace Alcazar.Web.Extensibility
 				options = options.Area(Area);
 
 			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
+				options = options.Key(Key.SplitSafe());
 
 			// Set load action
 			options = options.LoadAction(Action);
@@ -165,7 +166,7 @@ namespace Alcazar.Web.Extensibility
 			}
 
 			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
+				options = options.Key(Key.SplitSafe());
 
 			// No Area/Controller set here, it is all included in the ODate URL
 			options = options.Url(BaseUrl);
@@ -210,7 +211,7 @@ namespace Alcazar.Web.Extensibility
 			}
 
 			if (!string.IsNullOrEmpty(Key))
-				options = options.Key(Key);
+				options = options.Key(Key.SplitSafe());
 
 			// No Area/Controller set here, it is all included in the URL, but we may have a BaseUrl
 			// Set load action
@@ -269,7 +270,8 @@ namespace Alcazar.Web.Extensibility
 		public DataSourceTypes DatasourceType { get; set; }
 
 		/// <summary>
-		/// Get or set the name of the key property of datasource items.
+		/// Get or set the name or names of the key properties of datasource items.
+		/// Multiple names are space separated.
 		/// </summary>
 		[HtmlAttributeName("key")]
 		public string Key { get; set; }

@@ -1,15 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
+﻿using Alcazar.DevExpress.Utilities;
+using Alcazar.Web.Utilities;
+using Amaqele.Common.Types;
+using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Mvc.Builders;
+using DevExtreme.AspNet.Mvc.Factories;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
-using DevExtreme.AspNet.Mvc.Builders;
-using DevExtreme.AspNet.Mvc;
-using Microsoft.AspNetCore.Html;
 
 namespace Alcazar.Web.Extensibility
 {
@@ -71,6 +79,9 @@ namespace Alcazar.Web.Extensibility
 				builder.Hint(title);
 			}
 
+			// Process the timezone
+			builder = ProcessTimezone(builder, value, !string.IsNullOrEmpty(Title), out string timezoneText, out string timezoneTitle);
+
 			// Process the read-only state
 			if (IsReadonly)
 			{
@@ -85,43 +96,30 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Disabled(true);
 			}
 
-            // Process text-area specific properties
-            // TODO culture/app specific format
-            // TODO editing of time component
-            // builder = builder.DisplayFormat(Format.ShortDate);
-            //builder = builder.DateSerializationFormat();
+			// Process text-area specific properties
+			// builder = ProcessDefaultFormat(builder);
+			builder = ProcessFormat(builder, out string customFormat);
 
-			// Setr the type: date, time, datetime
-            builder = builder.Type(Type);
-            switch (Type)
-			{
-				// Default is the fill date/time, so that we always see the time component, even if it is 00:00:00
-				default:
-				case DateBoxType.DateTime:
-                    builder = builder.DisplayFormat("yyyy-MM-dd HH:mm:ss");
-					break;
+			// Process buttons
+			builder = ProcessButtons(builder, timezoneText, timezoneTitle);
 
-				// Expressly requesting date only
-				case DateBoxType.Date:
-					builder = builder.DisplayFormat("yyyy-MM-dd");
-					break;
+			// Controls how the date/time value is serialized to and from the server (i.e., the format used in AJAX requests, form posts, or data binding).
+			// We use the default ISO8601, works just fine
+			// builder = builder.DateSerializationFormat();
 
-				// Expressly requesting time only
-				case DateBoxType.Time:
-					builder = builder.DisplayFormat("HH:mm:ss");
-					break;
-			}
+			// Set the type: date, time, datetime
+			builder = builder.Type(Type);
 
 			if (!string.IsNullOrEmpty(OnChange))
 				builder = builder.OnChange(OnChange);
 
-            if (!string.IsNullOrEmpty(OnValueChanged))
-                builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
 
-            //builder = builder.ActiveStateEnabled(OnChange);
+			//builder = builder.ActiveStateEnabled(OnChange);
 
-            // Render the builder (into the content)
-            Render(context, output.Content, builder);
+			// Render the builder (into the content)
+			Render(context, output.Content, builder);
 		}
 
 		private DateBoxBuilder ProcessCommon(DateBoxBuilder builder)
@@ -164,14 +162,208 @@ namespace Alcazar.Web.Extensibility
 				// Setting the value as direct date
 				builder = builder.Value(dateValue1);
 			}
-            else if (value is TimeSpan timespan1)
-            {
+			else if (value is TimeSpan timespan1)
+			{
 				// Setting the value as direct date
 				DateTime dateValue2 = new DateTime(timespan1.Ticks);
-                builder = builder.Value(dateValue2);
-            }
+				builder = builder.Value(dateValue2);
+			}
 
-            return builder;
+			return builder;
+		}
+
+		/// <summary>
+		/// Process the display format of the control.
+		/// </summary>
+		private DateBoxBuilder ProcessFormat(DateBoxBuilder builder, out string customFormat)
+		{
+			if (!string.IsNullOrEmpty(CustomFormat))
+			{
+				// 1. Specified custom format
+				builder = builder.DisplayFormat(customFormat = CustomFormat);
+			}
+			else
+			{
+				Format? format = null;
+				if (Format.HasValue)
+				{
+					// 2. Specified format
+					format = Format.Value;
+				}
+				else
+				{
+					// 3. Format based on the date box type
+					format = DxCultureUtilities.ToFormat(Type);
+				}
+
+				customFormat = null;
+				if (format.HasValue)
+				{
+					// We have determined the format of the content, translate it into the current culture
+					customFormat = DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
+					if (!string.IsNullOrEmpty(customFormat))
+						builder = builder.DisplayFormat(customFormat);
+				}
+			}
+
+			return builder;
+		}
+
+		/// <summary>
+		/// Process the display format of the control using defaults. Not used.
+		/// </summary>
+		private DateBoxBuilder ProcessDefaultFormat(DateBoxBuilder builder)
+		{
+			switch (Type)
+			{
+				// Default is the fill date/time, so that we always see the time component, even if it is 00:00:00
+				default:
+				case DateBoxType.DateTime:
+					builder = builder.DisplayFormat("yyyy-MM-dd HH:mm:ss");
+					break;
+
+				// Expressly requesting date only
+				case DateBoxType.Date:
+					builder = builder.DisplayFormat("yyyy-MM-dd");
+					break;
+
+				// Expressly requesting time only
+				case DateBoxType.Time:
+					builder = builder.DisplayFormat("HH:mm:ss");
+					break;
+			}
+
+			return builder;
+		}
+
+		private DateBoxBuilder ProcessTimezone(DateBoxBuilder builder, object value, bool hasTitle, out string timezoneText, out string timezoneHint)
+		{
+			timezoneText = null;
+			timezoneHint = null;
+
+			TimeZoneInfo timezone = WebTimezoneManager.GetEffectiveTimezone(ViewContext.HttpContext.Session, ViewContext.HttpContext.User);
+
+			// Display timezone information
+			if (value is DateTime dateTime)
+			{
+				// A DateTime uses the Kind parameter, and we dont know the offset
+				switch (dateTime.Kind)
+				{
+					default:
+					case DateTimeKind.Unspecified:
+						timezoneText = "?";
+						timezoneHint = "Un-specified timezone";
+						break;
+
+					case DateTimeKind.Utc:
+						timezoneText = "Z";
+						timezoneHint = "Universal Coordinated Time (UTC)";
+						break;
+
+					case DateTimeKind.Local:
+						timezoneText = "+";
+						timezoneHint = $"Local time ({timezone.Id})";
+						break;
+				}
+			}
+			else if (value is DateTimeOffset dateTimeOffset)
+			{
+				// A DateTimeOffset specifies its offset from UTC, and makes our work here much easier
+				if (dateTimeOffset.Offset.TotalSeconds == 0.0)
+				{
+					timezoneText = "Z";
+					timezoneHint = "Universal Coordinated Time (UTC)";
+				}
+				else
+				{
+					timezoneText = $"{dateTimeOffset.Offset.TotalHours:N1}";
+					timezoneHint = $"Local time ({dateTimeOffset.Offset.ToShortFriendly()})";
+				}
+			}
+
+			if (!hasTitle && !string.IsNullOrEmpty(timezoneHint))
+				builder.Hint(timezoneHint);
+
+			return builder;
+		}
+
+		private string FormatValue(object value, string customFormat)
+		{
+			if (value is DateTime dateTime)
+			{
+				// A DateTime uses the Kind parameter, and we dont know the offset
+				switch (dateTime.Kind)
+				{
+					default:
+					case DateTimeKind.Unspecified: return $"{dateTime.ToString(customFormat)}?";
+					case DateTimeKind.Utc: return $"{dateTime.ToString(customFormat)}Z";
+					case DateTimeKind.Local: return $"{dateTime.ToString(customFormat)}?";
+				}
+			}
+			else if (value is DateTime dateTimeOffset)
+			{
+				// A DateTime uses the Kind parameter, and we dont know the offset
+				switch (dateTimeOffset.Kind)
+				{
+					default:
+					case DateTimeKind.Unspecified: return $"{dateTimeOffset.ToString(customFormat)}?";
+					case DateTimeKind.Utc: return $"{dateTimeOffset.ToString(customFormat)}Z";
+					case DateTimeKind.Local: return $"{dateTimeOffset.ToString(customFormat)}?";
+				}
+			}
+
+			return null;
+		}
+
+		private DateBoxBuilder ProcessButtons(DateBoxBuilder builder, string timezoneText, string timezoneTitle)
+		{
+			// Add buttons, but only if we have some
+			if (!string.IsNullOrEmpty(HelpText) || !string.IsNullOrEmpty(timezoneText))
+			{
+				// We have buttons, add them, also the clear button if needed (otherwise if there are any buttons, the clear button gets lost)
+				builder = builder.Buttons(b =>
+				{
+					// Add the clear button, but only if there are other buttons
+					if (AllowClear)
+						b.Add().Name("clear");
+
+					// Add the custom help button, but only if we have a help text
+					AddHelpButton(b);
+
+					// Add custom defined buttons, but only if we have some
+					AddTimezoneButton(b, timezoneText, timezoneTitle);
+				});
+			}
+			else
+			{
+				// We have NO buttons, but check for the clear button
+				builder = builder.ShowClearButton(AllowClear);
+			}
+
+			return builder;
+		}
+
+		protected void AddTimezoneButton(CollectionFactory<TextEditorButtonBuilder> button, string timezoneText, string timezoneTitle)
+		{
+			string helpText = TranslateToProp(HelpText, ViewContext);
+			button.Add()
+				.Name("timezone")
+				.Location(TextEditorButtonLocation.After)
+				.Widget(w =>
+				{
+					var button = w.Button();
+
+					if (string.IsNullOrEmpty(timezoneText))
+						button = button.Icon("time");
+					else
+						button = button.Text(timezoneText);
+
+					button = button
+						.Hint(timezoneTitle)
+						.StylingMode(ButtonStylingMode.Contained);
+
+					return button;
+				});
 		}
 
 		#endregion
@@ -192,6 +384,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("value")]
 		public DateTime? Value { get; set; }
 
-        #endregion
-    }
+		#endregion
+	}
 }

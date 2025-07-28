@@ -317,12 +317,6 @@ namespace Alcazar.Web.Extensibility
 		public System.Collections.IEnumerable Items { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if the clear button should be shown. Defaults to true.
-		/// </summary>
-		[HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; } = true;
-
-		/// <summary>
 		/// Get or set an indicator if the control should be opened on click. Defaults to false.
 		/// </summary>
 		[HtmlAttributeName("open-click")]

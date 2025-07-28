@@ -209,12 +209,6 @@ namespace Alcazar.Web.Extensibility
         public string ValueJS { get; set; }
         
 		/// <summary>
-        /// Get or set an indicator if the clear button should be shown. Defaults to true.
-        /// </summary>
-        [HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; } = true;
-
-		/// <summary>
 		/// Get or set mode of this text box. The mode sets behaviour for common use cases, such as passwords and email. Defaults to a standard text box.
 		/// </summary>
 		[HtmlAttributeName("mode")]

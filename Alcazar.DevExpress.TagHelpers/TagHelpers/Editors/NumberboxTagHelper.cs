@@ -222,12 +222,6 @@ namespace Alcazar.Web.Extensibility
         public string ValueJS { get; set; }
         
 		/// <summary>
-        /// Get or set an indicator if the clear button should be shown. Defaults to true.
-        /// </summary>
-        [HtmlAttributeName("clear")]
-		public bool AllowClear { get; set; } = true;
-
-		/// <summary>
 		/// Get or set mode of this number box. The mode sets behaviour for common use cases, such as telephone numbers. Defaults to a standard number box.
 		/// </summary>
 		[HtmlAttributeName("mode")]

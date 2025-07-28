@@ -1,4 +1,5 @@
-﻿using Amaqele.Common.Base;
+﻿using Alcazar.DevExpress.Utilities;
+using Amaqele.Common.Base;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
@@ -191,7 +192,7 @@ namespace Alcazar.Web.Extensibility
 			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
 			ColumnsContext columnContext = GetOrCreateContext<ColumnsContext>(context);
 
-			// Process children of the card tag, the header, footer, and my body will need them 
+			// Process children of the data grid tag
 			IHtmlContent content = await output.GetChildContentAsync();
 
 			// Set the data source
@@ -503,17 +504,13 @@ namespace Alcazar.Web.Extensibility
 				else if (column.DataType.HasValue)
 				{
 					// 3. Format based on the data type
-					format = ToFormat(column.DataType.Value);
+					format = DxCultureUtilities.ToFormat(column.DataType.Value);
 				}
 
 				if (format.HasValue)
 				{
 					// We have determined the format of the content, translate it into the current culture
-					// The feature is not available from the constructor, therefore request it here.
-					IRequestCultureFeature requestCultureFeature = ViewContext.HttpContext.Features.Get<IRequestCultureFeature>();
-					CultureInfo cultureInfo = requestCultureFeature?.RequestCulture?.Culture ?? Thread.CurrentThread.CurrentCulture;
-
-					string customFormat = ToCustomFormat(format.Value, Thread.CurrentThread.CurrentCulture);
+					string customFormat = DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
 					if (!string.IsNullOrEmpty(customFormat))
 						builder = builder.Format(customFormat);
 				}
@@ -646,81 +643,6 @@ namespace Alcazar.Web.Extensibility
 			//.Template("<span>xxx</span>")
 			// if (button.Content != null)
 			//	builder2 = builder2.Template(ToString(button.Content));
-		}
-
-		private Format? ToFormat(GridColumnDataType dataType)
-		{
-			switch (dataType)
-			{
-				default:
-				case GridColumnDataType.String:
-				case GridColumnDataType.Boolean:
-				case GridColumnDataType.Object: return null;
-
-				case GridColumnDataType.Number: return Format.Decimal;
-
-				case GridColumnDataType.Date: return Format.ShortDate;
-				case GridColumnDataType.DateTime: return Format.ShortDateShortTime;
-
-			}
-		}
-
-		private string ToCustomFormat(Format format, CultureInfo culture)
-		{
-			switch (format)
-			{
-				// NOT supported
-				default:
-				case Format.Billions:
-				case Format.Currency:
-				case Format.Day:
-				case Format.Millions:
-				case Format.Millisecond:
-				case Format.Month:
-				case Format.MonthAndDay:
-				case Format.MonthAndYear:
-				case Format.Quarter:
-				case Format.QuarterAndYear:
-				case Format.Thousands:
-				case Format.Trillions:
-				case Format.Year:
-				case Format.DayOfWeek:
-				case Format.Hour:
-				case Format.Minute:
-				case Format.Second: return null;
-
-				// Numbers TODO
-				case Format.Decimal: //var x = culture.GetFormat(typeof(int)); return x.ToString();//.NumberFormat.NumberNegativePattern.ToString();
-				case Format.Exponential: //return culture.NumberFormat.NumberNegativePattern.ToString();
-				case Format.FixedPoint: //return culture.NumberFormat.NumberNegativePattern.ToString();
-				case Format.LargeNumber: //return culture.NumberFormat.NumberNegativePattern.ToString();
-				case Format.Percent: return null; //return culture.NumberFormat.PercentPositivePattern.ToString();
-
-				// Date and time
-				case Format.LongDate: return culture.DateTimeFormat.LongDatePattern;
-				case Format.LongTime: return culture.DateTimeFormat.LongTimePattern;
-				case Format.ShortDate: return culture.DateTimeFormat.ShortDatePattern;
-				case Format.ShortTime: return culture.DateTimeFormat.ShortTimePattern;
-				case Format.LongDateLongTime: return $"{culture.DateTimeFormat.LongDatePattern} {culture.DateTimeFormat.LongTimePattern}";
-				case Format.ShortDateShortTime: return $"{culture.DateTimeFormat.ShortDatePattern} {culture.DateTimeFormat.ShortTimePattern}";
-			}
-		}
-
-		private string ToCustomFormat(GridColumnDataType dataType)
-		{
-			switch (dataType)
-			{
-				default:
-				case GridColumnDataType.String:
-				case GridColumnDataType.Boolean:
-				case GridColumnDataType.Object: return null;
-
-				case GridColumnDataType.Number: return "##0.00";
-
-				case GridColumnDataType.Date: return "yyyy-MM-dd";
-				case GridColumnDataType.DateTime: return "yyyy-MM-dd HH:mm";
-
-			}
 		}
 
 		private void todo(DataGridBuilder<object> builder)
