@@ -123,6 +123,8 @@ namespace Alcazar.Web.Extensibility
 
             builder = builder.Mode(Mode);
 
+			builder = ProcessEvents(builder);
+
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
@@ -186,6 +188,16 @@ namespace Alcazar.Web.Extensibility
 				string title = TranslateToProp(Title, ViewContext);
 				builder.Hint(title);
 			}
+
+			return builder;
+		}
+
+		private TextBoxBuilder ProcessEvents(TextBoxBuilder builder)
+		{
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
 
 			return builder;
 		}

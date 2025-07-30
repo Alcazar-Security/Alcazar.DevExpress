@@ -81,6 +81,8 @@ namespace Alcazar.Web.Extensibility
 		protected void ApplyControlContext(ControlContext controlContext)
 		{
 			// Apply values which the control context might want to pass into me, the editor
+			if (ID == null)
+				ID = controlContext.Name ?? controlContext.For?.Name;
 			if (Name == null)
 				Name = controlContext.Name;
 			if (For == null)

@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Amaqele.Common.Types;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Encodings.Web;
@@ -88,7 +90,15 @@ namespace Alcazar.Web.Extensibility
 			IHtmlContent content = await output.GetChildContentAsync();
 
 			// Process the (child) data source
-			if (sourceContext.Datasource != null)
+			if (Items != null)
+			{
+				// Process server-side supplied items
+				builder = builder.DataSource(Items);
+
+				// Process known item types
+				builder = ProcessItemTypes(builder, Items);
+			}
+			else if (sourceContext.Datasource != null)
 			{
 				// Build the data source from the child tag
 				builder = builder.MinSearchLength(sourceContext.Datasource.MinSearchLength);
@@ -218,6 +228,21 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private AutocompleteBuilder ProcessItemTypes(AutocompleteBuilder builder, IEnumerable items)
+		{
+			Type elementType = TypeHelper.GetEnumerableElementType(items);
+			if (elementType == typeof(SelectListItem))
+			{
+				// For SelectListItems, use 'Value' and 'Text'
+				if (string.IsNullOrEmpty(ValueExpression))
+					ValueExpression = ValueString;
+				if (string.IsNullOrEmpty(SearchExpression))
+					SearchExpression = TextString;
+			}
+
+			return builder;
+		}
+
 		private AutocompleteBuilder ProcessTitle(AutocompleteBuilder builder)
 		{
 			if (!string.IsNullOrEmpty(Title))
@@ -240,6 +265,14 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
+
+
+		/// <summary>
+		/// Get or set the items of this dropdown box.
+		/// Items are supplied server side, and are an alternative to a data source.
+		/// </summary>
+		[HtmlAttributeName("asp-items")]
+		public System.Collections.IEnumerable Items { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if the dropdown button should be shown.

@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -219,13 +217,17 @@ namespace Alcazar.Web.Extensibility
 
         /// <summary>
         /// Get or set the icon of the button.
+        /// This property must be lowercase for DevExtreme to recognise it as icon property.
         /// </summary>
-        public string Icon { get; set; }
+        [JsonPropertyName("icon")]
+		public string Icon { get; set; }
 
-        /// <summary>
-        /// Get or set the text of the button.
-        /// </summary>
-        public string Text { get; set; }
+		/// <summary>
+		/// Get or set the text of the button.
+		/// This property must be UPPERcase for DevExtreme to recognise it as text property.
+		/// </summary>
+		[JsonPropertyName("Text")]
+		public string Text { get; set; }
 
         /// <summary>
         /// Get or set the value of the button.

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text.Encodings.Web;
@@ -102,6 +103,51 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
 
+			// Options
+			builder = builder.DropDownOptions(p =>
+			{
+				if (!string.IsNullOrEmpty(DropDownWidth))
+					p = p.Width(DropDownWidth);
+
+				p = p.Position(p =>
+				{
+					// MY is the dropdown's anchor point.
+					if (DropDownMyHorizontalAlignment.HasValue && DropDownMyVerticalAlignment.HasValue)
+						p = p.My(DropDownMyHorizontalAlignment.Value, DropDownMyVerticalAlignment.Value);
+
+					// AT is the button's anchor point.
+					if (DropDownAtHorizontalAlignment.HasValue && DropDownAtVerticalAlignment.HasValue)
+					{
+						// If the AT location is to be set, we MUST have an ID
+						p = p.At(DropDownAtHorizontalAlignment.Value, DropDownAtVerticalAlignment.Value)
+							 .Of($"#{ID}");
+					}
+
+					if (DropDownHorizontalCollision.HasValue && DropDownVerticalCollision.HasValue)
+						p = p.Collision(DropDownHorizontalCollision.Value, DropDownVerticalCollision.Value);
+				});
+			});
+
+			// Item template
+			if (!string.IsNullOrWhiteSpace(ItemTemplate))
+				builder = builder.ItemTemplate(ItemTemplate);
+			else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
+				builder = builder.ItemTemplate(new JS(ItemTemplateJS));
+			else if (ItemTemplateRZ != null)
+				builder = builder.ItemTemplate(ItemTemplateRZ);
+			else if (ItemTemplateNT != null)
+				builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
+
+			// Dropdown content template
+			if (!string.IsNullOrWhiteSpace(DropDownTemplate))
+				builder = builder.DropDownContentTemplate(DropDownTemplate);
+			else if (!string.IsNullOrWhiteSpace(DropDownTemplateJS))
+				builder = builder.DropDownContentTemplate(new JS(DropDownTemplateJS));
+			else if (DropDownTemplateRZ != null)
+				builder = builder.DropDownContentTemplate(DropDownTemplateRZ);
+			else if (DropDownTemplateNT != null)
+				builder = builder.DropDownContentTemplate(new TemplateName(DropDownTemplateNT));
+
 			// Event handlers
 			builder = ItemClick(builder);
 
@@ -112,6 +158,7 @@ namespace Alcazar.Web.Extensibility
 			IHtmlContent result = builder;
 			output.Content.SetHtmlContent(result);
 		}
+
 
 		private DropDownButtonBuilder ProcessCommon(DropDownButtonBuilder builder)
 		{
@@ -164,10 +211,6 @@ namespace Alcazar.Web.Extensibility
 		#region DropdownButtonTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		[ViewContext]
-		[HtmlAttributeNotBound]
-		public ViewContext ViewContext { get; set; }
-
 		/// <summary>
 		/// Get or set an indicator if the  text of the button.
 		/// </summary>
@@ -203,6 +246,115 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("display-expr")]
 		public string DisplayExpression { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DropdownButtonTagHelper properties: dropdown options
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the dropdown width of this control. Defaults to teh width of the dropdown button.
+		/// </summary>
+		[HtmlAttributeName("dropdown-width")]
+		public string DropDownWidth { get; set; }
+
+		/// <summary>
+		/// Get or set the horizontal anchor MY point of the dropdown.
+		/// </summary>
+		[HtmlAttributeName("dropdown-my-horz")]
+		public HorizontalAlignment? DropDownMyHorizontalAlignment { get; set; }
+
+		/// <summary>
+		/// Get or set the vertical anchor MY point of the dropdown.
+		/// </summary>
+		[HtmlAttributeName("dropdown-my-vert")]
+		public VerticalAlignment? DropDownMyVerticalAlignment { get; set; }
+
+		/// <summary>
+		/// Get or set the horizontal anchor AT point of the button.
+		/// </summary>
+		[HtmlAttributeName("dropdown-at-horz")]
+		public HorizontalAlignment? DropDownAtHorizontalAlignment { get; set; }
+
+		/// <summary>
+		/// Get or set the vertical anchor AT point of the button.
+		/// </summary>
+		[HtmlAttributeName("dropdown-at-vert")]
+		public VerticalAlignment? DropDownAtVerticalAlignment { get; set; }
+
+		/// <summary>
+		/// Get or set the horizontal collision resolution strategy for dropdown positioning.
+		/// </summary>
+		[HtmlAttributeName("dropdown-horz-collision")]
+		public PositionResolveCollision? DropDownHorizontalCollision { get; set; }
+
+		/// <summary>
+		/// Get or set the vertical collision resolution strategy for dropdown positioning.
+		/// </summary>
+		[HtmlAttributeName("dropdown-vert-collision")]
+		public PositionResolveCollision? DropDownVerticalCollision { get; set; }
+		
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DropdownButtonTagHelper properties: tag helper templates
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the (string) item template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("item-template")]
+		public string ItemTemplate { get; set; }
+
+		/// <summary>
+		/// Get or set the JS item template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("item-template-js")]
+		public string ItemTemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the RazorBlock item template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("item-template-rz")]
+		public RazorBlock ItemTemplateRZ { get; set; }
+
+		/// <summary>
+		/// Get or set the named item template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("item-template-nt")]
+		public string ItemTemplateNT { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) dropdown template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("dropdown-template")]
+		public string DropDownTemplate { get; set; }
+
+		/// <summary>
+		/// Get or set the JS dropdown template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("dropdown-template-js")]
+		public string DropDownTemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the RazorBlock dropdown template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("dropdown-template-rz")]
+		public RazorBlock DropDownTemplateRZ { get; set; }
+
+		/// <summary>
+		/// Get or set the named dropdown template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("dropdown-template-nt")]
+		public string DropDownTemplateNT { get; set; }
+
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DropdownButtonTagHelper properties: tag helper events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
 		/// Get or set the action to be executed when a dropdown item is clicked.

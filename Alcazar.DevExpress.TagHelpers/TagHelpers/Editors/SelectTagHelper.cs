@@ -285,7 +285,6 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-
 		private SelectBoxBuilder ProcessTitle(SelectBoxBuilder builder)
 		{
 			if (!string.IsNullOrEmpty(Title))
