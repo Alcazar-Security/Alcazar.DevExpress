@@ -568,7 +568,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the command column type of this column. Applicable only to command columns.
 		/// </summary>
-		public GridCommandColumnType CommandType { get; set; }
+		public GridCommandColumnType CommandType { get; set; } = GridCommandColumnType.Buttons;
 
 		/// <summary>
 		/// Get or set the icon of the column.

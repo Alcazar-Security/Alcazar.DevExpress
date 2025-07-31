@@ -17,7 +17,7 @@ namespace Alcazar.Web.Extensibility
 	public class DataSourceTagHelperBase : RouteTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region RouteTagHelperBase methods: data source builder
+		#region DataSourceTagHelperBase methods: data source builder
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -25,7 +25,7 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		/// <param name="factory"> The data source factory. </param>
 		/// <returns> The data source builder.</returns>
-		public OptionsOwnerBuilder BuildDatasource(DataSourceFactory factory)
+		public StoreDataSourceBuilder BuildDatasource(DataSourceFactory factory)
 		{
 			if (DatasourceType == DataSourceTypes.None)
 			{
@@ -57,7 +57,13 @@ namespace Alcazar.Web.Extensibility
 			}
 		}
 
-		private OptionsOwnerBuilder BuildStaticJson(DataSourceFactory factory)
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataSourceTagHelperBase methods: generic builders
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		private StoreDataSourceBuilder BuildStaticJson(DataSourceFactory factory)
 		{
 			var options = factory.StaticJson();
 
@@ -67,7 +73,7 @@ namespace Alcazar.Web.Extensibility
 			return options;
 		}
 
-		private OptionsOwnerBuilder BuildArray(DataSourceFactory factory)
+		private StoreDataSourceBuilder BuildArray(DataSourceFactory factory)
 		{
 			ArrayDataSourceBuilder options = factory.Array();
 
@@ -98,7 +104,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Build an MVC datasource, which must reside in the current application.
 		/// </summary>
-		private OptionsOwnerBuilder BuildMvc(DataSourceFactory factory)
+		private StoreDataSourceBuilder BuildMvc(DataSourceFactory factory)
 		{
 			// Create options and its method 
 			// Set load action
@@ -153,7 +159,7 @@ namespace Alcazar.Web.Extensibility
 			return options;
 		}
 
-		private OptionsOwnerBuilder BuildOData(DataSourceFactory factory)
+		private StoreDataSourceBuilder BuildOData(DataSourceFactory factory)
 		{
 			ODataSourceBuilder options = factory.OData();
 
@@ -196,7 +202,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Build a remote datasource, which may reside outside the current application.
 		/// </summary>
-		private OptionsOwnerBuilder BuildRemoteController(DataSourceFactory factory)
+		private StoreDataSourceBuilder BuildRemoteController(DataSourceFactory factory)
 		{
 			// Create options and its method 
 			// Set load action

@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using NLog.Config;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -185,6 +187,9 @@ namespace Alcazar.Web.Extensibility
 				});
 			}
 
+			// Process exporting functionality
+			builder = ProcessExport(builder);
+
 			// Data grid events
 			builder = ProcessEvents(builder);
 
@@ -297,6 +302,21 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private DataGridBuilder<T> ProcessExport<T>(DataGridBuilder<T> builder)
+		{
+			if (!string.IsNullOrEmpty(OnExporting))
+			{
+				builder = builder.Export(e => e
+					.Enabled(true)
+					.AllowExportSelectedData(AllowExportSelectedData)
+					.Formats(ExportFormats));
+
+				builder = builder.OnExporting(OnExporting);
+			}
+
+			return builder;
+		}
+
 		private DataGridBuilder<T> ProcessEvents<T>(DataGridBuilder<T> builder)
 		{
 			// Content events
@@ -331,6 +351,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.OnSaving(OnSaving);
 			if (!string.IsNullOrEmpty(OnSaved))
 				builder = builder.OnSaved(OnSaved);
+
+			// Exporting - hendled by ProcessExporting
 
 			// Copilot added events
 			if (!string.IsNullOrEmpty(OnCellClick))
@@ -725,6 +747,18 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("asp-for")]
 		public ModelExpression For { get; set; }
 
+		/// <summary>
+		/// Get or set a sequence of allowed export formats.
+		/// </summary>
+		[HtmlAttributeName("export-formats")]
+		public IEnumerable<DataGridExportFormat> ExportFormats { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if exporting selected data is allowed.
+		/// </summary>
+		[HtmlAttributeName("export-selected")]
+		public bool AllowExportSelectedData { get; set; }
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -918,6 +952,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("saved")]
 		public string OnSaved { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to be executed when exportinf to PDF or XLSX.
+		/// </summary>
+		[HtmlAttributeName("exporting")]
+		public string OnExporting { get; set; }
 
 		// Add these properties to the "DataGridTagHelper properties: tag helper events" region
 
