@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using NLog.Config;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -104,9 +106,12 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.FieldChooser(c => c
 				.Enabled(true)
 				.Height(400)
-				.AllowSearch(false)
+				.Texts(t => t
+					.RowFields("Drag fields here xx")
+					.AllFields("Search fields xx"))
+				.AllowSearch(AllowSearch)
 				.ApplyChangesMode(ApplyChangesMode.Instantly)
-				.Layout(PivotGridFieldChooserLayout.Layout0));
+				.Layout(PivotGridFieldChooserLayout.Layout1));
 
 			// Totals
 			builder = builder
@@ -114,7 +119,6 @@ namespace Alcazar.Web.Extensibility
 				.ShowColumnGrandTotals(ShowColumnGrandTotals)
 				.ShowRowTotals(ShowRowTotals)
 				.ShowRowGrandTotals(ShowRowGrandTotals);
-
 
 			// Process exporting functionality
 			builder = ProcessExport(builder);
@@ -130,9 +134,19 @@ namespace Alcazar.Web.Extensibility
 			IHtmlContent content = await output.GetChildContentAsync();
 
 			builder = builder.DataSource(d => d
+				.Fields(c => ProcessFieldColumns(c, columnContext.Columns))
 				.Store(s => s.Mvc().Controller("PivotGridData").LoadAction("Get")));
 
-			PivotGridStoreFactory d;
+			if (ShowRowFields || ShowColumnFields || ShowDataFields || ShowFilterFields)
+			{
+				builder = builder.FieldPanel(p => p
+					.ShowRowFields(ShowRowFields)
+					.ShowColumnFields(ShowColumnFields)
+					.ShowDataFields(ShowDataFields)
+					.ShowFilterFields(ShowFilterFields)
+					.AllowFieldDragging(AllowFieldDragging)
+					.Visible(true));
+			}
 
 			// Set the data source
 			if (sourceContext.Datasource != null)
@@ -146,8 +160,14 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.DataSource(b => b.Store(f => BuildDatasource(f)));
 			}
 
-			// Add columns - seems to be done in the datasource
-
+			// Store state
+			if (!string.IsNullOrEmpty(State))
+			{
+				builder = builder.StateStoring(s => s
+					.Enabled(true)
+					.Type(StateStoringType.LocalStorage)
+					.StorageKey("dx-widget-gallery-pivotgrid-storing"));
+			}
 			// Event handlers
 			if (!string.IsNullOrEmpty(OnInitialised))
 				builder = builder.OnInitialized(OnInitialised);
@@ -212,7 +232,22 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
+		private void ProcessFieldColumns<T>(CollectionFactory<PivotGridDataSourceFieldBuilder<T>> factory, IEnumerable<ColumnModel> columns)
+		{
+			foreach (ColumnModel column in columns)
+			{
+				switch (column.Type)
+				{
+					// A field column places a field into the pivot table
+					default:
+					case "field":
+						ProcessFieldColumn<T>(factory, column);
+						break;
+				}
+			}
+		}
+
+		private CollectionFactory<PivotGridDataSourceFieldBuilder<T>> ProcessFieldColumn<T>(CollectionFactory<PivotGridDataSourceFieldBuilder<T>> factory, ColumnModel column)
 		{
 			// Column header
 			if (column.For != null)
@@ -220,19 +255,10 @@ namespace Alcazar.Web.Extensibility
 				// If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ due to a [JsonProperty] attribute
 				if (string.IsNullOrEmpty(column.Name))
 				{
-					// Check for a [JsonProperty] attribute which renames the field in JSON data and confuses DX
-					// 2025-05 UNDO this, we use Newtonsoft attributes, but DX uses System.Text.Json, therefore DX serialises with the original property names
-					//if (column.For.Metadata is Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.DefaultModelMetadata mmd && mmd.Attributes.PropertyAttributes != null)
-					//{
-					//	// Use the JSON property name
-					//	JsonPropertyAttribute attribute = mmd.Attributes.PropertyAttributes.FirstOrDefault((a) => a is JsonPropertyAttribute) as JsonPropertyAttribute;
-					//	if (attribute != null)
-					//		column.Name = attribute.PropertyName;
-					//}
-
 					if (string.IsNullOrEmpty(column.Name))
 					{
 						// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
+						// Best to avoid this
 						column.Name = RemoveNoname(column.For.Name);
 					}
 				}
@@ -246,19 +272,20 @@ namespace Alcazar.Web.Extensibility
 				column.DataType = ToDataType(column.For.Metadata.ModelType);
 			}
 
-			DataGridColumnBuilder<T> builder = columns.Add()
+			PivotGridDataSourceFieldBuilder<T> builder = factory.Add()
 				.DataField(column.Name)
 				.Caption(column.Label)
-				.Alignment(column.Alignment)
-				.AllowEditing(!column.IsReadonly);
+				.Width(column.DoubleWidth);
 
+			// Visibility
 			if (!string.IsNullOrEmpty(column.IsVisibleAction))
 				builder = builder.Visible(new JS(column.IsVisibleAction));
 			else
 				builder = builder.Visible(column.IsVisible);
 
-			if (column.DataType.HasValue)
-				builder = builder.DataType(column.DataType.Value);
+			// Data type
+			if (column.PivotDataType.HasValue)
+				builder = builder.DataType(column.PivotDataType.Value);
 
 			// Filtering
 			if (column.FilterType.HasValue)
@@ -266,14 +293,6 @@ namespace Alcazar.Web.Extensibility
 				builder = builder
 					.AllowFiltering(true)
 					.FilterType(column.FilterType.Value);
-
-				if (column.FilterOperation.HasValue)
-				{
-					builder = builder
-						.SelectedFilterOperation(column.FilterOperation.Value)
-						.FilterValue(column.FilterValue);
-					//.EditorOptions("");
-				}
 			}
 			else
 			{
@@ -287,48 +306,32 @@ namespace Alcazar.Web.Extensibility
 			{
 				if (column.SortIndex > 0)
 				{
-					builder = builder.SortIndex(column.SortIndex);
-
 					// If we have a sort index, we must have a sort order
 					if (column.SortOrder == null)
 						column.SortOrder = SortOrder.Asc;
+
+					builder = builder.SortOrder(column.SortOrder.Value);
 				}
 
-				if (column.SortOrder.HasValue)
-					builder = builder.SortOrder(column.SortOrder.Value);
-
 				if (!string.IsNullOrEmpty(column.SortingMethod))
-					builder = builder.SortingMethod(column.SortingMethod);
-
-				if (!string.IsNullOrEmpty(column.SortValue))
-					builder = builder.CalculateSortValue(column.SortValue);
-			}
-
-			// Column and grid layout
-			if (!string.IsNullOrEmpty(column.Width))
-				builder = builder.Width(column.Width);
-
-			// Editing of a column
-			if (column.LookupDatasource != null)
-			{
-				//builder.EditorOptions(?);
-				//builder.ShowEditorAlways(true);
-				builder = builder.Lookup(lookup =>
 				{
-					// Process the (column) data source
-					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
+					builder = builder.SortingMethod(column.SortingMethod);
+				}
 
-					// Not supported for trees? lookup = lookup.Grouped(true);
-					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
-					lookup = lookup.ValueExpr(column.ValueExpression);
-					lookup = lookup.DisplayExpr(column.DisplayExpression);
-				});
+				// Sorting by summary
+				builder = builder.AllowSortingBySummary(column.AllowSortingBySummary);
+				if (!string.IsNullOrEmpty(column.SortBySummaryField))
+					builder = builder.SortBySummaryField(column.SortBySummaryField);
+				if (column.SortBySummaryPath != null)
+					builder = builder.SortBySummaryPath(column.SortBySummaryPath);
 			}
 
-			// Set the cell value
-			// Thought we need that for cascading editing, but it didnt work
-			if (!string.IsNullOrEmpty(column.SetCellValue))
-				builder = builder.SetCellValue(column.SetCellValue);
+			// Area and expansion
+			builder = builder.Area(column.PivotArea);
+			if (column.AreaIndex.HasValue)
+				builder = builder.AreaIndex(column.AreaIndex.Value);
+
+			builder = builder.Expanded(column.IsExpanded);
 
 			// Column formatting
 			// 1. Specified custom format
@@ -362,155 +365,9 @@ namespace Alcazar.Web.Extensibility
 				}
 			}
 
-			// Column styling
-			if (!string.IsNullOrEmpty(column.CssClass))
-				builder = builder.CssClass(column.CssClass);
-
-			// Set the edit templates
-			if (!string.IsNullOrEmpty(column.EditTemplate))
-				builder = builder.EditCellTemplate(column.EditTemplate);
-			else if (!string.IsNullOrEmpty(column.EditTemplateJS))
-				builder = builder.EditCellTemplate(new JS(column.EditTemplateJS));
-			else if (column.EditTemplateRZ != null)
-				builder = builder.EditCellTemplate(column.EditTemplateRZ);
-			else if (!string.IsNullOrEmpty(column.EditTemplateNT))
-				builder = builder.EditCellTemplate(new TemplateName(column.EditTemplateNT));
-
-			// Set the child content or templates
-			if (!string.IsNullOrWhiteSpace(column.Content))
-				builder = builder.CellTemplate(column.Content);
-			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
-				builder = builder.CellTemplate(new JS(column.ContentJS));
-			else if (column.ContentRZ != null)
-				builder = builder.CellTemplate(column.ContentRZ);
-			else if (!string.IsNullOrEmpty(column.ContentNT))
-				builder = builder.CellTemplate(new TemplateName(column.ContentNT));
-
 			// Column events
 			// There are no events on the column
-			return columns;
-		}
-
-		private async Task<CollectionFactory<DataGridColumnBuilder<T>>> ProcessCommandColumnAsync<T>(TagHelperContext context, TagHelperOutput output, CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
-		{
-			// Get the context, so that we can use it here
-			// ButtonContext buttonContext = GetContextSafe<ButtonContext>(context);
-
-			// Process children of the tag, we will need them
-			IHtmlContent content = await output.GetChildContentAsync();
-
-			DataGridColumnBuilder<T> builder = columns.Add()
-				.Type(column.CommandType)
-				.Caption(column.Label);
-
-			if (column.Index.HasValue)
-				builder = builder.VisibleIndex(column.Index.Value);
-
-			if (!string.IsNullOrEmpty(column.IsVisibleAction))
-				builder = builder.Visible(new JS(column.IsVisibleAction));
-			else
-				builder = builder.Visible(column.IsVisible);
-
-			// Add buttons, but only if we have some
-			if (column.Buttons != null)
-			{
-				// We have buttons, add them, also the clear button if needed (otherwise if there are any buttons, the clear button gets lost)
-				builder = builder.Buttons(buttons =>
-				{
-					// Add the edit button, if there is an update action
-					if (!string.IsNullOrEmpty(UpdateAction))
-						buttons.Add().Name("edit");
-
-					// Add the delete button, if there is a delete action
-					if (!string.IsNullOrEmpty(DeleteAction))
-						buttons.Add().Name("delete");
-
-					foreach (ButtonModel button in column.Buttons)
-					{
-						DataGridColumnButtonBuilder buttonBuilder = buttons.Add();
-
-						BuildButton<T>(buttonBuilder, button);
-					}
-				});
-			}
-			else
-			{
-				// We have NO buttons, but check for the clear button
-				// So we should not have a custom column in the first place, nothing to do
-			}
-
-			// Set the child content or templates
-			// This is challenged here, since the custom template overwrites the button content AND behaviour, eg a delete no longer deletes
-			if (!string.IsNullOrWhiteSpace(column.Content))
-				builder = builder.CellTemplate(column.Content);
-			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
-				builder = builder.CellTemplate(new JS(column.ContentJS));
-			else if (column.ContentRZ != null)
-				builder = builder.CellTemplate(column.ContentRZ);
-			else if (!string.IsNullOrWhiteSpace(column.ContentNT))
-				builder = builder.CellTemplate(new TemplateName(column.ContentNT));
-
-			return columns;
-		}
-
-		private void BuildButton<T>(DataGridColumnButtonBuilder buttonBuilder, ButtonModel button)
-		{
-			if (!string.IsNullOrEmpty(button.Name))
-				buttonBuilder = buttonBuilder.Name(button.Name);
-
-			// Seemingly can only display icon OR text
-			if (!string.IsNullOrEmpty(button.Icon))
-				buttonBuilder = buttonBuilder.Icon(button.Icon);
-			else if (!string.IsNullOrEmpty(button.Text))
-			{
-				string text = TranslateToProp(button.Text, ViewContext);
-				buttonBuilder = buttonBuilder.Text(text);
-			}
-
-			if (!string.IsNullOrEmpty(button.Title))
-			{
-				string title = TranslateToProp(button.Title, ViewContext);
-				buttonBuilder = buttonBuilder.Hint(title);
-			}
-
-			if (!string.IsNullOrEmpty(button.IsVisibleAction))
-				buttonBuilder = buttonBuilder.Visible(new JS(button.IsVisibleAction));
-			else
-				buttonBuilder = buttonBuilder.Visible(button.IsVisible);
-
-			if (!string.IsNullOrEmpty(button.OnClickAction))
-				buttonBuilder = buttonBuilder.OnClick(button.OnClickAction);
-
-			// Set the class
-			if (!string.IsNullOrEmpty(button.Class))
-				buttonBuilder = buttonBuilder.CssClass(button.Class);
-
-			// Not used currently
-			//.Template("<span>xxx</span>")
-			// if (button.Content != null)
-			//	builder2 = builder2.Template(ToString(button.Content));
-		}
-
-		private void todo(PivotGridBuilder<object> builder)
-		{
-			BulletBuilder builder2 = _htmlHelper.DevExtreme().Bullet()
-				.Value(new JS("value * 100"))
-				.Size(s => s
-					.Height(35)
-					.Width(150))
-				.Margin(m => m
-					.Top(5)
-					.Bottom(0)
-					.Left(5))
-				.ShowTarget(false)
-				.ShowZeroLevel(true)
-				.StartScaleValue(0)
-				.EndScaleValue(100)
-				.Tooltip(t => t
-					.Enabled(true)
-					.Font(f => f.Size(18))
-					.PaddingTopBottom(2)
-					/*.CustomizeTooltip("customizeTooltip")*/);
+			return factory;
 		}
 
 		#endregion
@@ -622,7 +479,61 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("row-grand-totals")]
 		public bool ShowRowGrandTotals { get; set; }
-		
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: pivot
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if row fields should be shown in the field panel.
+		/// </summary>
+		[HtmlAttributeName("show-row-fields")]
+		public bool ShowRowFields { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if column fields should be shown in the field panel.
+		/// </summary>
+		[HtmlAttributeName("show-column-fields")]
+		public bool ShowColumnFields { get; set; } = true;
+
+		/// <summary>
+		/// Get or set an indicator if data fields should be shown in the field panel.
+		/// </summary>
+		[HtmlAttributeName("show-data-fields")]
+		public bool ShowDataFields { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if filter fields should be shown in the field panel.
+		/// </summary>
+		[HtmlAttributeName("show-filter-fields")]
+		public bool ShowFilterFields { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if fields in the field panel can be dragged.
+		/// </summary>
+		[HtmlAttributeName("drag-fields")]
+		public bool AllowFieldDragging { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if the field chooser allows searching.
+		/// </summary>
+		[HtmlAttributeName("search")]
+		public bool AllowSearch { get; set; }
+
+		/// <summary>
+		/// Get or set the storage key of the state store. Defaults to 'dx-pivot-grid-store'.
+		/// </summary>
+		[HtmlAttributeName("state")]
+		public string State { get; set; } = "dx-pivot-grid-store";
+
+		/// <summary>
+		/// Get or set the type of store used for storing the state of the pivot grid control. Defaults to <see cref="StateStoringType.LocalStorage"/>.
+		/// </summary>
+		[HtmlAttributeName("state-type")]
+		public StateStoringType StateStoringType { get; set; } = StateStoringType.LocalStorage;
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

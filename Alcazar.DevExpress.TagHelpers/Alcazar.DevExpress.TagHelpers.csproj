@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <Folder Include="Extensibility\" />
+    <Folder Include="TagHelpers\Reports\" />
   </ItemGroup>
 
   <ItemGroup>

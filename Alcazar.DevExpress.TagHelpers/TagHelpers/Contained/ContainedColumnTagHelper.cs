@@ -103,6 +103,15 @@ namespace Alcazar.Web.Extensibility
 				// Command columns
 				CommandType = CommandType,
 				Buttons = buttonContext.Buttons,
+
+				// Pivot columns
+				PivotDataType= PivotDataType,
+				PivotArea = PivotArea,
+				AreaIndex = AreaIndex,
+				IsExpanded = IsExpanded,
+				AllowSortingBySummary = AllowSortingBySummary,
+				SortBySummaryField = SortBySummaryField,
+				SortBySummaryPath = SortBySummaryPath,
 			};
 
 			columnContext.Columns.Add(column);
@@ -365,6 +374,54 @@ namespace Alcazar.Web.Extensibility
 		public string Text { get; set; }
 
 		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: pivot field column
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the pivot data type of this field.
+		/// </summary>
+		[HtmlAttributeName("pivottype")]
+		public PivotGridDataType? PivotDataType { get; set; }
+
+		/// <summary>
+		/// Get or set the pivot area of the field.
+		/// </summary>
+		[HtmlAttributeName("area")]
+		public PivotGridArea PivotArea { get; set; }
+
+		/// <summary>
+		/// Get or set the pivot area index of the field.
+		/// </summary>
+		[HtmlAttributeName("area-index")]
+		public int? AreaIndex { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if the field is to be expanded.
+		/// </summary>
+		[HtmlAttributeName("expanded")]
+		public bool IsExpanded { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if sorting by summary is enabled.
+		/// </summary>
+		[HtmlAttributeName("sort-summary")]
+		public bool AllowSortingBySummary { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the field to sort by summary.
+		/// </summary>
+		[HtmlAttributeName("summay-field")]
+		public string SortBySummaryField { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the field to sort by path.
+		/// </summary>
+		[HtmlAttributeName("path-field")]
+		public IEnumerable<double> SortBySummaryPath { get; set; }
+
+		#endregion
 	}
 
 	/// <summary>
@@ -422,9 +479,14 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the width of this column.
+		/// Get or set the width of this column (as HTLP width value, eg 10em).
 		/// </summary>
 		public string Width { get; set; }
+
+		/// <summary>
+		/// Get or set the width of this column (as double value, in pixels).
+		/// </summary>
+		public double DoubleWidth { get; set; }
 
 		/// <summary>
 		/// Get or set the index of the column. Zero denotes the first column.
@@ -584,6 +646,47 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set a sequence of buttons of the column.
 		/// </summary>
 		public IEnumerable<ButtonModel> Buttons { get; internal set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: pivot field column
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the pivot data type of this field.
+		/// </summary>
+		public PivotGridDataType? PivotDataType { get; set; }
+
+		/// <summary>
+		/// Get or set the pivot area of the field.
+		/// </summary>
+		public PivotGridArea PivotArea { get; set; }
+
+		/// <summary>
+		/// Get or set the pivot area index of the field.
+		/// </summary>
+		public int? AreaIndex { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if the field is to be expanded.
+		/// </summary>
+		public bool IsExpanded { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if sorting by summary is enabled.
+		/// </summary>
+		public bool AllowSortingBySummary { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the field to sort by summary.
+		/// </summary>
+		public string SortBySummaryField { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the field to sort by path.
+		/// </summary>
+		public IEnumerable<double> SortBySummaryPath { get; set; }
 
 		#endregion
 	}

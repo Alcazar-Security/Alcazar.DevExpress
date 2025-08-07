@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
@@ -229,27 +230,7 @@ namespace Alcazar.Web.Extensibility
 
 			// Add columns, if we have some
 			if (columnContext.Columns.Any())
-			{
-				builder = builder.Columns(async columns =>
-				{
-					foreach (ColumnModel column in columnContext.Columns)
-					{
-						switch (column.Type)
-						{
-							// A data column displays a property of the model
-							default:
-							case "data":
-								ProcessDataColumn<T>(columns, column);
-								break;
-
-							// A command column displays command buttons which act on the model which is displayed in this row
-							case "command":
-								await ProcessCommandColumnAsync<T>(context, output, columns, column);
-								break;
-						}
-					}
-				});
-			}
+				builder = builder.Columns(async c => await ProcessColumnsAsync<T>(c, context, output, columnContext.Columns));
 
 			// Event handlers
 			if (!string.IsNullOrEmpty(OnInitialised))
@@ -260,23 +241,30 @@ namespace Alcazar.Web.Extensibility
 
 			// Build the toolbar
 			// The location of the toolbar is not changable, DX says:
-			// The data grid does not provide an option for the toolbar position. You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
-			//builder = builder.Toolbar(toolbar =>
-			//{
-			//	toolbar.Items(i =>
-			//	{
-			//		// If we are inserting, show and customise the ADD toolbar button
-			//		if (string.IsNullOrEmpty(InsertAction) || string.IsNullOrEmpty(OnInserted))
-			//		{
-			//			i.Add()
-			//				.Name(DataGridToolbarItem.AddRowButton)
-			//				.Location(ToolbarItemLocation.After)
-			//				.ShowText(ToolbarItemShowTextMode.InMenu);
-			//		}
-			//	});
-			//});
+			// The data grid does not provide an option for the toolbar position.
+			// You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
 
 			return builder;
+		}
+
+		private async Task ProcessColumnsAsync<T>(CollectionFactory<DataGridColumnBuilder<T>> factory, TagHelperContext context, TagHelperOutput output, IEnumerable<ColumnModel> columns)
+		{
+			foreach (ColumnModel column in columns)
+			{
+				switch (column.Type)
+				{
+					// A data column displays a property of the model
+					default:
+					case "data":
+						ProcessDataColumn<T>(factory, column);
+						break;
+
+					// A command column displays command buttons which act on the model which is displayed in this row
+					case "command":
+						await ProcessCommandColumnAsync<T>(context, output, factory, column);
+						break;
+				}
+			}
 		}
 
 		private DataGridBuilder<T> ProcessCommon<T>(DataGridBuilder<T> builder)
@@ -569,9 +557,6 @@ namespace Alcazar.Web.Extensibility
 
 		private async Task<CollectionFactory<DataGridColumnBuilder<T>>> ProcessCommandColumnAsync<T>(TagHelperContext context, TagHelperOutput output, CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
 		{
-			// Get the context, so that we can use it here
-			// ButtonContext buttonContext = GetContextSafe<ButtonContext>(context);
-
 			// Process children of the tag, we will need them
 			IHtmlContent content = await output.GetChildContentAsync();
 
@@ -665,38 +650,6 @@ namespace Alcazar.Web.Extensibility
 			//.Template("<span>xxx</span>")
 			// if (button.Content != null)
 			//	builder2 = builder2.Template(ToString(button.Content));
-		}
-
-		private void todo(DataGridBuilder<object> builder)
-		{
-			builder = builder.RowAlternationEnabled(true);
-
-			builder = builder.SearchPanel(s => s
-				.Visible(true)
-				.HighlightCaseSensitive(true));
-
-			//builder = builder.OnContentReady("contentReady");
-			builder = builder.GroupPanel(g => g.Visible(true));
-			builder = builder.Grouping(g => g.AutoExpandAll(false));
-
-			BulletBuilder builder2 = _htmlHelper.DevExtreme().Bullet()
-				.Value(new JS("value * 100"))
-				.Size(s => s
-					.Height(35)
-					.Width(150))
-				.Margin(m => m
-					.Top(5)
-					.Bottom(0)
-					.Left(5))
-				.ShowTarget(false)
-				.ShowZeroLevel(true)
-				.StartScaleValue(0)
-				.EndScaleValue(100)
-				.Tooltip(t => t
-					.Enabled(true)
-					.Font(f => f.Size(18))
-					.PaddingTopBottom(2)
-					/*.CustomizeTooltip("customizeTooltip")*/);
 		}
 
 		#endregion
