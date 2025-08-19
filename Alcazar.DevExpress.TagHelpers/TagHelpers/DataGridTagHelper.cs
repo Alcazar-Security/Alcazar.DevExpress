@@ -416,13 +416,19 @@ namespace Alcazar.Web.Extensibility
 				.Alignment(column.Alignment)
 				.AllowEditing(!column.IsReadonly);
 
+			// Data type
+			if (column.DataType.HasValue)
+				builder = builder.DataType(column.DataType.Value);
+
+			// Visibility
 			if (!string.IsNullOrEmpty(column.IsVisibleAction))
 				builder = builder.Visible(new JS(column.IsVisibleAction));
 			else
 				builder = builder.Visible(column.IsVisible);
 
-			if (column.DataType.HasValue)
-				builder = builder.DataType(column.DataType.Value);
+			// Fixed
+			if (column.FixedPosition.HasValue)
+				builder = builder.FixedPosition(column.FixedPosition.Value);
 
 			// Filtering
 			if (column.FilterType.HasValue)
@@ -436,7 +442,6 @@ namespace Alcazar.Web.Extensibility
 					builder = builder
 						.SelectedFilterOperation(column.FilterOperation.Value)
 						.FilterValue(column.FilterValue);
-					//.EditorOptions("");
 				}
 			}
 			else
@@ -519,6 +524,7 @@ namespace Alcazar.Web.Extensibility
 
 				if (format.HasValue)
 				{
+					// TODO - when the thread culture on startup differs from the broswer culture, then we can an unmodified culture here, and culture options do not kick in. this needs some work.
 					// We have determined the format of the content, translate it into the current culture
 					string customFormat = DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
 					if (!string.IsNullOrEmpty(customFormat))

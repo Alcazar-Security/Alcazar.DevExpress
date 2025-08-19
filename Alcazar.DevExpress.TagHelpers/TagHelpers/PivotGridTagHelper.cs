@@ -168,6 +168,7 @@ namespace Alcazar.Web.Extensibility
 					.Type(StateStoringType.LocalStorage)
 					.StorageKey("dx-widget-gallery-pivotgrid-storing"));
 			}
+
 			// Event handlers
 			if (!string.IsNullOrEmpty(OnInitialised))
 				builder = builder.OnInitialized(OnInitialised);
@@ -277,15 +278,15 @@ namespace Alcazar.Web.Extensibility
 				.Caption(column.Label)
 				.Width(column.DoubleWidth);
 
+			// Data type
+			if (column.PivotDataType.HasValue)
+				builder = builder.DataType(column.PivotDataType.Value);
+
 			// Visibility
 			if (!string.IsNullOrEmpty(column.IsVisibleAction))
 				builder = builder.Visible(new JS(column.IsVisibleAction));
 			else
 				builder = builder.Visible(column.IsVisible);
-
-			// Data type
-			if (column.PivotDataType.HasValue)
-				builder = builder.DataType(column.PivotDataType.Value);
 
 			// Filtering
 			if (column.FilterType.HasValue)
@@ -496,7 +497,7 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set an indicator if column fields should be shown in the field panel.
 		/// </summary>
 		[HtmlAttributeName("show-column-fields")]
-		public bool ShowColumnFields { get; set; } = true;
+		public bool ShowColumnFields { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if data fields should be shown in the field panel.

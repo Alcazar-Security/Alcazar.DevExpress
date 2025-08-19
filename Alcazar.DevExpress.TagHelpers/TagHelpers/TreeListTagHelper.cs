@@ -280,33 +280,21 @@ namespace Alcazar.Web.Extensibility
 				.AllowSorting(true)
 				.AllowEditing(!column.IsReadonly);
 
+			// Data type
+			if (column.DataType.HasValue)
+				builder = builder.DataType(column.DataType.Value);
+
+			// Visibility
 			if (!string.IsNullOrEmpty(column.IsVisibleAction))
 				builder = builder.Visible(new JS(column.IsVisibleAction));
 			else
 				builder = builder.Visible(column.IsVisible);
 
-			//.SortOrder(SortOrder.Asc);
+			// Fixed
+			if (column.FixedPosition.HasValue)
+				builder = builder.FixedPosition(column.FixedPosition.Value);
 
-			// Editing of a column
-			if (column.LookupDatasource != null)
-			{
-				//builder.EditorOptions(?);
-				//builder.ShowEditorAlways(true);
-				builder = builder.Lookup(lookup =>
-				{
-					// Process the (column) data source
-					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
-					
-					// Not supported for trees? lookup = lookup.Grouped(true);
-					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
-					lookup = lookup.ValueExpr(column.ValueExpression);
-					lookup = lookup.DisplayExpr(column.DisplayExpression);
-				});
-			}
-
-			if (column.DataType.HasValue)
-				builder = builder.DataType(column.DataType.Value);
-
+			// Filtering
 			if (column.FilterType.HasValue)
 			{
 				builder = builder
@@ -326,6 +314,47 @@ namespace Alcazar.Web.Extensibility
 				builder = builder
 					.AllowFiltering(false);
 			}
+
+			// Sorting
+			builder = builder.AllowSorting(column.IsSorting);
+			if (column.IsSorting)
+			{
+				if (column.SortIndex > 0)
+				{
+					builder = builder.SortIndex(column.SortIndex);
+
+					// If we have a sort index, we must have a sort order
+					if (column.SortOrder == null)
+						column.SortOrder = SortOrder.Asc;
+				}
+
+				if (column.SortOrder.HasValue)
+					builder = builder.SortOrder(column.SortOrder.Value);
+
+				if (!string.IsNullOrEmpty(column.SortingMethod))
+					builder = builder.SortingMethod(column.SortingMethod);
+
+				if (!string.IsNullOrEmpty(column.SortValue))
+					builder = builder.CalculateSortValue(column.SortValue);
+			}
+
+			// Editing of a column
+			if (column.LookupDatasource != null)
+			{
+				//builder.EditorOptions(?);
+				//builder.ShowEditorAlways(true);
+				builder = builder.Lookup(lookup =>
+				{
+					// Process the (column) data source
+					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
+					
+					// Not supported for trees? lookup = lookup.Grouped(true);
+					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
+					lookup = lookup.ValueExpr(column.ValueExpression);
+					lookup = lookup.DisplayExpr(column.DisplayExpression);
+				});
+			}
+
 
 			if (!string.IsNullOrWhiteSpace(column.Content))
 				builder = builder.CellTemplate(column.Content);

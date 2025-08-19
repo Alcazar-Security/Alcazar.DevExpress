@@ -80,6 +80,7 @@ namespace Alcazar.Web.Extensibility
 
 				IsVisible = IsVisible,
 				IsVisibleAction = IsVisibleAction,
+				FixedPosition = FixedPosition,
 				IsReadonly = IsReadonly,
 
 				// Filtering and sorting
@@ -168,6 +169,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("visible-js")]
 		public string IsVisibleAction { get; set; }
+
+		/// <summary>
+		/// Get or set the fixed position of the column, if any.
+		/// </summary>
+		[HtmlAttributeName("fixed")]
+		public FixedPosition? FixedPosition { get; set; }
 
 		#endregion
 
@@ -471,6 +478,11 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set an JS method to determine if this column should be visible.
 		/// </summary>
 		public string IsVisibleAction { get; set; }
+
+		/// <summary>
+		/// Get or set the fixed position of the column, if any.
+		/// </summary>
+		public FixedPosition? FixedPosition { get; set; }
 
 		#endregion
 

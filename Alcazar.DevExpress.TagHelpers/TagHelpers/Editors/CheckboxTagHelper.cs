@@ -115,6 +115,9 @@ namespace Alcazar.Web.Extensibility
 
 			builder = builder.Text(labelText);
 
+			// Process events
+			builder = ProcessEvents(builder);
+
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
@@ -175,6 +178,16 @@ namespace Alcazar.Web.Extensibility
 				Boolean.TryParse(stringValue, out bool boolValue2);
 				builder = builder.Value(boolValue2);
 			}
+
+			return builder;
+		}
+
+		private CheckBoxBuilder ProcessEvents(CheckBoxBuilder builder)
+		{
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
 
 			return builder;
 		}

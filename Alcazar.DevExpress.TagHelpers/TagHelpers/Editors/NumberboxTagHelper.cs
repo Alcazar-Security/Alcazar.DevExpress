@@ -189,6 +189,8 @@ namespace Alcazar.Web.Extensibility
 
 		private NumberBoxBuilder ProcessEvents(NumberBoxBuilder builder)
 		{
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
 			if (!string.IsNullOrEmpty(OnChange))
 				builder = builder.OnChange(OnChange);
 			if (!string.IsNullOrEmpty(OnEnterKey))
