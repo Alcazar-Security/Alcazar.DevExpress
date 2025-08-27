@@ -228,9 +228,14 @@ namespace Alcazar.Web.Extensibility
 					break;
 			}
 
-			// Add columns, if we have some
 			if (columnContext.Columns.Any())
+			{
+				// Add columns, if we have some
 				builder = builder.Columns(async c => await ProcessColumnsAsync<T>(c, context, output, columnContext.Columns));
+
+				// Add summaries for columns
+				builder = builder.Summary(s => ProcessSummaries<T>(s, context, output, columnContext.Columns));
+			}
 
 			// Event handlers
 			if (!string.IsNullOrEmpty(OnInitialised))
@@ -245,26 +250,6 @@ namespace Alcazar.Web.Extensibility
 			// You might want to add a separate toolbar widget under your grid and populate it with desired controls. Samples are available in our Toolbar documentation.
 
 			return builder;
-		}
-
-		private async Task ProcessColumnsAsync<T>(CollectionFactory<DataGridColumnBuilder<T>> factory, TagHelperContext context, TagHelperOutput output, IEnumerable<ColumnModel> columns)
-		{
-			foreach (ColumnModel column in columns)
-			{
-				switch (column.Type)
-				{
-					// A data column displays a property of the model
-					default:
-					case "data":
-						ProcessDataColumn<T>(factory, column);
-						break;
-
-					// A command column displays command buttons which act on the model which is displayed in this row
-					case "command":
-						await ProcessCommandColumnAsync<T>(context, output, factory, column);
-						break;
-				}
-			}
 		}
 
 		private DataGridBuilder<T> ProcessCommon<T>(DataGridBuilder<T> builder)
@@ -376,6 +361,69 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private string DetermineColumnFormat(ColumnModel col)
+		{
+			// Parameters which influence formatting
+			GridColumnDataType? columnDataType = col.DataType;
+			Format? columnFormat = col.Format;
+			string columnCustomFormat = col.CustomFormat;
+
+			if(!string.IsNullOrEmpty(columnCustomFormat))
+			{
+				// 1. Specified custom format
+				return columnCustomFormat;
+			}
+			else
+			{
+				Format? format = null;
+				if (columnFormat.HasValue)
+				{
+					// 2. Specified format
+					format = columnFormat.Value;
+				}
+				else if (columnDataType.HasValue)
+				{
+					// 3. Format based on the data type
+					format = DxCultureUtilities.ToFormat(columnDataType.Value);
+				}
+
+				if (format.HasValue)
+				{
+					// TODO - when the thread culture on startup differs from the broswer culture, then we can an unmodified culture here, and culture options do not kick in. this needs some work.
+					// We have determined the format of the content, translate it into the current culture
+					return DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
+				}
+			}
+
+			return null;
+		}
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper methods: columns
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		private async Task ProcessColumnsAsync<T>(CollectionFactory<DataGridColumnBuilder<T>> factory, TagHelperContext context, TagHelperOutput output, IEnumerable<ColumnModel> columns)
+		{
+			foreach (ColumnModel column in columns)
+			{
+				switch (column.Type)
+				{
+					// A data column displays a property of the model
+					default:
+					case "data":
+						ProcessDataColumn<T>(factory, column);
+						break;
+
+					// A command column displays command buttons which act on the model which is displayed in this row
+					case "command":
+						await ProcessCommandColumnAsync<T>(context, output, factory, column);
+						break;
+				}
+			}
+		}
+
 		private CollectionFactory<DataGridColumnBuilder<T>> ProcessDataColumn<T>(CollectionFactory<DataGridColumnBuilder<T>> columns, ColumnModel column)
 		{
 			// Column header
@@ -407,10 +455,15 @@ namespace Alcazar.Web.Extensibility
 				if (string.IsNullOrEmpty(column.Label))
 					column.Label = column.For.Metadata.Name;
 
-				column.DataType = ToDataType(column.For.Metadata.ModelType);
+				// Set the data type to the default value for the model type, if it has not been explicitely set
+				if (!column.DataType.HasValue)
+					column.DataType = ToDataType(column.For.Metadata.ModelType);
 			}
 
+			// DataGridColumnBuilder<T> builder2 = columns.AddFor(column.For);
+
 			DataGridColumnBuilder<T> builder = columns.Add()
+				//.Name(column.Name)
 				.DataField(column.Name)
 				.Caption(column.Label)
 				.Alignment(column.Alignment)
@@ -503,34 +556,9 @@ namespace Alcazar.Web.Extensibility
 			// 1. Specified custom format
 			// 2. Specified format
 			// 3. Format based on the data type
+			column.CustomFormat = DetermineColumnFormat(column);
 			if (!string.IsNullOrEmpty(column.CustomFormat))
-			{
-				// 1. Specified custom format
 				builder = builder.Format(column.CustomFormat);
-			}
-			else
-			{
-				Format? format = null;
-				if (column.Format.HasValue)
-				{
-					// 2. Specified format
-					format = column.Format.Value;
-				}
-				else if (column.DataType.HasValue)
-				{
-					// 3. Format based on the data type
-					format = DxCultureUtilities.ToFormat(column.DataType.Value);
-				}
-
-				if (format.HasValue)
-				{
-					// TODO - when the thread culture on startup differs from the broswer culture, then we can an unmodified culture here, and culture options do not kick in. this needs some work.
-					// We have determined the format of the content, translate it into the current culture
-					string customFormat = DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
-					if (!string.IsNullOrEmpty(customFormat))
-						builder = builder.Format(customFormat);
-				}
-			}
 
 			// Column styling
 			if (!string.IsNullOrEmpty(column.CssClass))
@@ -661,6 +689,81 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper methods: totals
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		private DataGridSummaryBuilder<T> ProcessSummaries<T>(DataGridSummaryBuilder<T> builder, TagHelperContext context, TagHelperOutput output, IEnumerable<ColumnModel> columns)
+		{
+			// Recalculate while editing
+			builder = builder
+				.RecalculateWhileEditing(IsRecalculateWhileEditing)
+				.SkipEmptyValues(true);
+
+			if (!string.IsNullOrEmpty(CalculateCustomSummary))
+				builder = builder.CalculateCustomSummary(CalculateCustomSummary);
+
+			// Grand totals
+			builder = builder.TotalItems(c => ProcessSummaryColumns(c, context, output, columns));
+
+			// Group totals TODO
+			// builder = builder.GroupItems(c => ProcessGroupColumns(c, context, output, columns));
+
+			return builder;
+		}
+
+		private void ProcessSummaryColumns<T>(CollectionFactory<DataGridSummaryTotalItemBuilder<T>> factory, TagHelperContext context, TagHelperOutput output, IEnumerable<ColumnModel> columns)
+		{
+			foreach (ColumnModel column in columns)
+			{
+				switch (column.Type)
+				{
+					// A data column displays a property of the model
+					default:
+					case "data":
+						ProcessSummaryColumn<T>(factory, column);
+						break;
+
+					// A command column displays command buttons which act on the model which is displayed in this row
+					case "command":
+						break;
+				}
+			}
+		}
+
+		private DataGridSummaryTotalItemBuilder<T> ProcessSummaryColumn<T>(CollectionFactory<DataGridSummaryTotalItemBuilder<T>> factory, ColumnModel column)
+		{
+			if (column.SummaryType != null)
+			{
+				DataGridSummaryTotalItemBuilder<T> builder = factory.Add();
+
+				// The name is mandatory, it links the total definition to the column
+				// if (column.For != null)
+				//	factory.AddFor(column.For);
+
+				// Associate with the column
+				builder = builder
+					.Name(column.Name)
+					.ShowInColumn(column.Name);
+
+				builder = builder.SummaryType(column.SummaryType.Value);
+
+				if (!string.IsNullOrEmpty(column.CustomizeText))
+					builder = builder.CustomizeText(column.CustomizeText);
+
+				// The column builder has already set the custom format
+				// column.CustomFormat = DetermineColumnFormat(column);
+				if (!string.IsNullOrEmpty(column.CustomFormat))
+					builder = builder.ValueFormat(column.CustomFormat);
+
+				return builder;
+			}
+
+			return null;
+		}
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataGridTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
@@ -767,6 +870,18 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("sorting")]
 		public GridSortingMode SortingMode { get; set; } = GridSortingMode.Multiple;
 
+		/// <summary>
+		/// Get or set an indicator if totals hould be recalculated while editing
+		/// </summary>
+		[HtmlAttributeName("recalc")]
+		public bool IsRecalculateWhileEditing { get; set; }
+
+		/// <summary>
+		/// Get or set the JS method to use to calculate a summary in a custom way.
+		/// </summary>
+		[HtmlAttributeName("calc")]
+		public string CalculateCustomSummary { get; set; }
+		
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//

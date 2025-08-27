@@ -98,6 +98,13 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(OnRemoved))
 				options = options.OnRemoved(OnRemoved);
 
+			if (!string.IsNullOrEmpty(OnLoading))
+				options = options.OnLoading(OnLoading);
+			if (!string.IsNullOrEmpty(OnLoaded))
+				options = options.OnLoaded(OnLoaded);
+			if (!string.IsNullOrEmpty(OnPush))
+				options = options.OnPush(OnPush);
+
 			return options;
 		}
 
@@ -156,6 +163,13 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(OnBeforeSend))
 				options = options.OnBeforeSend(OnBeforeSend);
 
+			if (!string.IsNullOrEmpty(OnLoading))
+				options = options.OnLoading(OnLoading);
+			if (!string.IsNullOrEmpty(OnLoaded))
+				options = options.OnLoaded(OnLoaded);
+			if (!string.IsNullOrEmpty(OnPush))
+				options = options.OnPush(OnPush);
+
 			return options;
 		}
 
@@ -193,8 +207,12 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(OnRemoved))
 				options = options.OnRemoved(OnRemoved);
 
-			//if (!string.IsNullOrEmpty(OnBeforeSend))
-			//	options = options.OnBeforeSend(OnBeforeSend);
+			if (!string.IsNullOrEmpty(OnLoading))
+				options = options.OnLoading(OnLoading);
+			if (!string.IsNullOrEmpty(OnLoaded))
+				options = options.OnLoaded(OnLoaded);
+			if (!string.IsNullOrEmpty(OnPush))
+				options = options.OnPush(OnPush);
 
 			return options;
 		}
@@ -250,6 +268,13 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(OnBeforeSend))
 				options = options.OnBeforeSend(OnBeforeSend);
 
+			if (!string.IsNullOrEmpty(OnLoading))
+				options = options.OnLoading(OnLoading);
+			if (!string.IsNullOrEmpty(OnLoaded))
+				options = options.OnLoaded(OnLoaded);
+			if (!string.IsNullOrEmpty(OnPush))
+				options = options.OnPush(OnPush);
+
 			return options;
 		}
 
@@ -301,6 +326,48 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
+		/// Get or set the JS function to call when the datasource is loading.
+		/// </summary>
+		[HtmlAttributeName("loading")]
+		public string OnLoading { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call when the datasource has finished loading.
+		/// </summary>
+		[HtmlAttributeName("loaded")]
+		public string OnLoaded { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call when a data operation fails.
+		/// </summary>
+		[HtmlAttributeName("error")]
+		public string OnError { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call when data is pushed from the server.
+		/// </summary>
+		[HtmlAttributeName("push")]
+		public string OnPush { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call before a load operation starts.
+		/// </summary>
+		[HtmlAttributeName("before-load")]
+		public string OnBeforeLoad { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to customize store load options before sending to the server.
+		/// </summary>
+		[HtmlAttributeName("customize")]
+		public string OnCustomizeStoreLoadOptions { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to call when the data in the store changes.
+		/// </summary>
+		[HtmlAttributeName("datachanged")]
+		public string OnDataChanged { get; set; }
+
+		/// <summary>                   
 		/// Get or set the JS function to call when a new item is being inserted.
 		/// </summary>
 		[HtmlAttributeName("inserting")]

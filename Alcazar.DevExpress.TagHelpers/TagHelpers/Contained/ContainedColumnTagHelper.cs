@@ -93,6 +93,9 @@ namespace Alcazar.Web.Extensibility
 				SortingMethod = SortingMethod,
 				SortValue = SortValue,
 
+				// Totals
+				SummaryType = SummaryType,
+				CustomizeText = CustomizeText,
 				// Styling
 				CssClass = CssClass,
 
@@ -345,6 +348,25 @@ namespace Alcazar.Web.Extensibility
 		public string SortValue { get; set; }
 
 		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column totals
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the type of total or summary required for this column.
+		/// </summary>
+		[HtmlAttributeName("summary")]
+		public SummaryType? SummaryType { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function which customises the text of the total cell.
+		/// </summary>
+		[HtmlAttributeName("customize-text")]
+		public string CustomizeText { get; set; }
+
+		#endregion
+
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ColumnModel properties: data column styling
@@ -621,6 +643,22 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the calculating sort value.
 		/// </summary>
 		public string SortValue { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ColumnModel properties: data column totals
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the type of total or summary required for this column.
+		/// </summary>
+		public SummaryType? SummaryType { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function which customises the text of the total cell.
+		/// </summary>
+		public string CustomizeText { get; set; }
 
 		#endregion
 
