@@ -220,7 +220,7 @@ namespace Alcazar.Web.Extensibility
 					builder = builder.RemoteOperations(c =>
 					{
 						c.Filtering(true);              // MVC always does remote filtering
-						c.Grouping(true);               // MVC never does remote sorting
+						c.Grouping(true);               // MVC always does remote grouping
 						c.Paging(IsRemotePaging);       // MVC might do remote paging
 						c.Sorting(false);               // MVC never does remote sorting
 					});

@@ -25,6 +25,8 @@ namespace Alcazar.Web.Extensibility
 	[HtmlTargetElement("data-source", ParentTag = "dx-dropdown", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-tag", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-radiogroup", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("data-source", ParentTag = "dx-chart", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("data-source", ParentTag = "dx-piechart", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-diagram", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class DataSourceTagHelper : DataSourceTagHelperBase

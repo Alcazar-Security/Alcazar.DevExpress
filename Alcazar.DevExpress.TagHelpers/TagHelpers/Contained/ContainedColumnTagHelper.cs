@@ -367,7 +367,6 @@ namespace Alcazar.Web.Extensibility
 
 		#endregion
 
-
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ColumnModel properties: data column styling
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -377,6 +376,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("cell-class")]
 		public string CssClass { get; set; }
+
+		/// <summary>
+		/// Get or set the CSS style to be applied to grid cells of this column.
+		/// </summary>
+		[HtmlAttributeName("cell-style")]
+		public string CellStyle { get; set; }
 
 		#endregion
 
