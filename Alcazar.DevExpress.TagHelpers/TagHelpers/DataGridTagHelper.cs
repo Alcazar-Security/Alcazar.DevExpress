@@ -109,13 +109,18 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.ShowRowLines(true);
 			builder = builder.ShowColumnLines(false);
 			builder = builder.ShowColumnHeaders(true);
-			builder = builder.ColumnAutoWidth(true);
-			//builder = builder.ColumnWidth(Mode.Auto);
-			//builder = builder.Scrolling(s => s
-			//	.ColumnRenderingMode(GridColumnRenderingMode.Standard)
-			//	.Mode(GridScrollingMode.Infinite)
-			//	.ShowScrollbar(ShowScrollbarMode.OnHover));
 			//builder = builder.RootOnly(true);
+
+			// Scrolling
+			// builder = builder.ColumnWidth(Mode.Auto);
+			builder = builder.ColumnAutoWidth(ColumnAutoWidth);
+			builder = builder.ColumnFixing(c => c.Enabled(ColumnFixing));
+
+			builder = builder.Scrolling(s => s
+				.Mode(ScrollingMode)
+				.ColumnRenderingMode(ColumnRenderingMode)
+				.ShowScrollbar(ScrollbarMode)
+				.UseNative(false));
 
 			// Filter
 			builder = builder.FilterRow(f => f.Visible(IsFilterVisible));
@@ -368,7 +373,7 @@ namespace Alcazar.Web.Extensibility
 			Format? columnFormat = col.Format;
 			string columnCustomFormat = col.CustomFormat;
 
-			if(!string.IsNullOrEmpty(columnCustomFormat))
+			if (!string.IsNullOrEmpty(columnCustomFormat))
 			{
 				// 1. Specified custom format
 				return columnCustomFormat;
@@ -481,7 +486,11 @@ namespace Alcazar.Web.Extensibility
 
 			// Fixed
 			if (column.FixedPosition.HasValue)
-				builder = builder.FixedPosition(column.FixedPosition.Value);
+			{
+				builder = builder
+					.Fixed(true)
+					.FixedPosition(column.FixedPosition.Value);
+			}
 
 			// Filtering
 			if (column.FilterType.HasValue)
@@ -689,6 +698,48 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: layout
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if columns shoud use auto-width for this data grid.
+		/// </summary>
+		[HtmlAttributeName("column-auto-width")]
+		public bool ColumnAutoWidth { get; set; } = true;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DataGridTagHelper properties: behaviour
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if column fixing is allowed for this data grid.
+		/// </summary>
+		[HtmlAttributeName("fixing")]
+		public bool ColumnFixing { get; set; }
+
+		/// <summary>
+		/// Get or set the scrolling mode to be used for this data grid.
+		/// </summary>
+		[HtmlAttributeName("scrolling-mode")]
+		public GridScrollingMode ScrollingMode { get; set; } = GridScrollingMode.Standard;
+
+		/// <summary>
+		/// Get or set the scroll bar mode to be used for this data grid.
+		/// </summary>
+		[HtmlAttributeName("scrollbar-mode")]
+		public ShowScrollbarMode ScrollbarMode { get; set; } = ShowScrollbarMode.OnHover;
+
+		/// <summary>
+		/// Get or set the column rendering mode to be used for this data grid.
+		/// </summary>
+		[HtmlAttributeName("column-rendering-mode")]
+		public GridColumnRenderingMode ColumnRenderingMode { get; set; } = GridColumnRenderingMode.Standard;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DataGridTagHelper methods: totals
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
@@ -881,7 +932,7 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("calc")]
 		public string CalculateCustomSummary { get; set; }
-		
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
