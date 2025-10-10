@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -25,16 +26,12 @@ namespace Alcazar.Web.Extensibility
 		#region DropdownButtonTagHelper construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public DropdownButtonTagHelper(IHtmlHelper htmlHelper, HtmlEncoder htmlEncoder, IViewComponentHelper viewComponentHelper)
+		public DropdownButtonTagHelper(IHtmlHelper htmlHelper)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
-			_htmlEncoder = htmlEncoder;
-			_viewComponentHelper = viewComponentHelper;
 		}
 
-		private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
-		private readonly HtmlEncoder _htmlEncoder;
 
 		#endregion
 
@@ -61,6 +58,9 @@ namespace Alcazar.Web.Extensibility
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
 
+			// Process non-tag attriubtes
+			builder = ProcessAttributes(builder, output.Attributes);
+
 			// Make it a split button (where the button itself can be clicked too)
 			if (IsSplit)
 				builder = builder.SplitButton(true);
@@ -84,15 +84,43 @@ namespace Alcazar.Web.Extensibility
 			builder = ItemClick(builder);
 
 			// Set the item template
-			if (itemsContext.ItemTemplateContent != null)
+			if (!string.IsNullOrWhiteSpace(ItemTemplate))
+				builder = builder.ItemTemplate(ItemTemplate);
+			else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
+				builder = builder.ItemTemplate(new JS(ItemTemplateJS));
+			else if (ItemTemplateRZ != null)
+				builder = builder.ItemTemplate(ItemTemplateRZ);
+			else if (ItemTemplateNT != null)
+				builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
+			else if (itemsContext.ItemTemplateContent != null)
 				builder = builder.ItemTemplate(ToString(itemsContext.ItemTemplateContent));
 
 			// Set the template
-			if (itemsContext.TemplateContent != null)
+			if (!string.IsNullOrWhiteSpace(Template))
+				builder = builder.Template(Template);
+			else if (!string.IsNullOrWhiteSpace(TemplateJS))
+				builder = builder.Template(new JS(TemplateJS));
+			else if (TemplateRZ != null)
+				builder = builder.Template(TemplateRZ);
+			else if (TemplateNT != null)
+				builder = builder.Template(new TemplateName(TemplateNT));
+			else if (itemsContext.TemplateContent != null)
 				builder = builder.Template(ToString(itemsContext.TemplateContent));
 
+			// Set the dropdown content template
+			if (!string.IsNullOrWhiteSpace(DropDownTemplate))
+				builder = builder.DropDownContentTemplate(DropDownTemplate);
+			else if (!string.IsNullOrWhiteSpace(DropDownTemplateJS))
+				builder = builder.DropDownContentTemplate(new JS(DropDownTemplateJS));
+			else if (DropDownTemplateRZ != null)
+				builder = builder.DropDownContentTemplate(DropDownTemplateRZ);
+			else if (DropDownTemplateNT != null)
+				builder = builder.DropDownContentTemplate(new TemplateName(DropDownTemplateNT));
+			else if (itemsContext.DropdownTemplateContent != null)
+				builder = builder.Template(ToString(itemsContext.DropdownTemplateContent));
+
 			// Apply items, if any
-			if (itemsContext.Items != null)
+			if (itemsContext.Items != null && itemsContext.Items.Any())
 				builder = builder.DataSource(itemsContext.Items);
 			else if (Items != null)
 				builder = builder.DataSource(Items);
@@ -128,26 +156,6 @@ namespace Alcazar.Web.Extensibility
 				});
 			});
 
-			// Item template
-			if (!string.IsNullOrWhiteSpace(ItemTemplate))
-				builder = builder.ItemTemplate(ItemTemplate);
-			else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
-				builder = builder.ItemTemplate(new JS(ItemTemplateJS));
-			else if (ItemTemplateRZ != null)
-				builder = builder.ItemTemplate(ItemTemplateRZ);
-			else if (ItemTemplateNT != null)
-				builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
-
-			// Dropdown content template
-			if (!string.IsNullOrWhiteSpace(DropDownTemplate))
-				builder = builder.DropDownContentTemplate(DropDownTemplate);
-			else if (!string.IsNullOrWhiteSpace(DropDownTemplateJS))
-				builder = builder.DropDownContentTemplate(new JS(DropDownTemplateJS));
-			else if (DropDownTemplateRZ != null)
-				builder = builder.DropDownContentTemplate(DropDownTemplateRZ);
-			else if (DropDownTemplateNT != null)
-				builder = builder.DropDownContentTemplate(new TemplateName(DropDownTemplateNT));
-
 			// Event handlers
 			builder = ItemClick(builder);
 
@@ -174,6 +182,34 @@ namespace Alcazar.Web.Extensibility
 		}
 
 		/// <summary>
+		/// Process attributes.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		///						On outer div						On element
+		/// Any attribute		attr on dx-lineargauge				-
+		/// Class attribute		class on dx-lineargauge				elem-class on dx-lineargauge
+		/// </para>
+		/// </remarks>
+		private DropDownButtonBuilder ProcessAttributes(DropDownButtonBuilder builder, TagHelperAttributeList attributes)
+		{
+			// We are choosing to place the attributes on the element, not the input
+			foreach (var attr in attributes)
+			{
+				// Currently not used, all attributes remain only on the outer div
+				// Class is not an attribute we want to pass on here (elem-class does that)
+				//if (attr.Name != "class")
+				//	builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+			}
+
+			// Class on element
+			if (!string.IsNullOrEmpty(ElementClass))
+				builder = builder.ElementAttr("class", ElementClass);
+
+			return builder;
+		}
+
+		/// <summary>
 		/// Set the action to be executed when a dropdown item is clicked.
 		/// </summary>
 		/// <param name="builder"></param>
@@ -192,18 +228,21 @@ namespace Alcazar.Web.Extensibility
 					break;
 
 				// rb: TODO
-				case "rb":
+				case _clickRb:
 					// builder.OnItemClick(RazorBlock(null));
 					break;
 
 				// href: the item includes a href, use it by calling a default method
-				case "href":
+				case _clickHref:
 					builder.OnItemClick("dx_dropdown_itemclick");
 					break;
 			}
 
 			return builder;
 		}
+
+		protected const string _clickRb = "rb";
+		protected const string _clickHref = "href";
 
 		#endregion
 
@@ -246,6 +285,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("display-expr")]
 		public string DisplayExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the class attribute for the control element.
+		/// </summary>
+		[HtmlAttributeName("elem-class")]
+		public string ElementClass { get; set; }
 
 		#endregion
 
@@ -294,12 +339,36 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("dropdown-vert-collision")]
 		public PositionResolveCollision? DropDownVerticalCollision { get; set; }
-		
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DropdownButtonTagHelper properties: tag helper templates
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the (string) template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("template")]
+		public string Template { get; set; }
+
+		/// <summary>
+		/// Get or set the JS template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("template-js")]
+		public string TemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the RazorBlock template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("template-rz")]
+		public RazorBlock TemplateRZ { get; set; }
+
+		/// <summary>
+		/// Get or set the named template of this dropdown button control.
+		/// </summary>
+		[HtmlAttributeName("template-nt")]
+		public string TemplateNT { get; set; }
 
 		/// <summary>
 		/// Get or set the (string) item template of this dropdown button control.

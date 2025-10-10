@@ -234,11 +234,25 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		/// <summary>
+		/// Process attributes.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// </para>
+		/// </remarks>
 		private LinearGaugeBuilder ProcessAttributes(LinearGaugeBuilder builder, TagHelperAttributeList attributes)
 		{
 			// We are choosing to place the attributes on the element, not the input
 			foreach (var attr in attributes)
-				builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+			{
+				if (attr.Name != "class")
+					builder = builder.ElementAttr(attr.Name, attr.Value?.ToString());
+			}
+
+			// Class on element TODO
+			//if (!string.IsNullOrEmpty(ElementClass))
+			//	builder = builder.ElementAttr("class", ElementClass);
 
 			// No option for attributes on the input field here
 			return builder;
@@ -356,6 +370,12 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region LinearGaugeTagHelper properties: Appearance
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the class attribute for the control element.
+		/// </summary>
+		[HtmlAttributeName("elem-class")]
+		public string ElementClass { get; set; }
 
 		/// <summary>
 		/// Get or set the orientation of the gauge ('horizontal' or 'vertical').

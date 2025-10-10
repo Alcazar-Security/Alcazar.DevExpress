@@ -37,8 +37,9 @@ namespace Alcazar.Web.Extensibility
     /// * Button items within a <see cref="PopupTagHelper"/>.
     /// </summary>
     [HtmlTargetElement("item", ParentTag = "dx-radiogroup", TagStructure = TagStructure.NormalOrSelfClosing)]
-    [HtmlTargetElement("item", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
-    [HtmlTargetElement("item", ParentTag = "dx-popup", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("item", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("item", ParentTag = "target-selector", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("item", ParentTag = "dx-popup", TagStructure = TagStructure.NormalOrSelfClosing)]
     public class ContainedItemTagHelper : ContainedItemTagHelperBase
     {
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -187,14 +188,27 @@ namespace Alcazar.Web.Extensibility
     /// </summary>
     public class ItemContext
     {
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region ItemContext properties
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ItemContext properties
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        public IHtmlContent TemplateContent { get; set; }
-        public IHtmlContent ItemTemplateContent { get; set; }
+		/// <summary>
+		/// Get or set the content or template for this control.
+		/// </summary>
+		public IHtmlContent TemplateContent { get; set; }
 
-        public IList<ItemModel> Items { get; } = new List<ItemModel>();
+		/// <summary>
+		/// Get or set the item content or template for the control.
+		/// </summary>
+		public IHtmlContent ItemTemplateContent { get; set; }
+
+		/// <summary>
+		/// Get or set the dropdown content or template for the dropdown button's dropdown menu.
+		/// TODO if we wver use this, need to make a class like ItemTemplateTagHelper for it.
+		/// </summary>
+		public IHtmlContent DropdownTemplateContent { get; set; }
+
+		public IList<ItemModel> Items { get; } = new List<ItemModel>();
 
         #endregion
     }
