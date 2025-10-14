@@ -220,7 +220,7 @@ namespace Alcazar.Web.Extensibility
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
         /// <summary>
-        /// Get or set the ID of this item. Not used anywhere currently.
+        /// Get or set the ID of this item. Used to set the value of a dropdown item.
         /// </summary>
         public string ID { get; set; }
 
