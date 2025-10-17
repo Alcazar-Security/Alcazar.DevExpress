@@ -465,8 +465,6 @@ namespace Alcazar.Web.Extensibility
 					column.DataType = ToDataType(column.For.Metadata.ModelType);
 			}
 
-			// DataGridColumnBuilder<T> builder2 = columns.AddFor(column.For);
-
 			DataGridColumnBuilder<T> builder = columns.Add()
 				//.Name(column.Name)
 				.DataField(column.Name)
@@ -584,6 +582,7 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.EditCellTemplate(new TemplateName(column.EditTemplateNT));
 
 			// Set the child content or templates
+			bool hasContent = true;
 			if (!string.IsNullOrWhiteSpace(column.Content))
 				builder = builder.CellTemplate(column.Content);
 			else if (!string.IsNullOrWhiteSpace(column.ContentJS))
@@ -592,6 +591,16 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.CellTemplate(column.ContentRZ);
 			else if (!string.IsNullOrEmpty(column.ContentNT))
 				builder = builder.CellTemplate(new TemplateName(column.ContentNT));
+			else
+				hasContent = false;
+
+			// Cell title/tooltip
+			if (!hasContent && !string.IsNullOrEmpty(column.Title))
+			{
+				// Only add tooltip template if no custom template is already set
+				string tooltipTemplate = $"<span title='{column.Title}'><%- value %></span>";
+				builder = builder.CellTemplate(tooltipTemplate);
+			}
 
 			// Column events
 			// There are no events on the column

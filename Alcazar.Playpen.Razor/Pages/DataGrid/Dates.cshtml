@@ -1,0 +1,82 @@
+﻿@page
+@using Alcazar.Playpen.Models
+@using DevExtreme.AspNet.Mvc
+@using Alcazar.Playpen.Razor.Pages.DataGrid
+
+@model DateItem
+
+<div class="alert alert-warning -1">
+	Default DevExtreme gets local or UTC times serialised as '2000-02-14T04:00:00+02:00' and '2000-02-14T12:00:00Z' respectively,
+	and the `new Date()` approach converts them to local values, which conflicts with the Alcazar approach.
+	We should be seeing '2000-02-14' as dates, and '12:00' UTC and '04:00' local time for GMT-8.
+</div>
+
+<dx-datagrid asp-action="GetDates" asp-controller="DataGridDates" record-type="typeof(DateItem)" load-param-max="2">
+	<column asp-for="LocalDateTime" custom-format="yyyy-MM-dd HH:mm" />
+	<column asp-for="UniversalDateTime" custom-format="yyyy-MM-dd HH:mm" />
+	<column asp-for="LocalDate" custom-format="yyyy-MM-dd" />
+	<column asp-for="UniversalDate" custom-format="yyyy-MM-dd" />
+	<column asp-for="Day" custom-format="yyyy-MM-dd" />
+</dx-datagrid>
+<hr />
+
+<div class="alert alert-warning -1">
+	Using a JS override for 'cell-prepared', we can prevent `new Date()` to converting dates to local values.
+</div>
+
+<dx-datagrid asp-action="GetDates" asp-controller="DataGridDates" record-type="typeof(DateItem)" load-param-max="2" cell-prepared="onCellPrepared">
+	<column asp-for="LocalDateTime" custom-format="yyyy-MM-dd HH:mm" />
+	<column asp-for="UniversalDateTime" custom-format="yyyy-MM-dd HH:mm" />
+	<column asp-for="LocalDate" custom-format="yyyy-MM-dd" />
+	<column asp-for="UniversalDate" custom-format="yyyy-MM-dd" />
+	<column asp-for="Day" custom-format="yyyy-MM-dd" />
+</dx-datagrid>
+
+@section Scripts
+{
+	<script>
+		// Called when a cell has been prepared
+		function onCellPrepared (e) {
+			// Check if this is a date/time column
+			if (e.column.dataType === 'datetime') {
+				// Apply this only if we are in a data cell, and we have a value for the cell
+				if (e.rowType === 'data' && e.data && e.data[e.column.dataField]) {
+					// Take the cell value and format it to a date
+					// dx would do this by itself, but we need to change the default JS behaviour of auto-converting to local
+					var value = e.data[e.column.dataField];
+
+					// If we have a UTC (Z) date, remove the Z, this prevents adjustment to local time by new Date()
+					var isUtc = false;
+					if (typeof value === 'string' && value.endsWith('Z')) {
+						value = value.slice(0, -1);
+						isUtc = true;
+					}
+
+					// Format the standard dx way
+					var date = new Date(value);
+					var text = formatDateDX(date, e.column.format);
+
+					// Process the tooltip, UTC or local time
+					// Add 'Z' to UTC to make it obvious
+					var title;
+					if (isUtc) {
+						text = text + 'Z';
+						title = 'UTC';
+					}
+					else {
+						title = 'Local time';
+
+					}
+
+					// Set the date value and title/tooltip
+					e.cellElement.text(text);
+					e.cellElement.attr('title', title);
+				}
+			}
+		}
+
+		function formatDateDX(date, format) {
+			return DevExpress.localization.formatDate(date, format);
+		}
+	</script>
+}

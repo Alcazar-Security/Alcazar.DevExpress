@@ -135,7 +135,7 @@ namespace Alcazar.Web.Extensibility
 
 			// Set load action
 			options = options.LoadAction(Action);
-
+			
 			// Set editing actions
 			if (!string.IsNullOrEmpty(InsertAction))
 				options = options.InsertAction(InsertAction);

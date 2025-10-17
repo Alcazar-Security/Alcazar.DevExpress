@@ -77,6 +77,7 @@ namespace Alcazar.Web.Extensibility
 				EditTemplateJS = EditTemplateJS,
 				EditTemplateRZ = EditTemplateRZ,
 				EditTemplateNT = EditTemplateNT,
+				Title = Title,
 
 				IsVisible = IsVisible,
 				IsVisibleAction = IsVisibleAction,
@@ -292,6 +293,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("group-expr")]
 		public string GroupExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) title or tooltip of this column.
+		/// </summary>
+		[HtmlAttributeName("title")]
+		public string Title { get; set; }
 
 		#endregion
 
@@ -613,6 +620,11 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the name of the item property to be used as lookup dropdown item grouping selector.
 		/// </summary>
 		public string GroupExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the (string) title or tooltip of this column.
+		/// </summary>
+		public string Title { get; set; }
 
 		#endregion
 
