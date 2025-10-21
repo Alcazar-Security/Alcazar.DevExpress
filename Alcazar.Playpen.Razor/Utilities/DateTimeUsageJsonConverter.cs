@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Alcazar.Playpen.Razor.Utilities
@@ -12,57 +13,51 @@ namespace Alcazar.Playpen.Razor.Utilities
 		{
 			if (reader.TokenType == JsonTokenType.String)
 			{
-				var dateString = reader.GetString();
+				string dateString = reader.GetString();
 
-				// Handle date-only values with 'D' suffix
-				if (dateString?.EndsWith("D") == true)
+				if (string.IsNullOrEmpty(dateString))
+					throw new JsonException("DateTime string is empty");
+
+				bool isUtc = false;
+				if (dateString?.EndsWith("Z") == true)
 				{
+					isUtc = true;
 					dateString = dateString.Substring(0, dateString.Length - 1);
 				}
 
-				if (DateTime.TryParse(dateString, out var date))
-				{
-					return DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
-				}
+				// Adjust the kind to UTC or local, based on the presence of 'Z'
+				if (DateTime.TryParse(dateString, CultureInfo.InvariantCulture, out DateTime date))
+					return DateTime.SpecifyKind(date, isUtc ? DateTimeKind.Utc : DateTimeKind.Local);
 			}
-			throw new JsonException("Unable to parse DateTime");
+
+			throw new JsonException("Unable to parse DateTime ");
 		}
 
 		public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
 		{
-			// Get the property info from the serialization context
-			// This is complex with System.Text.Json, so we'll use a simpler approach
+			// The JSON converter has no context of the property being serialized, therefore we cannot inspect the [DateTimeUsage] attribute.
+			// We dont know if the DateTime is intended to be date-only or date-time.
+			// But we have the DateTimeKind, so we can at least handle UTC correctly.
+			string stringValue;
 
-			// Check if this DateTime has DateTimeUsage attribute with IsDateOnly = true
-			bool isDateOnly = IsDateOnlyProperty(value);
-
-			if (isDateOnly)
+			// Format datetime without timezone offset
+			if (value.TimeOfDay == TimeSpan.Zero)
 			{
-				// Format as date-only with 'D' suffix
-				writer.WriteStringValue(value.ToString("yyyy-MM-dd") + "D");
+				// Date with no time component
+				stringValue = value.ToString("yyyy-MM-dd");
 			}
 			else
 			{
-				// Format datetime without timezone offset
-				if (value.TimeOfDay == TimeSpan.Zero)
-				{
-					// Date with no time component
-					writer.WriteStringValue(value.ToString("yyyy-MM-dd"));
-				}
-				else
-				{
-					// DateTime with time component
-					writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
-				}
+				// DateTime with time component
+				stringValue = value.ToString("yyyy-MM-ddTHH:mm:ss.fff");
 			}
-		}
 
-		private bool IsDateOnlyProperty(DateTime value)
-		{
-			// This is a simplified check - in a real implementation, you'd need
-			// to track the property being serialized through the JsonSerializerContext
-			// For now, we'll assume dates with exactly midnight time might be date-only
-			return value.TimeOfDay == TimeSpan.Zero;
+			// Append 'Z' for UTC times. NO longer, the Datagrid inspects the attribute instead
+			// if (value.Kind == DateTimeKind.Utc)
+			// 	stringValue += "Z";
+
+			// Write the date/time value
+			writer.WriteStringValue(stringValue);
 		}
 	}
 }

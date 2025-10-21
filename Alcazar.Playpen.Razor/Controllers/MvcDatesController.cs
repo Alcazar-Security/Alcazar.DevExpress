@@ -51,6 +51,7 @@ namespace Alcazar.Playpen.Razor.Controllers
 
 			// Create a UTC base date, as if we get it from the database, adjusted for what it is (UTC)
 			DateTime baseDate = DateTime.SpecifyKind(new DateTime(2000, 2, 14), DateTimeKind.Utc);
+			TimeSpan baseTime = TimeSpan.FromHours(12);
 
 			for (int i = 0; i < 5; i++)
 			{
@@ -67,6 +68,15 @@ namespace Alcazar.Playpen.Razor.Controllers
 					UniversalDate = currentDate,
 
 					Day = currentDate,
+
+					LocalTime = currentDateTime,
+					UniversalTime = currentDateTime,
+
+					LocalTimespan = baseTime,
+					UniversalTimespan = baseTime,
+
+					Date = currentDateTime,
+					DateTime = currentDateTime,
 				};
 
 				dataList.Add(item);

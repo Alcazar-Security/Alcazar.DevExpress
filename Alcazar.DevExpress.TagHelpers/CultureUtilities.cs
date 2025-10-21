@@ -21,12 +21,12 @@ namespace Alcazar.DevExpress.Utilities
 
 		static public string GetRequestCultureFormat(ViewContext viewContext, Format format)
 		{
+			CultureInfo cultureInfo = Thread.CurrentThread.CurrentCulture;
+
 			// The feature is not available from the constructor, therefore request it here.
 			IRequestCultureFeature requestCultureFeature = viewContext.HttpContext.Features.Get<IRequestCultureFeature>();
-			if (requestCultureFeature == null)
-				return null;
-
-			CultureInfo cultureInfo = requestCultureFeature?.RequestCulture?.Culture ?? Thread.CurrentThread.CurrentCulture;
+			if (requestCultureFeature != null && requestCultureFeature.RequestCulture != null)
+				cultureInfo = requestCultureFeature.RequestCulture.Culture;
 
 			return DxCultureUtilities.ToCustomFormat(format, cultureInfo);
 		}

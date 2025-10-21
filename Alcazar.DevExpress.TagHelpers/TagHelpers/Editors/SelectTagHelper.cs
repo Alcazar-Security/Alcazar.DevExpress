@@ -153,29 +153,29 @@ namespace Alcazar.Web.Extensibility
 					builder = builder.SearchExpr(SearchExpression);
 			}
 
-            // Item template
-            if (!string.IsNullOrWhiteSpace(ItemTemplate))
-                builder = builder.ItemTemplate(ItemTemplate);
-            else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
-                builder = builder.ItemTemplate(new JS(ItemTemplateJS));
-            else if (ItemTemplateRZ != null)
-                builder = builder.ItemTemplate(ItemTemplateRZ);
-            else if (ItemTemplateNT != null)
-                builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
-            
-			// Field template
-            if (!string.IsNullOrWhiteSpace(FieldTemplate))
-                builder = builder.FieldTemplate(FieldTemplate);
-            else if (!string.IsNullOrWhiteSpace(FieldTemplateJS))
-                builder = builder.FieldTemplate(new JS(FieldTemplateJS));
-            else if (FieldTemplateRZ != null)
-                builder = builder.FieldTemplate(FieldTemplateRZ);
-            else if (FieldTemplateNT != null)
-                builder = builder.FieldTemplate(new TemplateName(FieldTemplateNT));
+			// Item template
+			if (!string.IsNullOrWhiteSpace(ItemTemplate))
+				builder = builder.ItemTemplate(ItemTemplate);
+			else if (!string.IsNullOrWhiteSpace(ItemTemplateJS))
+				builder = builder.ItemTemplate(new JS(ItemTemplateJS));
+			else if (ItemTemplateRZ != null)
+				builder = builder.ItemTemplate(ItemTemplateRZ);
+			else if (ItemTemplateNT != null)
+				builder = builder.ItemTemplate(new TemplateName(ItemTemplateNT));
 
-            // This setValue thing is really wierd.
-            // The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
-            if (!string.IsNullOrEmpty(SetValueJS))
+			// Field template
+			if (!string.IsNullOrWhiteSpace(FieldTemplate))
+				builder = builder.FieldTemplate(FieldTemplate);
+			else if (!string.IsNullOrWhiteSpace(FieldTemplateJS))
+				builder = builder.FieldTemplate(new JS(FieldTemplateJS));
+			else if (FieldTemplateRZ != null)
+				builder = builder.FieldTemplate(FieldTemplateRZ);
+			else if (FieldTemplateNT != null)
+				builder = builder.FieldTemplate(new TemplateName(FieldTemplateNT));
+
+			// This setValue thing is really wierd.
+			// The function is never called, but it must exist. It is set as an option into the editor, but it somehow updates the grid from the editor
+			if (!string.IsNullOrEmpty(SetValueJS))
 				builder = builder.Option("setValue", new JS(SetValueJS));
 
 			if (!string.IsNullOrEmpty(ValueExpression))
@@ -183,19 +183,10 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
 
-			// Event handlers
-			if (!string.IsNullOrEmpty(OnValueChanged))
-				builder = builder.OnValueChanged(OnValueChanged);
-			if (!string.IsNullOrEmpty(OnSelectionChanged))
-				builder = builder.OnSelectionChanged(OnSelectionChanged);
-			if (!string.IsNullOrEmpty(OnChange))
-				builder = builder.OnChange(OnChange);
+			// Process events
+			builder = ProcessEvents(builder);
 
-			if (!string.IsNullOrEmpty(OnContentReady))
-				builder = builder.OnContentReady(OnContentReady);
-			if (!string.IsNullOrEmpty(OnInitialized))
-				builder = builder.OnInitialized(OnInitialized);
-
+			// The control should be opened on click anywhere in the control.
 			builder = builder.OpenOnFieldClick(IsOpenClick);
 			//builder = builder.OnEnterKey("onMemberAdded");
 			//builder = builder.OnItemClick("onMemberAdded");
@@ -296,6 +287,23 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private SelectBoxBuilder ProcessEvents(SelectBoxBuilder builder)
+		{
+			// Event handlers
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnSelectionChanged))
+				builder = builder.OnSelectionChanged(OnSelectionChanged);
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
+
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+			return builder;
+		}
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -316,10 +324,10 @@ namespace Alcazar.Web.Extensibility
 		public System.Collections.IEnumerable Items { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if the control should be opened on click. Defaults to false.
+		/// Get or set an indicator if the control should be opened on click anywhere in the control.
 		/// </summary>
 		[HtmlAttributeName("open-click")]
-		public bool IsOpenClick { get; set; } = false;
+		public bool IsOpenClick { get; set; }
 
 		#endregion
 

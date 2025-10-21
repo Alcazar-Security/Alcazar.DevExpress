@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -60,6 +61,11 @@ namespace Alcazar.Web.Extensibility
             string value = TranslateToProp(Value, ViewContext);
             string title = TranslateToProp(Title, ViewContext);
 
+			// Get the class attribute, if any
+			// Get all other attributes
+			output.Attributes.TryGetAttribute("class", out TagHelperAttribute classAttr);
+            IEnumerable<TagHelperAttribute> attributes = output.Attributes.Where((a) => a.Name != "class");
+			
             IHtmlContent content = await output.GetChildContentAsync();
 
             ItemModel item = new ItemModel
@@ -80,7 +86,15 @@ namespace Alcazar.Web.Extensibility
 
                 // Item template
                 Content = content,
-            };
+
+                // Item data
+                Class = Class,
+                Data = Data,
+
+				// Attributes. Not used currently, dont know how to propagate them into a dropdown-button
+				CssClass = classAttr,
+                Attributes = attributes,
+			};
 
             itemContext.Items.Add(item);
         }
@@ -143,16 +157,28 @@ namespace Alcazar.Web.Extensibility
         /// </summary>
         public string Template { get; set; }
 
+		/// <summary>
+		/// Get or set a class value. This value will be available on the itemData, for dropdown button items.
+		/// </summary>
+		[HtmlAttributeName("class")]
+		public string Class { get; set; }
+
+		/// <summary>
+		/// Get or set a data value. This value will be available on the itemData, for dropdown button items.
+		/// </summary>
+		[HtmlAttributeName("data")]
+		public object Data { get; set; }
+		
         #endregion
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region ContainedItemTagHelper properties: events
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedItemTagHelper properties: events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        /// <summary>
-        /// Get or set the action to be executed when the button is clicked.
-        /// </summary>
-        [HtmlAttributeName("click")]
+		/// <summary>
+		/// Get or set the action to be executed when the button is clicked.
+		/// </summary>
+		[HtmlAttributeName("click")]
         public string OnClick { get; set; }
 
         #endregion
@@ -277,6 +303,28 @@ namespace Alcazar.Web.Extensibility
         /// </summary>
         public string Template { get; set; }
 
+		/// <summary>
+		/// Get or set the CSS class attribute, if any.
+		/// </summary>
+		public TagHelperAttribute CssClass { get; set; }
+
+		/// <summary>
+		/// Get or set a class value. This value will be available on the itemData, for dropdown button items.
+		/// </summary>
+		[JsonPropertyName("class")]
+		public string Class { get; set; }
+
+		/// <summary>
+		/// Get or set a data value. This value will be available on the itemData, for dropdown button items.
+		/// </summary>
+		[JsonPropertyName("data")]
+		public object Data { get; set; }
+		
+        /// <summary>
+		/// Get or set any attributes (other than the class attribute) which was set on the item.
+		/// </summary>
+		public IEnumerable<TagHelperAttribute> Attributes { get; set; }
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -324,6 +372,6 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("click")]
 		public string OnClick { get; set; }
 
-        #endregion
-    }
+		#endregion
+	}
 }

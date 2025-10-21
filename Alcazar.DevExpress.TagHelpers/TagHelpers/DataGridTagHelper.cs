@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -373,6 +374,9 @@ namespace Alcazar.Web.Extensibility
 			Format? columnFormat = col.Format;
 			string columnCustomFormat = col.CustomFormat;
 
+			if (columnCustomFormat == "(HH:mm:ss")
+			{ }
+
 			if (!string.IsNullOrEmpty(columnCustomFormat))
 			{
 				// 1. Specified custom format
@@ -394,9 +398,10 @@ namespace Alcazar.Web.Extensibility
 
 				if (format.HasValue)
 				{
-					// TODO - when the thread culture on startup differs from the broswer culture, then we can an unmodified culture here, and culture options do not kick in. this needs some work.
+					// TODO - when the thread culture on startup differs from the browser culture, then we can an unmodified culture here, and culture options do not kick in. this needs some work.
 					// We have determined the format of the content, translate it into the current culture
-					return DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
+					string cultureFormat = DxCultureUtilities.GetRequestCultureFormat(ViewContext, format.Value);
+					return cultureFormat;
 				}
 			}
 
@@ -566,6 +571,21 @@ namespace Alcazar.Web.Extensibility
 			column.CustomFormat = DetermineColumnFormat(column);
 			if (!string.IsNullOrEmpty(column.CustomFormat))
 				builder = builder.Format(column.CustomFormat);
+
+			// Experimental
+			if (column.For != null)
+			{
+				if (column.For.Metadata is DefaultModelMetadata dmm)
+				{
+					var datetimeUsageAttribute = dmm.Attributes.PropertyAttributes.OfType<DateTimeUsageAttribute>().FirstOrDefault();
+					if (datetimeUsageAttribute != null)
+					{
+						builder.Option("viewAs", datetimeUsageAttribute.ViewAs);
+						builder.Option("editAs", datetimeUsageAttribute.EditAs);
+						builder.Option("isDateOnly", datetimeUsageAttribute.IsDateOnly);
+					}
+				}
+			}
 
 			// Column styling
 			if (!string.IsNullOrEmpty(column.CssClass))

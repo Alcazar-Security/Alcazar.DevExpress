@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Alcazar.Web.Utilities
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
@@ -103,10 +104,27 @@
 		</div>
 	</footer>
 
-	<script src="~/lib/jquery/dist/jquery.min.js"></script>
-	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+
+	<!-- Add before your site-datetime.js -->
+	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js" asp-append-version="true"></script>
+
 	<script src="~/js/site.js" asp-append-version="true"></script>
+	<script src="~/js/site-datetime.js" asp-append-version="true"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)
+
+	@{
+		TimeZoneInfo timezone = WebTimezoneManager.GetEffectiveTimezone(Context.Session, User);
+	}
+
+	<script type="text/javascript">
+		// Set the date/time UI variables from configuration
+		if ($.fn.sitedatetime !== undefined) {
+			$.fn.sitedatetime('tz-offset', '@timezone.BaseUtcOffset');
+			$.fn.sitedatetime('tz-name', '@timezone.DisplayName');
+		}
+	</script>
 </body>
 </html>
