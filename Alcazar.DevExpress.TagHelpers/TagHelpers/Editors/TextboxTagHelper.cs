@@ -123,6 +123,7 @@ namespace Alcazar.Web.Extensibility
 
             builder = builder.Mode(Mode);
 
+			// Process events
 			builder = ProcessEvents(builder);
 
 			// Render the builder (into the content)
@@ -198,6 +199,18 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.OnContentReady(OnContentReady);
 			if (!string.IsNullOrEmpty(OnChange))
 				builder = builder.OnChange(OnChange);
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+			if (!string.IsNullOrEmpty(OnOptionChanged))
+				builder = builder.OnOptionChanged(OnOptionChanged);
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnEnterKey))
+				builder = builder.OnEnterKey(OnEnterKey);
+			if (!string.IsNullOrEmpty(OnFocusOut))
+				builder = builder.OnFocusOut(OnFocusOut);
+			if (!string.IsNullOrEmpty(OnInput))
+				builder = builder.OnInput(OnInput);
 
 			return builder;
 		}

@@ -99,6 +99,9 @@ namespace Alcazar.Web.Extensibility
 			// Process text-area specific properties
 			builder = builder.AutoResizeEnabled(AutoResize);
 
+			// Process events
+			builder = ProcessEvents(builder);
+
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
@@ -155,6 +158,28 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private TextAreaBuilder ProcessEvents(TextAreaBuilder builder)
+		{
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnEnterKey))
+				builder = builder.OnEnterKey(OnEnterKey);
+			if (!string.IsNullOrEmpty(OnFocusOut))
+				builder = builder.OnFocusOut(OnFocusOut);
+			if (!string.IsNullOrEmpty(OnInput))
+				builder = builder.OnInput(OnInput);
+			if (!string.IsNullOrEmpty(OnOptionChanged))
+				builder = builder.OnOptionChanged(OnOptionChanged);
+
+			return builder;
+		}
+		
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -166,12 +191,6 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
-
-		/// <summary>
-		/// Get or set the height of this text-area control.
-		/// </summary>
-		[HtmlAttributeName("height")]
-		public string Height { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if the height of this text-area control can be resized.
