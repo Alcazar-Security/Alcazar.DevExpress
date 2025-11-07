@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\" />
     <Folder Include="Extensibility\" />
     <Folder Include="TagHelpers\Reports\" />
   </ItemGroup>
