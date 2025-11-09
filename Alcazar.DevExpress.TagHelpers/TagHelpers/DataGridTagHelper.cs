@@ -374,9 +374,6 @@ namespace Alcazar.Web.Extensibility
 			Format? columnFormat = col.Format;
 			string columnCustomFormat = col.CustomFormat;
 
-			if (columnCustomFormat == "(HH:mm:ss")
-			{ }
-
 			if (!string.IsNullOrEmpty(columnCustomFormat))
 			{
 				// 1. Specified custom format
