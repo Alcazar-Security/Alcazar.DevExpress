@@ -86,7 +86,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper methods: generate controls
+		#region DxControlTagHelper methods: generate controls
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		private async Task<IHtmlContent> GenerateControl(TagHelperContext context, TagHelperOutput output)
@@ -514,7 +514,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper methods: generate composite controls
+		#region DxControlTagHelper methods: generate composite controls
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -717,7 +717,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper helper methods
+		#region DxControlTagHelper helper methods
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -750,7 +750,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties
+		#region DxControlTagHelper properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		[ViewContext]
@@ -760,7 +760,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties: label info
+		#region DxControlTagHelper properties: label info
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -780,7 +780,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region StandardControlTagHelper properties: control info
+		#region DxControlTagHelper properties: control info
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary> 
@@ -819,7 +819,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set an indicator if the control is read-only. Defaults to <see langword="false"/>.
 		/// </summary>
-		[HtmlAttributeName("is-readonly")]
+		[HtmlAttributeName("readonly")]
 		public bool IsReadonly { get; set; }
 
 		/// <summary>

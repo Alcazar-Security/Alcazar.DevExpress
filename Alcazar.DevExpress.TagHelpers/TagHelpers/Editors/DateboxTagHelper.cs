@@ -90,7 +90,10 @@ namespace Alcazar.Web.Extensibility
 					.HoverStateEnabled(true);
 			}
 
-			// Process thedisabled state
+			// Enable opening calendar on text field click
+			builder = builder.OpenOnFieldClick(IsOpenOnFieldClick);
+
+			// Process the disabled state
 			if (IsDisabled)
 			{
 				builder = builder.Disabled(true);
@@ -383,6 +386,17 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public DateTime? Value { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DateboxTagHelper properties: behaviour
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		/// <summary>
+		/// Get or set an indicator if this control should open the calender control on clickin anywhere in the text field.
+		/// </summary>
+		[HtmlAttributeName("open-click")]
+		public bool IsOpenOnFieldClick { get; set; }
 
 		#endregion
 	}

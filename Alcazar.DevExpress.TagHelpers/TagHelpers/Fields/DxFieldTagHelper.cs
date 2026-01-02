@@ -296,7 +296,7 @@ namespace Alcazar.Web.Extensibility
         /// <summary>
         /// Generate a required, standard, or named label.
         /// </summary>
-        protected async Task<IHtmlContent> GenerateLabel(TagHelperContext context)
+        protected async Task<IHtmlContent> GenerateLabel(TagHelperContext context, string extraLabelDivClass = null)
         {
             // Context attributes are all attributes on the source tag - we pass on all attributes which this part needs
             TagHelperAttribute[] contextAttributes = new TagHelperAttribute[0];
@@ -325,7 +325,10 @@ namespace Alcazar.Web.Extensibility
             // <div class="dx-field-label">
             var labelDiv = new TagBuilder("div");
             labelDiv.AddCssClass(LabelDivClass);
-            labelDiv.InnerHtml.AppendHtml(helperOutput);
+            if (!string.IsNullOrEmpty(extraLabelDivClass))
+                labelDiv.AddCssClass(extraLabelDivClass);
+
+			labelDiv.InnerHtml.AppendHtml(helperOutput);
 
             return labelDiv;
         }
@@ -574,7 +577,6 @@ namespace Alcazar.Web.Extensibility
         [HtmlAttributeName("readonly")]
         public bool IsReadonly { get; set; }
 
-
         [HtmlAttributeName("control-div-class")]
         public string ControlDivClass { get; set; } = "dx-field-value";
 
@@ -725,7 +727,7 @@ namespace Alcazar.Web.Extensibility
             // 2. Generate the label, unless we are a checkbox, and add to the output
             // After the control, it might pass us For/Name information
             IHtmlContent labelContent = null;
-            if (this.InputTypeName != ControlTypes.Checkbox)
+            if (InputTypeName != ControlTypes.Checkbox)
             {
                 labelContent = await GenerateLabel(context);
                 output.Content.SetHtmlContent(labelContent);
