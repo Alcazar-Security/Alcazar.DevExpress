@@ -13,8 +13,8 @@
 	@* Removed, Mircosoft does that already, Bootstrap version V5.1.0 from Mircosoft, DX uses V5.3.2, JQuery same version V3.7.1 *@
 	@* <link href="~/css/devextreme/bootstrap.css" rel="stylesheet" /> *@
 	<link href="~/css/devextreme/dx.light.css" rel="stylesheet" />
-	<link href="~/css/Site.css" rel="stylesheet" />
-	<link href="~/css/dx-site.css" rel="stylesheet" />
+	<link href="~/css/site.css" rel="stylesheet" />
+	<link href="~/css/site-menu.css" rel="stylesheet" />
 	<!--end::DX styles-->
 	<!--begin::DX scripts-->
 	<script src="~/js/devextreme/jquery.js"></script>
@@ -68,11 +68,27 @@
 								Controls
 							</a>
 							<ul class="dropdown-menu" aria-labelledby="navbarDropdownControls">
-								<li><a class="dropdown-item" asp-page="/DataGrid/Index">Data grid</a></li>
+								<li class="dropdown-submenu">
+									<a class="dropdown-item dropdown-toggle">Data grid</a>
+									<ul class="dropdown-menu">
+										<li><a class="dropdown-item" asp-page="/DataGrid/Index">Overview</a></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Overview">Basic Examples</a></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Dates">Date Columns</a></li>
+										<li><hr class="dropdown-divider"></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Filtering">Filtering</a></li>
+										<li><hr class="dropdown-divider"></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Sorting">Sorting</a></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Grouping">Grouping</a></li>
+										<li><a class="dropdown-item" asp-page="/DataGrid/Export">Export</a></li>
+									</ul>
+								</li>
+
 								<li><hr class="dropdown-divider"></li>
-								<li><h6 class="dropdown-header">Data Grid Examples</h6></li>
-								<li><a class="dropdown-item" asp-page="/DataGrid/Overview">Overview</a></li>
-								<li><a class="dropdown-item" asp-page="/DataGrid/Dates">Date columns</a></li>
+
+								<!-- Other control examples -->
+								<li><h6 class="dropdown-header">Other Controls</h6></li>
+								<li><a class="dropdown-item" asp-page="/Controls/Charts">Charts</a></li>
+								<li><a class="dropdown-item" asp-page="/Controls/Scheduler">Scheduler</a></li>
 							</ul>
 						</li>
 					</ul>
@@ -111,6 +127,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js" asp-append-version="true"></script>
 
 	<script src="~/js/site.js" asp-append-version="true"></script>
+	<script src="~/js/site-menu.js" asp-append-version="true"></script>
 	<script src="~/js/site-datetime.js" asp-append-version="true"></script>
 
 	@await RenderSectionAsync("Scripts", required: false)

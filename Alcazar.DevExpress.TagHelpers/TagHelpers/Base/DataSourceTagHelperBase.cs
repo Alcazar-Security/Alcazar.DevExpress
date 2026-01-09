@@ -350,12 +350,6 @@ namespace Alcazar.Web.Extensibility
 		public string OnPush { get; set; }
 
 		/// <summary>
-		/// Get or set the JS function to call before a load operation starts.
-		/// </summary>
-		[HtmlAttributeName("before-load")]
-		public string OnBeforeLoad { get; set; }
-
-		/// <summary>
 		/// Get or set the JS function to customize store load options before sending to the server.
 		/// </summary>
 		[HtmlAttributeName("customize")]

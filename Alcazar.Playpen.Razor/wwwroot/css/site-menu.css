@@ -1,0 +1,71 @@
+/* Nested dropdown styles for Bootstrap 5 */
+
+.dropdown-submenu {
+	position: relative;
+}
+
+	.dropdown-submenu .dropdown-menu {
+		top: 0;
+		left: 100%;
+		margin-top: -1px;
+		display: none !important; /* Force hide by default */
+		z-index: 1050; /* Ensure it appears above other elements */
+	}
+
+/* Show submenu on hover - desktop only */
+@media (min-width: 769px) {
+	.dropdown-submenu:hover > .dropdown-menu {
+		display: block !important; /* Force show on hover */
+	}
+
+	/* MAIN MENU HOVER - Show main dropdown menus on hover */
+	.navbar-nav .dropdown:hover > .dropdown-menu {
+		display: block !important;
+	}
+
+	/* Keep dropdown open when hovering over the dropdown menu itself */
+	.navbar-nav .dropdown .dropdown-menu:hover {
+		display: block !important;
+	}
+}
+
+.dropdown-submenu .dropdown-toggle::after {
+	transform: rotate(-90deg);
+	float: right;
+	margin-top: 8px;
+	margin-right: 6px;
+}
+
+/* Prevent Bootstrap from hiding the dropdown when hovering over submenu */
+.dropdown-menu .dropdown-submenu:hover {
+	background-color: transparent;
+}
+
+.dropdown-submenu .dropdown-item:hover {
+	background-color: var(--bs-dropdown-link-hover-bg, #e9ecef);
+}
+
+/* Main dropdown hover styles */
+@media (min-width: 769px) {
+	.navbar-nav .dropdown:hover > .nav-link {
+		background-color: var(--bs-dropdown-link-hover-bg, #e9ecef);
+		border-radius: 0.375rem;
+	}
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+	.dropdown-submenu .dropdown-menu {
+		position: static !important;
+		left: 0;
+		box-shadow: none;
+		border: 0;
+		margin: 0;
+		z-index: auto;
+	}
+
+	.dropdown-submenu:hover > .dropdown-menu {
+		display: none !important; /* Disable hover on mobile */
+	}
+
+	/* Disable main
