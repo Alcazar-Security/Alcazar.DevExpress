@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.Extensions.DependencyInjection;
 using NLog.Config;
 using System;
 using System.Collections;
@@ -133,9 +134,25 @@ namespace Alcazar.Web.Extensibility
 			// Process children of the data grid tag
 			IHtmlContent content = await output.GetChildContentAsync();
 
-			builder = builder.DataSource(d => d
-				.Fields(c => ProcessFieldColumns(c, columnContext.Columns))
-				.Store(s => s.Mvc().Controller("PivotGridData").LoadAction("Get")));
+			// Set the data source
+			if (sourceContext.Datasource != null)
+			{
+				// First preference, process the (child) data source
+				builder = builder.DataSource(b => b
+					.Store(f => sourceContext.Datasource.BuildDatasource(f))
+						.Fields(c => ProcessFieldColumns(c, columnContext.Columns))
+					)
+				    .FieldChooser(c => c.Height(500));
+			}
+			else
+			{
+				// Second preference, process the datasource from my own properties
+				builder = builder.DataSource(b => b
+					.Store(f => BuildDatasource(f))
+						.Fields(c => ProcessFieldColumns(c, columnContext.Columns))
+					)
+					.FieldChooser(c => c.Height(500));
+			}
 
 			if (ShowRowFields || ShowColumnFields || ShowDataFields || ShowFilterFields)
 			{
@@ -146,18 +163,6 @@ namespace Alcazar.Web.Extensibility
 					.ShowFilterFields(ShowFilterFields)
 					.AllowFieldDragging(AllowFieldDragging)
 					.Visible(true));
-			}
-
-			// Set the data source
-			if (sourceContext.Datasource != null)
-			{
-				// First preference, process the (child) data source
-				builder = builder.DataSource(b => b.Store(f => sourceContext.Datasource.BuildDatasource(f)));
-			}
-			else
-			{
-				// Second preference, process the datasource from my own properties
-				builder = builder.DataSource(b => b.Store(f => BuildDatasource(f)));
 			}
 
 			// Store state
@@ -242,6 +247,7 @@ namespace Alcazar.Web.Extensibility
 					// A field column places a field into the pivot table
 					default:
 					case "field":
+					case "filter":
 						ProcessFieldColumn<T>(factory, column);
 						break;
 				}
@@ -253,33 +259,18 @@ namespace Alcazar.Web.Extensibility
 			// Column header
 			if (column.For != null)
 			{
-				// If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ due to a [JsonProperty] attribute
-				if (string.IsNullOrEmpty(column.Name))
-				{
-					if (string.IsNullOrEmpty(column.Name))
-					{
-						// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
-						// Best to avoid this
-						column.Name = RemoveNoname(column.For.Name);
-					}
-				}
-
-				// Set the label if it is not explicitely set
-				if (string.IsNullOrEmpty(column.Label))
-					column.Label = column.For.Metadata.DisplayName;
-				if (string.IsNullOrEmpty(column.Label))
-					column.Label = column.For.Metadata.Name;
-
-				column.DataType = ToDataType(column.For.Metadata.ModelType);
+				ProcessColumnFor(column);
 			}
 
 			PivotGridDataSourceFieldBuilder<T> builder = factory.Add()
 				.DataField(column.Name)
-				.Caption(column.Label)
-				.Width(column.DoubleWidth);
+				.Caption(column.Label);
+
+			if (column.DoubleWidth > 0)
+				builder = builder.Width(column.DoubleWidth);
 
 			// Data type
-			if (column.PivotDataType.HasValue)
+			else if (column.PivotDataType.HasValue)
 				builder = builder.DataType(column.PivotDataType.Value);
 
 			// Visibility
@@ -289,6 +280,52 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Visible(column.IsVisible);
 
 			// Filtering
+			builder = ProcessColumnFiltering(column, builder);
+
+			// Sorting
+			builder = ProcessColumnSorting(column, builder);
+
+			// Area and expansion
+			builder = builder.Area(column.PivotArea);
+			if (column.AreaIndex.HasValue)
+				builder = builder.AreaIndex(column.AreaIndex.Value);
+
+			builder = builder.Expanded(column.IsExpanded);
+
+			// Column formatting
+			// 1. Specified custom format
+			// 2. Specified format
+			// 3. Format based on the data type
+			builder = ProcessColumnFormatting(column, builder);
+
+			// Column events
+			// There are no events on the column
+			return factory;
+		}
+
+		private void ProcessColumnFor(ColumnModel column)
+		{
+			// If we have both FOR and NAME, keep the existing name, this is an override for the DataField() method, where the JSON field and the property name differ due to a [JsonProperty] attribute
+			if (string.IsNullOrEmpty(column.Name))
+			{
+				if (string.IsNullOrEmpty(column.Name))
+				{
+					// This is a horrible hack for no.QualifiedName, when we try to obtain the asp-for prop from an IEnumerable model
+					column.Name = RemoveNoname(column.For.Name);
+				}
+			}
+
+			// Set the label if it is not explicitely set
+			if (string.IsNullOrEmpty(column.Label))
+				column.Label = column.For.Metadata.DisplayName;
+			if (string.IsNullOrEmpty(column.Label))
+				column.Label = column.For.Metadata.Name;
+
+			column.PivotDataType = ToPivotDataType(column.For.Metadata.ModelType);
+		}
+
+		private PivotGridDataSourceFieldBuilder<T> ProcessColumnFiltering<T>(ColumnModel column, PivotGridDataSourceFieldBuilder<T> builder)
+		{
 			if (column.FilterType.HasValue)
 			{
 				builder = builder
@@ -301,7 +338,11 @@ namespace Alcazar.Web.Extensibility
 					.AllowFiltering(false);
 			}
 
-			// Sorting
+			return builder;
+		}
+
+		private PivotGridDataSourceFieldBuilder<T> ProcessColumnSorting<T>(ColumnModel column, PivotGridDataSourceFieldBuilder<T> builder)
+		{
 			builder = builder.AllowSorting(column.IsSorting);
 			if (column.IsSorting)
 			{
@@ -327,17 +368,11 @@ namespace Alcazar.Web.Extensibility
 					builder = builder.SortBySummaryPath(column.SortBySummaryPath);
 			}
 
-			// Area and expansion
-			builder = builder.Area(column.PivotArea);
-			if (column.AreaIndex.HasValue)
-				builder = builder.AreaIndex(column.AreaIndex.Value);
+			return builder;
+		}
 
-			builder = builder.Expanded(column.IsExpanded);
-
-			// Column formatting
-			// 1. Specified custom format
-			// 2. Specified format
-			// 3. Format based on the data type
+		private PivotGridDataSourceFieldBuilder<T> ProcessColumnFormatting<T>(ColumnModel column, PivotGridDataSourceFieldBuilder<T> builder)
+		{
 			if (!string.IsNullOrEmpty(column.CustomFormat))
 			{
 				// 1. Specified custom format
@@ -366,9 +401,47 @@ namespace Alcazar.Web.Extensibility
 				}
 			}
 
-			// Column events
-			// There are no events on the column
-			return factory;
+			return builder;
+		}
+
+		protected PivotGridDataType? ToPivotDataType(Type type)
+		{
+			PrimitiveTypeCode code = PrimitiveType.FromNullableType(type);
+			switch (code)
+			{
+				default:
+				case PrimitiveTypeCode.None: return null;
+
+				case PrimitiveTypeCode.Int8:
+				case PrimitiveTypeCode.UInt8:
+				case PrimitiveTypeCode.Int16:
+				case PrimitiveTypeCode.UInt16:
+				case PrimitiveTypeCode.Int32:
+				case PrimitiveTypeCode.UInt32:
+				case PrimitiveTypeCode.Int64:
+				case PrimitiveTypeCode.UInt64:
+				case PrimitiveTypeCode.Float:
+				case PrimitiveTypeCode.Double:
+				case PrimitiveTypeCode.Decimal: return PivotGridDataType.Number;
+				case PrimitiveTypeCode.Enumeration: return PivotGridDataType.String;
+
+				case PrimitiveTypeCode.Bool: return PivotGridDataType.String;
+
+				case PrimitiveTypeCode.Char: return PivotGridDataType.String;
+				case PrimitiveTypeCode.String: return PivotGridDataType.String;
+				case PrimitiveTypeCode.Binary: return PivotGridDataType.String;
+				case PrimitiveTypeCode.Base64Binary: return PivotGridDataType.String;
+				case PrimitiveTypeCode.HexBinary: return PivotGridDataType.String;
+				case PrimitiveTypeCode.Guid: return PivotGridDataType.String;
+
+				case PrimitiveTypeCode.Date: return PivotGridDataType.Date;
+
+				case PrimitiveTypeCode.Time:
+				case PrimitiveTypeCode.Timestamp:
+				case PrimitiveTypeCode.Timespan: return PivotGridDataType.String;
+
+				case PrimitiveTypeCode.Object: return PivotGridDataType.String;
+			}
 		}
 
 		#endregion
@@ -490,25 +563,25 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set an indicator if row fields should be shown in the field panel.
 		/// </summary>
-		[HtmlAttributeName("show-row-fields")]
+		[HtmlAttributeName("row-fields")]
 		public bool ShowRowFields { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if column fields should be shown in the field panel.
 		/// </summary>
-		[HtmlAttributeName("show-column-fields")]
+		[HtmlAttributeName("column-fields")]
 		public bool ShowColumnFields { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if data fields should be shown in the field panel.
+		/// Get or set an indicator if data (cell) fields should be shown in the field panel.
 		/// </summary>
-		[HtmlAttributeName("show-data-fields")]
+		[HtmlAttributeName("cell-fields")]
 		public bool ShowDataFields { get; set; }
 
 		/// <summary>
 		/// Get or set an indicator if filter fields should be shown in the field panel.
 		/// </summary>
-		[HtmlAttributeName("show-filter-fields")]
+		[HtmlAttributeName("filter-fields")]
 		public bool ShowFilterFields { get; set; }
 
 		/// <summary>

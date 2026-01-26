@@ -17,6 +17,7 @@ namespace Alcazar.Web.Extensibility
 	/// </summary>
 	[HtmlTargetElement("column", ParentTag = "dx-datagrid", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("column", ParentTag = "dx-treelist", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("column", ParentTag = "dx-pivotgrid", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class ColumnTagHelper : TagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
