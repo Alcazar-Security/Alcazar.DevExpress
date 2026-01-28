@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
+using DevExtreme.AspNet.Mvc.Factories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -81,12 +82,19 @@ namespace Alcazar.Web.Extensibility
 			// Create the context, so that we can pass it to child tag helpers
 			ButtonContext buttonContext = GetOrCreateContext<ButtonContext>(context);
 
-			// Add buttons, but only if we have some
-			if (buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText))
+			// Defaults to true for password mode, false otherwise. If ShowPasswordToggle is set, it overrides the default.
+			bool showPasswordToggle = ShowPasswordToggle ?? (Mode == TextBoxMode.Password);
+
+			// Add buttons, but only if we have some OR if this is a password field with toggle
+			bool needsButtons = buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText) || showPasswordToggle;
+			if (needsButtons)
 			{
 				// We have buttons, add them, also the clear button if needed (otherwise if there are any buttons, the clear button gets lost)
 				builder = builder.Buttons(b =>
 				{
+					// Add password toggle button for password mode
+					AddPasswordToggleButton(b, showPasswordToggle);
+
 					// Add the clear button, but only if there are other buttons
 					if (AllowClear)
 						b.Add().Name("clear");
@@ -215,6 +223,25 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		private void AddPasswordToggleButton(CollectionFactory<TextEditorButtonBuilder> builder, bool showPasswordToggle)
+		{
+			if (showPasswordToggle)
+			{
+				string toggleHint = TranslateToProp("#ShowPasswordToggleHint", ViewContext);
+				builder.Add()
+					.Name("password-toggle")
+					.Location(TextEditorButtonLocation.After)
+					.Widget(w => w.Button()
+						.Icon(HidePasswordIcon)
+						.Hint(toggleHint)
+						.StylingMode(ButtonStylingMode.Text)
+						.OnClick("onPasswordToggle"));
+			}
+		}
+
+		public const string ShowPasswordIcon = "bi bi-eye";
+		public const string HidePasswordIcon = "bi bi-eye-slash";
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -238,6 +265,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("mode")]
 		public TextBoxMode Mode { get; set; } = TextBoxMode.Text;
+
+		/// <summary>
+		/// Get or set whether to show the password toggle button for password mode.
+		/// Defaults to true for password mode, false otherwise.
+		/// </summary>
+		[HtmlAttributeName("password-toggle")]
+		public bool? ShowPasswordToggle { get; set; }
 
 		#endregion
 	}

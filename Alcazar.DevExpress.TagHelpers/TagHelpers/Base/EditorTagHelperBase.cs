@@ -205,12 +205,12 @@ namespace Alcazar.Web.Extensibility
 			return null;
 		}
 
-		protected void AddHelpButton(CollectionFactory<TextEditorButtonBuilder> button)
+		protected void AddHelpButton(CollectionFactory<TextEditorButtonBuilder> builder)
 		{
 			if (!string.IsNullOrEmpty(HelpText))
 			{
 				string helpText = TranslateToProp(HelpText, ViewContext);
-				button.Add()
+				builder.Add()
 					.Name("help")
 					.Location(TextEditorButtonLocation.After)
 					.Widget(w => w.Button()
