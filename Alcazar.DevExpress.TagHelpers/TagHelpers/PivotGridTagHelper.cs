@@ -290,6 +290,11 @@ namespace Alcazar.Web.Extensibility
 			if (column.AreaIndex.HasValue)
 				builder = builder.AreaIndex(column.AreaIndex.Value);
 
+			// Although DX uses count as default, we do sum as default
+			// Somehow this also works for the field-chooser, not sure how
+			if (column.PivotArea == PivotGridArea.Data)
+				builder.SummaryType(column.SummaryType ?? SummaryType.Sum);
+
 			builder = builder.Expanded(column.IsExpanded);
 
 			// Column formatting
