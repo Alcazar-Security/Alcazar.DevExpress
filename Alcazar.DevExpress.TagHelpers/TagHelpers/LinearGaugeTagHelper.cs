@@ -168,6 +168,8 @@ namespace Alcazar.Web.Extensibility
 
 							if (!string.IsNullOrEmpty(rangeModel.Color))
 								range = range.Color(rangeModel.Color);
+							else if (!string.IsNullOrEmpty(rangeModel.ColorJS))
+								range = range.Color(new JS(rangeModel.ColorJS));
 
 							//if (rangeModel.Width.HasValue)
 							//	range = range.Width(rangeModel.Width.Value);
@@ -500,6 +502,7 @@ namespace Alcazar.Web.Extensibility
 				StartValue = StartValue,
 				EndValue = EndValue,
 				Color = Color,
+				ColorJS = ColorJS,
 				Title = title,
 
 				// Appearance
@@ -542,6 +545,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("color")]
 		public string Color { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke to return the color of this range.
+		/// This method must return the color in lowercase for DevExtreme to recognize it as color property.
+		/// </summary>
+		[HtmlAttributeName("colorJS")]
+		public string ColorJS { get; set; }
 
 		/// <summary>
 		/// Get or set the title or hint to be displayed for this range.
@@ -630,6 +640,13 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[JsonPropertyName("color")]
 		public string Color { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke to return the color of this range.
+		/// This method must return the color in lowercase for DevExtreme to recognize it as color property.
+		/// </summary>
+		[JsonPropertyName("colorJS")]
+		public string ColorJS { get; set; }
 
 		/// <summary>
 		/// Get or set the title or hint to be displayed for this range.
