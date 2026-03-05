@@ -17,7 +17,7 @@ namespace Alcazar.Web.Extensibility
 	/// </summary>
 	[HtmlTargetElement("argument-axis", ParentTag = "dx-chart", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("argument-axis", ParentTag = "dx-piechart", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ChartArgumentAxisTagHelper : TagHelperBase
+	public class ChartArgumentAxisTagHelper : ChartAxisTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ChartArgumentAxisTagHelper overrides
@@ -32,15 +32,19 @@ namespace Alcazar.Web.Extensibility
 			ChartContext chartContext = GetContextSafe<ChartContext>(context);
 
 			// Construct the axis model
-			ChartAxisModel axisModel = new ChartAxisModel
+			ChartArgumentAxisModel axisModel = new ChartArgumentAxisModel
 			{
-				// Axis type
+				Name = Name,
+				Color = Color,
+				Min = Min,
+				Max = Max,
 				AxisScaleType = AxisScaleType,
 				LabelFormat = LabelFormat,
 				LabelOverlappingBehavior = LabelOverlappingBehavior,
+				IsWorkdays = IsWorkdays,
 			};
 
-			chartContext.ChartAxis = axisModel;
+			chartContext.ArgumentAxis = axisModel;
 		}
 
 		#endregion
@@ -56,7 +60,7 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region ChartArgumentAxisTagHelper properties
+		#region ChartArgumentAxisTagHelper properties: axis
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -77,13 +81,19 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("label-overlapping")]
 		public OverlappingBehavior? LabelOverlappingBehavior { get; set; }
 
+		/// <summary>
+		/// Get or set an indicator if the axis should show workdays only
+		/// </summary>
+		[HtmlAttributeName("workdays")]
+		public bool IsWorkdays { get; set; }
+
 		#endregion
 	}
 
 	/// <summary>
-	/// The <see cref="ChartAxisModel"/> model type represents a contained chart axis, which is confered to the parent chart control.
+	/// The <see cref="ChartArgumentAxisModel"/> model type represents a contained argument chart axis, which is confered to the parent chart control.
 	/// </summary>
-	public class ChartAxisModel
+	public class ChartArgumentAxisModel : ChartAxisModelBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region Argument axis properties
@@ -103,6 +113,11 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the overlapping behaviour of the label of the argument axis.
 		/// </summary>
 		public OverlappingBehavior? LabelOverlappingBehavior { get; set; }
+
+		/// <summary>
+		/// Get or set an indicator if the axis should show workdays only
+		/// </summary>
+		public bool IsWorkdays { get; set; }
 
 		#endregion
 	}

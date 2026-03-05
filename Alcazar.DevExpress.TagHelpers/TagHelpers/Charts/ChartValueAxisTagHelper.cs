@@ -1,3 +1,4 @@
+using DevExpress.Data.Linq.Helpers;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
 using Microsoft.AspNetCore.Html;
@@ -10,8 +11,8 @@ namespace Alcazar.Web.Extensibility
 {
 	[HtmlTargetElement("value-axis", ParentTag = "dx-chart", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("value-axis", ParentTag = "dx-piechart", TagStructure = TagStructure.NormalOrSelfClosing)]
-	public class ChartValueAxisTagHelper : TagHelperBase
-    {
+	public class ChartValueAxisTagHelper : ChartAxisTagHelperBase
+	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ChartArgumentAxisTagHelper overrides
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -26,7 +27,13 @@ namespace Alcazar.Web.Extensibility
             {
                 Name = Name,
                 Position = Position,
-                TickInterval = TickInterval,
+				Min = Min,
+				Max = Max,
+				Offset = Offset,
+				IsShowZero = IsShowZero,
+				Color = Color,
+
+				TickInterval = TickInterval,
                 LabelFormat = LabelFormat
             };
 
@@ -43,13 +50,22 @@ namespace Alcazar.Web.Extensibility
         [HtmlAttributeNotBound]
         public ViewContext ViewContext { get; set; }
 
-        [HtmlAttributeName("name")]
-        public string Name { get; set; }
-
         [HtmlAttributeName("position")]
         public Position? Position { get; set; }
 
-        [HtmlAttributeName("interval")]
+		/// <summary>
+		/// Get or set the offset for the value axis.
+		/// </summary>
+		[HtmlAttributeName("offset")]
+		public double? Offset { get; set; }
+
+		/// <summary>
+		/// Get or set whether to show zero line on the value axis.
+		/// </summary>
+		[HtmlAttributeName("zero")]
+		public bool IsShowZero { get; set; } = true;
+		
+		[HtmlAttributeName("interval")]
         public double? TickInterval { get; set; }
 
         [HtmlAttributeName("format")]
@@ -58,22 +74,59 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 	}
 
+	public class ChartAxisTagHelperBase : TagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ChartAxisTagHelperBase properties
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-	public class ChartValueAxisModel
+		/// <summary>
+		/// Get or set the name of the axis.
+		/// </summary>
+		[HtmlAttributeName("name")]
+		public string Name { get; set; }
+
+		/// <summary>
+		/// Get or set the color of the argument axis.
+		/// </summary>
+		[HtmlAttributeName("color")]
+		public string Color { get; set; }
+
+		/// <summary>
+		/// Get or set the minimum value for the axis range.
+		/// </summary>
+		[HtmlAttributeName("min")]
+		public double? Min { get; set; }
+
+		/// <summary>
+		/// Get or set the maximum value for the axis range.
+		/// </summary>
+		[HtmlAttributeName("max")]
+		public double? Max { get; set; }
+
+		#endregion
+	}
+
+	public class ChartValueAxisModel : ChartAxisModelBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region ChartValueAxisModel properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the name of the value axis.
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
 		/// Get or set the position of the value axis.
 		/// </summary>
 		public Position? Position { get; set; }
+
+		/// <summary>
+		/// Get or set the offset for the value axis.
+		/// </summary>
+		public double? Offset { get; set; }
+
+		/// <summary>
+		/// Get or set whether to show zero line on the value axis.
+		/// </summary>
+		public bool IsShowZero { get; set; } = true;
 
 		/// <summary>
 		/// Get or set the tick interval of the value axis.
@@ -88,4 +141,32 @@ namespace Alcazar.Web.Extensibility
         #endregion
     }
 
+	public class ChartAxisModelBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ChartAxisModelBase properties
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the name of the axis.
+		/// </summary>
+		public string Name { get; set; }
+
+		/// <summary>
+		/// Get or set the color of the argument axis.
+		/// </summary>
+		public string Color { get; set; }
+
+		/// <summary>
+		/// Get or set the minimum value for the axis range.
+		/// </summary>
+		public double? Min { get; set; }
+
+		/// <summary>
+		/// Get or set the maximum value for the axis range.
+		/// </summary>
+		public double? Max { get; set; }
+
+		#endregion
+	}
 }

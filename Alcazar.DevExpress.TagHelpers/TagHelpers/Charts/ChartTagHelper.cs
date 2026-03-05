@@ -80,42 +80,39 @@ namespace Alcazar.Web.Extensibility
 			builder = ProcessValueAxes(builder, chartContext);
 			builder = ProcessSeries(builder, chartContext);
 
-			builder = builder.ValueAxis((a) =>
+			if (IsTooltip)
 			{
-				a.Add()
-					.Name("frequency")
-					.Position(Position.Left)
-					.TickInterval(300);
-			});
-
-			builder = builder.Series((s) =>
-			{
-				s.Add()
-					.ArgumentField("State")
-					.ValueField("Amount")
-					.Type(SeriesType.Bar)
-					.Color("#3498db")
-					.Name("Amount");
-			});
-
-			builder = builder.Tooltip(t =>
-			{
-				t = t.Enabled(true);
-				t = t.Format("currency");
-				t = t.Location(ChartTooltipLocation.Center);
-				t = t.Border((b) =>
+				builder = builder.Tooltip(t =>
 				{
-					b = b.Color("#000");
-					b = b.Width(2);
-					b = b.Visible(true);
+					t = t.Enabled(true);
+
+					if (TooltipFormat.HasValue)
+						t = t.Format(TooltipFormat.Value);
+
+					t = t.Location(TooltipLocation);
+
+					if (TooltipBorder > 0)
+					{
+						t = t.Border((b) =>
+						{
+							b = b.Visible(true);
+							b = b.Width(TooltipBorder);
+							if (!string.IsNullOrEmpty(TooltipBorderColor))
+								b = b.Color(TooltipBorderColor);
+						});
+					}
+
+					t = t.Font((f) =>
+					{
+						if (TooltipFontSize > 0)
+							f = f.Size(TooltipFontSize);
+						if (TooltipFontWeight > 0)
+							f = f.Weight(TooltipFontWeight);
+						if (!string.IsNullOrEmpty(TooltipFontColor))
+							f = f.Color(TooltipFontColor);
+					});
 				});
-				t = t.Font((f) =>
-				{
-					f = f.Color("#000");
-					f = f.Size(20);
-					f = f.Weight(400);
-				});
-			});
+			}
 
 			// Appearance
 			builder = builder.CommonSeriesSettings((s) =>
@@ -163,22 +160,46 @@ namespace Alcazar.Web.Extensibility
 
 		private ChartBuilder ProcessArgumentAxis(ChartBuilder builder, ChartContext chartContext)
 		{
-			if (chartContext.ChartAxis != null)
+			if (chartContext.ArgumentAxis != null)
 			{
 				builder = builder.ArgumentAxis((a) =>
 				{
+					var axis = chartContext.ArgumentAxis;
+
+					if (!string.IsNullOrEmpty(axis.Name))
+						a = a.Title(axis.Name);
+
 					// Axis type
-					if (chartContext.ChartAxis.AxisScaleType.HasValue)
-						a = a.Type(chartContext.ChartAxis.AxisScaleType.Value);
+					if (axis.AxisScaleType.HasValue)
+						a = a.Type(axis.AxisScaleType.Value);
+
+					if (!string.IsNullOrEmpty(axis.Color))
+						a = a.Color(axis.Color);
+
+					// TODO
+					// a = a.WholeRange();
+					a = a.WorkdaysOnly(axis.IsWorkdays);
 
 					// Axis label
 					a = a.Label((l) =>
 					{
-						if (chartContext.ChartAxis.LabelFormat.HasValue)
-							l = l.Format(chartContext.ChartAxis.LabelFormat.Value);
-						if (chartContext.ChartAxis.LabelOverlappingBehavior.HasValue)
-							l = l.OverlappingBehavior(chartContext.ChartAxis.LabelOverlappingBehavior.Value);
+						if (axis.LabelFormat.HasValue)
+							l = l.Format(axis.LabelFormat.Value);
+						if (axis.LabelOverlappingBehavior.HasValue)
+							l = l.OverlappingBehavior(axis.LabelOverlappingBehavior.Value);
 					});
+
+					// Axis range
+					if (axis.Min.HasValue || axis.Max.HasValue)
+					{
+						a = a.VisualRange(vr =>
+						{
+							if (axis.Min.HasValue)
+								vr = vr.StartValue(axis.Min.Value);
+							if (axis.Max.HasValue)
+								vr = vr.EndValue(axis.Max.Value);
+						});
+					}
 				});
 			}
 
@@ -194,6 +215,7 @@ namespace Alcazar.Web.Extensibility
 					foreach (var axis in chartContext.ValueAxes)
 					{
 						var axisBuilder = a.Add();
+
 						if (!string.IsNullOrEmpty(axis.Name))
 							axisBuilder = axisBuilder.Name(axis.Name);
 						if (axis.Position.HasValue)
@@ -202,6 +224,28 @@ namespace Alcazar.Web.Extensibility
 							axisBuilder = axisBuilder.TickInterval(axis.TickInterval.Value);
 						if (axis.LabelFormat.HasValue)
 							axisBuilder = axisBuilder.Label(l => l.Format(axis.LabelFormat.Value));
+
+						if (!string.IsNullOrEmpty(axis.Color))
+							axisBuilder = axisBuilder.Color(axis.Color);
+
+						if (axis.Offset.HasValue)
+							axisBuilder = axisBuilder.Offset(axis.Offset.Value);
+
+						axisBuilder = axisBuilder.ShowZero(axis.IsShowZero);
+
+						axisBuilder = axisBuilder.ShowZero(axis.IsShowZero);
+
+						// Axis range
+						if (axis.Min.HasValue || axis.Max.HasValue)
+						{
+							axisBuilder = axisBuilder.VisualRange(vr =>
+							{
+								if (axis.Min.HasValue)
+									vr = vr.StartValue(axis.Min.Value);
+								if (axis.Max.HasValue)
+									vr = vr.EndValue(axis.Max.Value);
+							});
+						}
 					}
 				});
 			}
@@ -236,11 +280,11 @@ namespace Alcazar.Web.Extensibility
 
 			return builder;
 		}
-	
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region AutocompleteTagHelper properties: tag helper
+		#region ChartTagHelper properties: tag helper
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -248,6 +292,60 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("palette")]
 		public VizPalette? Palette { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ChartTagHelper properties: tooltip
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if a tooltip is to be displayed for values in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip")]
+		public bool IsTooltip { get; set; }
+
+		/// <summary>
+		/// Get or set the format to be used for the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-format")]
+		public Format? TooltipFormat { get; set; }
+
+		/// <summary>
+		/// Get or set the location of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-location")]
+		public ChartTooltipLocation TooltipLocation { get; set; } = ChartTooltipLocation.Center;
+
+		/// <summary>
+		/// Get or set the width of the border of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-border")]
+		public double TooltipBorder { get; set; }
+
+		/// <summary>
+		/// Get or set the color of the border of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-border-color")]
+		public string TooltipBorderColor { get; set; }
+
+		/// <summary>
+		/// Get or set the size of the font of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-font-size")]
+		public double TooltipFontSize { get; set; }
+
+		/// <summary>
+		/// Get or set the weight of the font of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-font-weight")]
+		public double TooltipFontWeight { get; set; }
+
+		/// <summary>
+		/// Get or set the color of the font of the values tooltip in the chart.
+		/// </summary>
+		[HtmlAttributeName("tooltip-font-color")]
+		public string TooltipFontColor { get; set; }
 
 		#endregion
 	}
