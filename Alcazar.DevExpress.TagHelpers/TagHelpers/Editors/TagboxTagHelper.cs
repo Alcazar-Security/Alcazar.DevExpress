@@ -152,12 +152,7 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(DisplayExpression))
 				builder = builder.DisplayExpr(DisplayExpression);
 
-			builder = builder.OnSelectionChanged(OnSelectionChanged);
-			builder = builder.OnChange(OnChange);
-			//builder = builder.OnEnterKey("onMemberAdded");
-			//builder = builder.OnItemClick("onMemberAdded");
-			//builder = builder.OnOptionChanged("onMemberAdded");
-			//builder = builder.OnValueChanged("onMemberAdded");
+			builder = ProcessEvents(builder);
 
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
@@ -229,6 +224,54 @@ namespace Alcazar.Web.Extensibility
 				string title = TranslateToProp(Title, ViewContext);
 				builder.Hint(title);
 			}
+
+			return builder;
+		}
+
+		private TagBoxBuilder ProcessEvents(TagBoxBuilder builder)
+		{
+			// Base class events
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+			if (!string.IsNullOrEmpty(OnOptionChanged))
+				builder = builder.OnOptionChanged(OnOptionChanged);
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+			if (!string.IsNullOrEmpty(OnEnterKey))
+				builder = builder.OnEnterKey(OnEnterKey);
+			if (!string.IsNullOrEmpty(OnFocusOut))
+				builder = builder.OnFocusOut(OnFocusOut);
+			if (!string.IsNullOrEmpty(OnInput))
+				builder = builder.OnInput(OnInput);
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
+
+			// TagBox-specific events
+			if (!string.IsNullOrEmpty(OnSelectionChanged))
+				builder = builder.OnSelectionChanged(OnSelectionChanged);
+			if (!string.IsNullOrEmpty(OnItemClick))
+				builder = builder.OnItemClick(OnItemClick);
+			if (!string.IsNullOrEmpty(OnOpened))
+				builder = builder.OnOpened(OnOpened);
+			if (!string.IsNullOrEmpty(OnClosed))
+				builder = builder.OnClosed(OnClosed);
+			if (!string.IsNullOrEmpty(OnCustomItemCreating))
+				builder = builder.OnCustomItemCreating(OnCustomItemCreating);
+			if (!string.IsNullOrEmpty(OnMultiTagPreparing))
+				builder = builder.OnMultiTagPreparing(OnMultiTagPreparing);
+			if (!string.IsNullOrEmpty(OnFocusIn))
+				builder = builder.OnFocusIn(OnFocusIn);
+			if (!string.IsNullOrEmpty(OnKeyDown))
+				builder = builder.OnKeyDown(OnKeyDown);
+			if (!string.IsNullOrEmpty(OnKeyUp))
+				builder = builder.OnKeyUp(OnKeyUp);
+
+			//if (!string.IsNullOrEmpty(OnSelecting))
+			//	builder = builder.OnSelecting(OnSelecting);
+			//if (!string.IsNullOrEmpty(OnDeselecting))
+			//	builder = builder.OnDeselecting(OnDeselecting);
 
 			return builder;
 		}
@@ -309,12 +352,80 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("timeout")]
 		public int SearchTimeout { get; set; }
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region SelectBoxTagHelper properties: tag helper events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
 		/// <summary>
 		/// Get or set the Javascript method to be called when the selection in the control changes.
 		/// </summary>
 		[HtmlAttributeName("selection-changed")]
 		public string OnSelectionChanged { get; set; }
 
+		/// <summary>
+		/// Get or set the Javascript method to be called when an item is clicked.
+		/// </summary>
+		[HtmlAttributeName("item-click")]
+		public string OnItemClick { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the dropdown is opened.
+		/// </summary>
+		[HtmlAttributeName("opened")]
+		public string OnOpened { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the dropdown is closed.
+		/// </summary>
+		[HtmlAttributeName("closed")]
+		public string OnClosed { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when a custom item is being created.
+		/// </summary>
+		[HtmlAttributeName("custom-item-creating")]
+		public string OnCustomItemCreating { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when an item is being selected.
+		/// Proposed by AI, but does not exist.
+		/// </summary>
+		[HtmlAttributeName("selecting")]
+		public string OnSelecting_ { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when an item is being deselected.
+		/// Proposed by AI, but does not exist.
+		/// </summary>
+		[HtmlAttributeName("deselecting")]
+		public string OnDeselecting_ { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when preparing multiple tags for display.
+		/// </summary>
+		[HtmlAttributeName("multi-tag-preparing")]
+		public string OnMultiTagPreparing { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control gains focus.
+		/// </summary>
+		[HtmlAttributeName("focus-in")]
+		public string OnFocusIn { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when a key is pressed down.
+		/// </summary>
+		[HtmlAttributeName("key-down")]
+		public string OnKeyDown { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when a key is released.
+		/// </summary>
+		[HtmlAttributeName("key-up")]
+		public string OnKeyUp { get; set; }
+		
 		#endregion
 	}
 }
