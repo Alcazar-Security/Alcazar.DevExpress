@@ -229,6 +229,12 @@ namespace Alcazar.Web.Extensibility
 		public IHtmlContent ItemTemplateContent { get; set; }
 
 		/// <summary>
+		/// Get or set a popup content or template for the control.
+        /// Different controls might use this for different purposes.
+		/// </summary>
+		public IHtmlContent PopupTemplateContent { get; set; }
+
+		/// <summary>
 		/// Get or set the dropdown content or template for the dropdown button's dropdown menu.
 		/// TODO if we wver use this, need to make a class like ItemTemplateTagHelper for it.
 		/// </summary>

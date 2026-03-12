@@ -28,6 +28,7 @@ namespace Alcazar.Web.Extensibility
 	[HtmlTargetElement("data-source", ParentTag = "dx-chart", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-piechart", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "dx-diagram", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("data-source", ParentTag = "dx-scheduler", TagStructure = TagStructure.NormalOrSelfClosing)]
 	[HtmlTargetElement("data-source", ParentTag = "column", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class DataSourceTagHelper : DataSourceTagHelperBase
 	{
@@ -55,6 +56,11 @@ namespace Alcazar.Web.Extensibility
 
 			// Process the buttons tag and remember the content, so that the parent can process it
 			DataSourceContext sourceContext = GetDatasourceContext(context);
+			
+			// Emergency exist
+			if (sourceContext == null)
+				return;
+
 			if (sourceContext.Datasource != null)
 				throw new NotSupportedException($"Cannot apply data source {DatasourceType} '{Action}', {sourceContext.Datasource.DatasourceType} '{sourceContext.Datasource.Action}' is already declared.");
 
