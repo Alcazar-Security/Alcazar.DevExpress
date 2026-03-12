@@ -35,6 +35,7 @@ namespace Alcazar.Web.Extensibility
 	/// Templates are custom HTML content of the control. They can contain embedded Ruby (erb) placeholders.
 	/// </summary>
 	[HtmlTargetElement("item-template", ParentTag = "dx-dropdown-button", TagStructure = TagStructure.NormalOrSelfClosing)]
+	[HtmlTargetElement("item-template", ParentTag = "dx-scheduler", TagStructure = TagStructure.NormalOrSelfClosing)]
 	public class ItemTemplateTagHelper : TagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -46,6 +47,50 @@ namespace Alcazar.Web.Extensibility
             // Process the card-actions tag and remember the content, so that the parent can inject it into the header
             ItemContext itemContext = GetContextSafe<ItemContext>(context);
 			itemContext.ItemTemplateContent = await output.GetChildContentAsync();
+			output.SuppressOutput();
+		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// The <see cref="CellTemplateTagHelper"/> implements a tag helper for DX controls which allow templates for a cell.
+	/// Templates are custom HTML content of the control. They can contain embedded Ruby (erb) placeholders.
+	/// </summary>
+	[HtmlTargetElement("cell-template", ParentTag = "dx-scheduler", TagStructure = TagStructure.NormalOrSelfClosing)]
+	public class CellTemplateTagHelper : TagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region CellTemplateTagHelper overrides
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+		{
+			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
+			ItemContext itemContext = GetContextSafe<ItemContext>(context);
+			itemContext.CellTemplateContent = await output.GetChildContentAsync();
+			output.SuppressOutput();
+		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// The <see cref="FormTemplateTagHelper"/> implements a tag helper for DX controls which allow templates for a form.
+	/// Templates are custom HTML content of the control. They can contain embedded Ruby (erb) placeholders.
+	/// </summary>
+	[HtmlTargetElement("form-template", ParentTag = "dx-scheduler", TagStructure = TagStructure.NormalOrSelfClosing)]
+	public class FormTemplateTagHelper : TagHelperBase
+	{
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region FormTemplateTagHelper overrides
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+		{
+			// Process the card-actions tag and remember the content, so that the parent can inject it into the header
+			ItemContext itemContext = GetContextSafe<ItemContext>(context);
+			itemContext.FormTemplateContent = await output.GetChildContentAsync();
 			output.SuppressOutput();
 		}
 

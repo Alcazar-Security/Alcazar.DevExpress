@@ -61,13 +61,14 @@ namespace Alcazar.Web.Extensibility
 
 			// Create the context, so that we can pass it to child tag helpers
 			ItemContext itemsContext = GetOrCreateContext<ItemContext>(context);
+			SchedulerTemplateContext templateContext = GetOrCreateContext<SchedulerTemplateContext>(context);
 			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
 
 			// Process child content
 			IHtmlContent content = await output.GetChildContentAsync();
 
 			// Process scheduler-specific configuration
-			builder = ProcessSchedulerConfiguration(builder, itemsContext);
+			builder = ProcessSchedulerConfiguration(builder, templateContext, itemsContext);
 
 			// Process data source
 			builder = ProcessDataSource(builder, sourceContext, context);
@@ -107,7 +108,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private SchedulerBuilder ProcessSchedulerConfiguration(SchedulerBuilder builder, ItemContext itemsContext)
+		private SchedulerBuilder ProcessSchedulerConfiguration(SchedulerBuilder builder, SchedulerTemplateContext templateContext, ItemContext itemsContext)
 		{
 			// Date and time configuration
 			if (CurrentDate.HasValue)
@@ -151,8 +152,7 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.CrossScrollingEnabled(IsCrossScrollingEnabled);
 
 			// Editing configuration
-			if (AllowAdding.HasValue || AllowUpdating.HasValue || AllowDeleting.HasValue ||
-				AllowDragging.HasValue || AllowResizing.HasValue)
+			if (AllowAdding.HasValue || AllowUpdating.HasValue || AllowDeleting.HasValue ||	AllowDragging.HasValue || AllowResizing.HasValue)
 			{
 				builder = builder.Editing(editing =>
 				{
@@ -176,8 +176,22 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.AppointmentTemplate(new JS(AppointmentTemplateJS));
 			else if (AppointmentTemplateNT != null)
 				builder = builder.AppointmentTemplate(new TemplateName(AppointmentTemplateNT));
-			else if (itemsContext.DropdownTemplateContent != null)
-				builder = builder.AppointmentTemplate(ToString(itemsContext.ItemTemplateContent));
+			else if (templateContext.AppointmentContent != null)
+				builder = builder.AppointmentTemplate(ToString(templateContext.AppointmentContent));
+
+			// Appointment form template
+			// This is different, we use the form template for JavaScript to create the template in 
+			if (!string.IsNullOrEmpty(AppointmentFormTemplate))
+				builder = builder.Option("customFormTemplate", AppointmentFormTemplate);
+			else if (!string.IsNullOrEmpty(AppointmentFormTemplateJS))
+				builder = builder.Option("customFormTemplate", new JS(AppointmentFormTemplateJS));
+			else if (!string.IsNullOrEmpty(AppointmentFormTemplateNT))
+				builder = builder.Option("customFormTemplate", new TemplateName(AppointmentFormTemplateNT));
+			else if (itemsContext.FormTemplateContent != null)
+				builder = builder.Option("customFormTemplate", ToString(itemsContext.FormTemplateContent));            
+	
+			// Appointment collector template
+			// TODO
 
 			// Appointment tooltip
 			if (!string.IsNullOrEmpty(AppointmentTooltipTemplate))
@@ -186,6 +200,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.AppointmentTooltipTemplate(new JS(AppointmentTooltipTemplateJS));
 			else if (!string.IsNullOrEmpty(AppointmentTooltipTemplateNT))
 				builder = builder.AppointmentTooltipTemplate(new TemplateName(AppointmentTooltipTemplateNT));
+			else if (templateContext.AppointmentTooltipContent != null)
+				builder = builder.AppointmentTemplate(ToString(templateContext.AppointmentTooltipContent));
 
 			// Data cell template
 			if (!string.IsNullOrEmpty(DataCellTemplate))
@@ -194,8 +210,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.DataCellTemplate(new JS(DataCellTemplateJS));
 			else if (DataCellTemplateNT != null)
 				builder = builder.DataCellTemplate(new TemplateName(DataCellTemplateNT));
-			else if (itemsContext.ItemTemplateContent != null)
-				builder = builder.DataCellTemplate(ToString(itemsContext.ItemTemplateContent));
+			else if (itemsContext.CellTemplateContent != null)
+				builder = builder.DataCellTemplate(ToString(itemsContext.CellTemplateContent));
 
 			// Date header template
 			// if (!string.IsNullOrEmpty(DateHeaderTemplate))
@@ -506,8 +522,26 @@ namespace Alcazar.Web.Extensibility
 		public string AppointmentTemplateNT { get; set; }
 
 		/// <summary>
-		/// Get or set the appointment tooltip template.
+		/// Get or set the appointment form template.
 		/// </summary>
+		[HtmlAttributeName("form-template")]
+		public string AppointmentFormTemplate { get; set; }
+
+		/// <summary>
+		/// Get or set the appointment form template as JavaScript.
+		/// </summary>
+		[HtmlAttributeName("form-template-js")]
+		public string AppointmentFormTemplateJS { get; set; }
+
+		/// <summary>
+		/// Get or set the appointment form template as named template.
+		/// </summary>
+		[HtmlAttributeName("form-template-nt")]
+		public string AppointmentFormTemplateNT { get; set; }    
+		
+		/// <summary>
+																/// Get or set the appointment tooltip template.
+																/// </summary>
 		[HtmlAttributeName("appointment-tooltip-template")]
 		public string AppointmentTooltipTemplate { get; set; }
 

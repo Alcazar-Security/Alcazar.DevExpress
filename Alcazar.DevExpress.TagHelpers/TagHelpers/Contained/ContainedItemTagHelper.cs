@@ -211,6 +211,7 @@ namespace Alcazar.Web.Extensibility
     }
 
     /// <summary>
+    /// The <see cref="ItemContext"/> handles embedded items and various template types.
     /// </summary>
     public class ItemContext
     {
@@ -229,8 +230,18 @@ namespace Alcazar.Web.Extensibility
 		public IHtmlContent ItemTemplateContent { get; set; }
 
 		/// <summary>
+		/// Get or set the cell content or template for the control.
+		/// </summary>
+		public IHtmlContent CellTemplateContent { get; set; }
+
+		/// <summary>
+		/// Get or set the form content or template for the control.
+		/// </summary>
+		public IHtmlContent FormTemplateContent { get; set; }
+
+		/// <summary>
 		/// Get or set a popup content or template for the control.
-        /// Different controls might use this for different purposes.
+		/// Different controls might use this for different purposes.
 		/// </summary>
 		public IHtmlContent PopupTemplateContent { get; set; }
 
