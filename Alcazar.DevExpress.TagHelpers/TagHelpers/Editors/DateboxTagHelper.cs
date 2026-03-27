@@ -34,6 +34,9 @@ namespace Alcazar.Web.Extensibility
 		public DateboxTagHelper(IHtmlHelper htmlHelper)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
+
+			// Contrary to most other controls, dont use the clear button by default
+			AllowClear = false;
 		}
 
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
@@ -59,6 +62,9 @@ namespace Alcazar.Web.Extensibility
 
 			// Create the builder for a popup
 			DateBoxBuilder builder = _htmlHelper.DevExtreme().DateBox();
+
+			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
+			ControlContext controlContext = ApplyControlContext(context);
 
 			// Process common functionality for editors
 			builder = ProcessCommon(builder);
@@ -112,11 +118,7 @@ namespace Alcazar.Web.Extensibility
 			// Set the type: date, time, datetime
 			builder = builder.Type(Type);
 
-			if (!string.IsNullOrEmpty(OnChange))
-				builder = builder.OnChange(OnChange);
-
-			if (!string.IsNullOrEmpty(OnValueChanged))
-				builder = builder.OnValueChanged(OnValueChanged);
+			builder = ProcessEvents(builder);
 
 			//builder = builder.ActiveStateEnabled(OnChange);
 
@@ -263,7 +265,7 @@ namespace Alcazar.Web.Extensibility
 						break;
 
 					case DateTimeKind.Local:
-						timezoneText = "+";
+						timezoneText = null;
 						timezoneHint = $"Local time ({timezone.Id})";
 						break;
 				}
@@ -333,7 +335,11 @@ namespace Alcazar.Web.Extensibility
 					AddHelpButton(b);
 
 					// Add custom defined buttons, but only if we have some
-					AddTimezoneButton(b, timezoneText, timezoneTitle);
+					if(!string.IsNullOrEmpty(timezoneText))
+						AddTimezoneButton(b, timezoneText, timezoneTitle);
+
+					// Add the default calendar dropdown button EXPLICITLY, as the last one
+					b.Add().Name("dropDown");
 				});
 			}
 			else
@@ -345,6 +351,11 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
+		/// <summary>
+		/// Add a TZ button which shows the TZ hint.
+		/// This is not really needed, the hint is already shown over the entire control, although a 'Z' or '+2' might be a nice move.
+		/// But since the offset is not known here, we dont use the button for local time for now. Maybe some JS could get us the offset...
+		/// </summary>
 		protected void AddTimezoneButton(CollectionFactory<TextEditorButtonBuilder> button, string timezoneText, string timezoneTitle)
 		{
 			string helpText = TranslateToProp(HelpText, ViewContext);
@@ -366,6 +377,63 @@ namespace Alcazar.Web.Extensibility
 
 					return button;
 				});
+		}
+
+		private DateBoxBuilder ProcessEvents(DateBoxBuilder builder)
+		{
+			// Inherited events
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+
+			if (!string.IsNullOrEmpty(OnOptionChanged))
+				builder = builder.OnOptionChanged(OnOptionChanged);
+
+			if (!string.IsNullOrEmpty(OnChange))
+				builder = builder.OnChange(OnChange);
+
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+
+			if (!string.IsNullOrEmpty(OnEnterKey))
+				builder = builder.OnEnterKey(OnEnterKey);
+
+			if (!string.IsNullOrEmpty(OnFocusIn))
+				builder = builder.OnFocusIn(OnFocusIn);
+
+			if (!string.IsNullOrEmpty(OnFocusOut))
+				builder = builder.OnFocusOut(OnFocusOut);
+
+			if (!string.IsNullOrEmpty(OnInput))
+				builder = builder.OnInput(OnInput);
+
+			// Calendar/dropdown specific events
+			if (!string.IsNullOrEmpty(OnOpened))
+				builder = builder.OnOpened(OnOpened);
+
+			if (!string.IsNullOrEmpty(OnClosed))
+				builder = builder.OnClosed(OnClosed);
+
+			// Keyboard events
+			if (!string.IsNullOrEmpty(OnKeyDown))
+				builder = builder.OnKeyDown(OnKeyDown);
+
+			if (!string.IsNullOrEmpty(OnKeyUp))
+				builder = builder.OnKeyUp(OnKeyUp);
+
+			// Copy/paste events
+			if (!string.IsNullOrEmpty(OnCopy))
+				builder = builder.OnCopy(OnCopy);
+
+			if (!string.IsNullOrEmpty(OnCut))
+				builder = builder.OnCut(OnCut);
+
+			if (!string.IsNullOrEmpty(OnPaste))
+				builder = builder.OnPaste(OnPaste); 
+			
+			return builder;
 		}
 
 		#endregion
@@ -391,12 +459,61 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region DateboxTagHelper properties: behaviour
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+	
 		/// <summary>
 		/// Get or set an indicator if this control should open the calender control on clickin anywhere in the text field.
 		/// </summary>
 		[HtmlAttributeName("open-click")]
 		public bool IsOpenOnFieldClick { get; set; }
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region DateboxTagHelper properties: events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the calendar/dropdown is opened.
+		/// </summary>
+		[HtmlAttributeName("opened")]
+		public string OnOpened { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the calendar/dropdown is closed.
+		/// </summary>
+		[HtmlAttributeName("closed")]
+		public string OnClosed { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when a key is pressed down.
+		/// </summary>
+		[HtmlAttributeName("key-down")]
+		public string OnKeyDown { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when a key is released.
+		/// </summary>
+		[HtmlAttributeName("key-up")]
+		public string OnKeyUp { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when text is copied.
+		/// </summary>
+		[HtmlAttributeName("copy")]
+		public string OnCopy { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when text is cut.
+		/// </summary>
+		[HtmlAttributeName("cut")]
+		public string OnCut { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when text is pasted.
+		/// </summary>
+		[HtmlAttributeName("paste")]
+		public string OnPaste { get; set; }
+		
 		#endregion
 	}
 }

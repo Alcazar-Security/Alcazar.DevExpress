@@ -142,7 +142,7 @@ namespace Alcazar.Web.Extensibility
 				{ }
 
 				// Use Option 1. simple value, until proven otherwise
-				// Works for WorkflowDefinition.InitialState, where the model is an int, and then the control dies not display the incoming value
+				// Works for WorkflowDefinition.InitialState, where the model is an int, and then the control does not display the incoming value
 				return value2;
 			}
 			catch
@@ -358,6 +358,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("enter")]
 		public string OnEnterKey { get; set; }
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the control obtains focus.
+		/// </summary>
+		[HtmlAttributeName("focus-in")]
+		public string OnFocusIn { get; set; }
 
 		/// <summary>
 		/// Get or set the Javascript method to be called when the control looses focus.
