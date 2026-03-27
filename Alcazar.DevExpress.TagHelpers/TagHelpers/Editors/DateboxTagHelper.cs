@@ -100,7 +100,6 @@ namespace Alcazar.Web.Extensibility
 			}
 
 			// Process text-area specific properties
-			// builder = ProcessDefaultFormat(builder);
 			builder = ProcessFormat(builder, out string customFormat);
 
 			// Process buttons

@@ -70,6 +70,9 @@ namespace Alcazar.Web.Extensibility
 			// Process scheduler-specific configuration
 			builder = ProcessSchedulerConfiguration(builder, templateContext, itemsContext);
 
+			// Process the popup appointment editor
+			builder = ProcessEditing(builder);
+
 			// Process data source
 			builder = ProcessDataSource(builder, sourceContext, context);
 
@@ -150,24 +153,6 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.ShadeUntilCurrentTime(ShadeUntilCurrentTime);
 			builder = builder.UseDropDownViewSwitcher(UseDropDownViewSwitcher);
 			builder = builder.CrossScrollingEnabled(IsCrossScrollingEnabled);
-
-			// Editing configuration
-			if (AllowAdding.HasValue || AllowUpdating.HasValue || AllowDeleting.HasValue ||	AllowDragging.HasValue || AllowResizing.HasValue)
-			{
-				builder = builder.Editing(editing =>
-				{
-					if (AllowAdding.HasValue)
-						editing = editing.AllowAdding(AllowAdding.Value);
-					if (AllowUpdating.HasValue)
-						editing = editing.AllowUpdating(AllowUpdating.Value);
-					if (AllowDeleting.HasValue)
-						editing = editing.AllowDeleting(AllowDeleting.Value);
-					if (AllowDragging.HasValue)
-						editing = editing.AllowDragging(AllowDragging.Value);
-					if (AllowResizing.HasValue)
-						editing = editing.AllowResizing(AllowResizing.Value);
-				});
-			}
 
 			// Appointment template
 			if (!string.IsNullOrEmpty(AppointmentTemplate))
@@ -268,7 +253,30 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private SchedulerBuilder ProcessEvents(SchedulerBuilder builder)
+		private SchedulerBuilder ProcessEditing(SchedulerBuilder builder)
+		{
+			// Editing configuration
+			if (AllowAdding.HasValue || AllowUpdating.HasValue || AllowDeleting.HasValue || AllowDragging.HasValue || AllowResizing.HasValue)
+			{
+				builder = builder.Editing(editing =>
+				{
+					if (AllowAdding.HasValue)
+						editing = editing.AllowAdding(AllowAdding.Value);
+					if (AllowUpdating.HasValue)
+						editing = editing.AllowUpdating(AllowUpdating.Value);
+					if (AllowDeleting.HasValue)
+						editing = editing.AllowDeleting(AllowDeleting.Value);
+					if (AllowDragging.HasValue)
+						editing = editing.AllowDragging(AllowDragging.Value);
+					if (AllowResizing.HasValue)
+						editing = editing.AllowResizing(AllowResizing.Value);
+				});
+			}
+
+			return builder;
+		}
+
+	private SchedulerBuilder ProcessEvents(SchedulerBuilder builder)
 		{
 			// Core events
 			if (!string.IsNullOrEmpty(OnContentReady))
@@ -305,7 +313,7 @@ namespace Alcazar.Web.Extensibility
 			// Form events
 			if (!string.IsNullOrEmpty(OnAppointmentFormOpening))
 				builder = builder.OnAppointmentFormOpening(OnAppointmentFormOpening);
-			//if (!string.IsNullOrEmpty(OnAppointmentFormClosed))
+			// if (!string.IsNullOrEmpty(OnAppointmentFormClosed))
 			//	builder = builder.OnAppointmentFormClosed(OnAppointmentFormClosed);
 
 			// Rendering events
