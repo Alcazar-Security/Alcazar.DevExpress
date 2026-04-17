@@ -104,6 +104,14 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
+			// Process data source options
+			if (!string.IsNullOrEmpty(GroupExpression))
+			{
+				builder = builder.Grouped(true);
+				builder = builder.DataSourceOptions(o => o
+					.Group(GroupExpression));
+			}
+
 			// Add buttons, but only if we have some
 			if (buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText))
 			{
@@ -347,6 +355,12 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("display-expr")]
 		public string DisplayExpression { get; set; }
+
+		/// <summary>
+		/// Get or set the name of the item property to be used for grouping.
+		/// </summary>
+		[HtmlAttributeName("group-expr")]
+		public string GroupExpression { get; set; }
 
 		/// <summary>
 		/// Get or set the search mode used by the control. Setting the search mode enables searching.

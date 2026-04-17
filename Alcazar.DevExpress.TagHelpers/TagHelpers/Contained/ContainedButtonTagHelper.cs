@@ -1,8 +1,10 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using Amaqele.Common.Types;
+using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,6 +32,11 @@ namespace Alcazar.Web.Extensibility
             string icon = TranslateToProp(Icon, ViewContext);
             string text = TranslateToProp(Text, ViewContext);
 
+			// Not needed here, the class is set by the data grid
+			// string @class = null;
+			//	if (output.Attributes.TryGetAttribute("class", out TagHelperAttribute classAttr))
+			//		@class = classAttr.Value.ToString();
+
             IHtmlContent content = await output.GetChildContentAsync();
 
             ButtonModel button = new ButtonModel
@@ -42,7 +49,16 @@ namespace Alcazar.Web.Extensibility
                 IsVisible = IsVisible,
                 IsVisibleAction = IsVisibleAction,
 
-                OnClickAction = OnClickAction,
+				// Route
+				Url = Url,
+				Action = Action,
+				Controller = Controller,
+				Area = Area,
+                RouteValues = RouteValues,
+                MingleValues = MingleValues,
+
+                // Events
+				OnClick = OnClick,
 
                 // Text editor buttons
                 Location = Location,
@@ -102,19 +118,61 @@ namespace Alcazar.Web.Extensibility
         /// <summary>
 		/// Get or set the JS method to be executed when the button is clicked.
 		/// </summary>
-		[HtmlAttributeName("onclick")]
-        public string OnClickAction { get; set; }
+		[HtmlAttributeName("click")]
+        public string OnClick { get; set; }
 
-        #endregion
+		#endregion
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region ContainedButtonTagHelper properties: TextEditorButton
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedButtonTagHelper properties: column button (DataGrid)
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
         /// <summary>
-        /// Get or set the location of the button.
+        /// Get or set the url this button should redirect to.
         /// </summary>
-        [HtmlAttributeName("location")]
+		[HtmlAttributeName("href")]
+		public string Url { get; set; }
+
+		/// <summary>
+		/// Get or set the action this button should redirect to.
+		/// </summary>
+		[HtmlAttributeName("asp-action")]
+		public string Action { get; set; }
+
+		/// <summary>
+		/// Get or set the controller of the action this button should redirect to.
+		/// </summary>
+		[HtmlAttributeName("asp-controller")]
+		public string Controller { get; set; }
+
+		/// <summary>
+		/// Get or set the area of the action this button should redirect to.
+		/// </summary>
+		[HtmlAttributeName("asp-area")]
+		public string Area { get; set; }
+
+		/// <summary> 
+		/// Get or set route values in the format asp-route-name='value', which will be added to the url this button should redirect to.
+		/// </summary> 
+		[HtmlAttributeName("asp-all-route-data", DictionaryAttributePrefix = "asp-route-")]
+		public IDictionary<string, string> RouteValues { get; set; } = new Dictionary<string, string>();
+
+        /// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// </summary> 
+		[HtmlAttributeName("mingle-all-route-data", DictionaryAttributePrefix = "mingle-")]
+		public IDictionary<string, string> MingleValues { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		
+        #endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedButtonTagHelper properties: TextEditorButton
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the location of the button.
+		/// </summary>
+		[HtmlAttributeName("location")]
         public TextEditorButtonLocation Location { get; set; }
         /// <summary>
         /// Get or set the styling of the button.
@@ -211,18 +269,59 @@ namespace Alcazar.Web.Extensibility
         /// <summary>
         /// Get or set the action to be executed when the button is clicked.
         /// </summary>
-        public string OnClickAction { get; set; }
+        public string OnClick { get; set; }
 
-        #endregion
+		#endregion
 
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-        #region ButtonModel properties: TextEditorButton
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ButtonModel properties: column button (DataGrid)
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-        /// <summary>
-        /// Get or set the location of the button.
-        /// </summary>
-        public TextEditorButtonLocation Location { get; set; }
+		/// <summary>
+		/// Get or set the url this button should redirect to.
+		/// </summary>
+		public string Url { get; set; }
+
+		/// <summary>
+		/// Get or set the action this button should redirect to.
+		/// </summary>
+		public string Action { get; set; }
+
+		/// <summary>
+		/// Get or set the controller of the action this button should redirect to.
+		/// </summary>
+		public string Controller { get; set; }
+
+		/// <summary>
+		/// Get or set the area of the action this button should redirect to.
+		/// </summary>
+		public string Area { get; set; }
+
+		/// <summary>
+		/// Get or set the base URL for the route, which is used for the remote controller.
+		/// </summary>
+		public string BaseUrl { get; set; }
+
+		/// <summary> 
+		/// Get or set route values in the format asp-route-name='value', which will be added to the url this button should redirect to.
+		/// </summary> 
+		public IDictionary<string, string> RouteValues { get; set; } = new Dictionary<string, string>();
+
+		/// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// </summary> 
+		public IDictionary<string, string> MingleValues { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ButtonModel properties: TextEditorButton
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the location of the button.
+		/// </summary>
+		public TextEditorButtonLocation Location { get; set; }
 
         /// <summary>
         /// Get or set the styling of the button.

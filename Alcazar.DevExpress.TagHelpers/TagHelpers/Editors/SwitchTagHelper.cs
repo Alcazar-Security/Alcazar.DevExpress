@@ -14,34 +14,26 @@ using Microsoft.AspNetCore.Html;
 namespace Alcazar.Web.Extensibility
 {
 	/// <summary>
-	/// The <see cref="CheckboxTagHelper"/> type implements a check box.
+	/// The <see cref="SwitchTagHelper"/> type implements an on/off switch.
 	/// </summary>
-	[HtmlTargetElement("dx-checkbox")]
-	public class CheckboxTagHelper : EditorTagHelperBase
+	[HtmlTargetElement("dx-switch")]
+	public class SwitchTagHelper : EditorTagHelperBase
 	{
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region CheckboxTagHelper construction
+		#region SwitchTagHelper construction
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
-		public CheckboxTagHelper(IHtmlHelper htmlHelper, IUrlHelperFactory urlHelperFactory, IActionContextAccessor actionContextAccessor, HtmlEncoder htmlEncoder, IViewComponentHelper viewComponentHelper, IHtmlGenerator generator)
+		public SwitchTagHelper(IHtmlHelper htmlHelper)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
-			//_urlHelper = urlHelperFactory.GetUrlHelper(actionContextAccessor.ActionContext);
-			//_htmlEncoder = htmlEncoder;
-			//_viewComponentHelper = viewComponentHelper;
-			//_generator = generator;
 		}
 
-		//private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
-		//private readonly IUrlHelper _urlHelper;
-		//private readonly HtmlEncoder _htmlEncoder;
-		//private readonly IHtmlGenerator _generator;
 
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		#region CheckboxTagHelper overrides
+		#region SwitchTagHelper overrides
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
@@ -58,7 +50,7 @@ namespace Alcazar.Web.Extensibility
 			output.SuppressOutput();
 
 			// Create the builder for a popup
-			CheckBoxBuilder builder = _htmlHelper.DevExtreme().CheckBox();
+			SwitchBuilder builder = _htmlHelper.DevExtreme().Switch();
 
 			// Apply the control context, which is values which an outer dx-field or dx-control tag might want to pass into me, the editor
 			ApplyControlContext(context);
@@ -96,9 +88,6 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.Disabled(true);
 			}
 
-			// Process text-area specific properties
-			builder = builder.EnableThreeStateBehavior(ThreeState);
-
 			// Set the label text (From LabelText, For, Name, in that order)
 			string labelText = null;
 			if (!string.IsNullOrEmpty(LabelText))
@@ -113,8 +102,6 @@ namespace Alcazar.Web.Extensibility
 			if (string.IsNullOrEmpty(labelText))
 				labelText = Name;
 
-			builder = builder.Text(labelText);
-
 			// Process events
 			builder = ProcessEvents(builder);
 
@@ -122,7 +109,7 @@ namespace Alcazar.Web.Extensibility
 			Render(context, output.Content, builder);
 		}
 
-		private CheckBoxBuilder ProcessCommon(CheckBoxBuilder builder)
+		private SwitchBuilder ProcessCommon(SwitchBuilder builder)
 		{
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
@@ -135,7 +122,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private CheckBoxBuilder ProcessAttributes(CheckBoxBuilder builder, TagHelperAttributeList attributes)
+		private SwitchBuilder ProcessAttributes(SwitchBuilder builder, TagHelperAttributeList attributes)
 		{
 			// We are choosing to place the attributes on the element, not the imput
 			foreach (var attr in attributes)
@@ -152,7 +139,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private CheckBoxBuilder ApplyFor(CheckBoxBuilder builder, object value)
+		private SwitchBuilder ApplyFor(SwitchBuilder builder, object value)
 		{
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
@@ -161,13 +148,7 @@ namespace Alcazar.Web.Extensibility
 			if (For == null)
 				value = Value;
 
-			if (value == null)
-			{
-				// Setting the value even if it is null (we could be in tri-state)
-				if (ThreeState)
-					builder = builder.Value(null);
-			}
-			else if (value is bool boolValue1)
+			if (value is bool boolValue1)
 			{
 				// Setting the value as direct bool
 				builder = builder.Value(boolValue1);
@@ -182,7 +163,7 @@ namespace Alcazar.Web.Extensibility
 			return builder;
 		}
 
-		private CheckBoxBuilder ProcessEvents(CheckBoxBuilder builder)
+		private SwitchBuilder ProcessEvents(SwitchBuilder builder)
 		{
 			if (!string.IsNullOrEmpty(OnContentReady))
 				builder = builder.OnContentReady(OnContentReady);
@@ -193,6 +174,8 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.OnInitialized(OnInitialized);
 			if (!string.IsNullOrEmpty(OnOptionChanged))
 				builder = builder.OnOptionChanged(OnOptionChanged);
+			if (!string.IsNullOrEmpty(OnDisposing))
+				builder = builder.OnDisposing(OnDisposing);
 
 			return builder;
 		}
@@ -207,7 +190,7 @@ namespace Alcazar.Web.Extensibility
 		/// Get or set the value to be displayed in this control.
 		/// </summary>
 		[HtmlAttributeName("value")]
-		public bool? Value { get; set; }
+		public bool Value { get; set; }
 
 		/// <summary>
 		/// Get or set the custom text for the label. Defaults to the equivalent of 'DisplayNameFor', woth a fallback to <see cref="base.Name"/>.
@@ -222,13 +205,19 @@ namespace Alcazar.Web.Extensibility
         /// </summary>
         [HtmlAttributeName("label-class")]
         public string LabelClass { get; set; }
-        
-		/// <summary>
-        /// Get or set an indicator if check box should have three-state behaviour.
-        /// </summary>
-        [HtmlAttributeName("three-state")]
-		public bool ThreeState { get; set; }
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region CheckboxTagHelper properties: tag helper events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the Javascript method to be called when the switch is being disposed.
+		/// </summary>
+		[HtmlAttributeName("disposing")]
+		public string OnDisposing { get; set; }
+	
 		#endregion
 	}
 }

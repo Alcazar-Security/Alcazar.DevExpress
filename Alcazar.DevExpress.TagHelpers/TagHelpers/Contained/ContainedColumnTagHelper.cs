@@ -140,7 +140,8 @@ namespace Alcazar.Web.Extensibility
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
 		/// <summary>
-		/// Get or set the type of the column: data (default), command
+		/// Get or set the type of the column. The permissible types depend on the containing control.
+		/// A data grid allows: data (default), command
 		/// </summary>
 		[HtmlAttributeName("type")]
 		public string Type { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Alcazar.Web.Extensibility;
+using Alcazar.Web.Utilities;
 using DevExpress.Data.Utils;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.Builders;
@@ -214,8 +215,9 @@ namespace Alcazar.Web.Extensibility
 
 		private PopupBuilder ProcessConfirmation(PopupBuilder builder, string idValue)
 		{
+			// 2026-04 introduced RouteUtilities
 			// Build the URL (the area part does not work!)
-			string url = BuildUrl(_urlHelper);
+			string url = RouteUtilities.BuildUrl(_urlHelper, Url, Action, Controller, Area, RouteValues);
 
 			// Add the YES and NO buttons
 			string yesValue = TranslateToProp(YesText, ViewContext);

@@ -1,4 +1,5 @@
 ﻿using Alcazar.DevExpress.Utilities;
+using Alcazar.Web.Utilities;
 using Amaqele.Common.Base;
 using Amaqele.Common.Types;
 using DevExtreme.AspNet.Mvc;
@@ -42,7 +43,7 @@ namespace Alcazar.Web.Extensibility
 		public DataGridTagHelper(IHtmlHelper htmlHelper, IUrlHelperFactory urlHelperFactory, IActionContextAccessor actionContextAccessor, HtmlEncoder htmlEncoder, IViewComponentHelper viewComponentHelper, IHtmlGenerator generator)
 		{
 			_htmlHelper = htmlHelper as Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper;
-			//_urlHelper = urlHelperFactory.GetUrlHelper(actionContextAccessor.ActionContext);
+			_urlHelper = urlHelperFactory.GetUrlHelper(actionContextAccessor.ActionContext);
 			//_htmlEncoder = htmlEncoder;
 			//_viewComponentHelper = viewComponentHelper;
 			//_generator = generator;
@@ -53,8 +54,7 @@ namespace Alcazar.Web.Extensibility
 
 		//private readonly IViewComponentHelper _viewComponentHelper;
 		private readonly Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelper _htmlHelper;
-
-		//private readonly IUrlHelper _urlHelper;
+		private readonly IUrlHelper _urlHelper;
 		//private readonly HtmlEncoder _htmlEncoder;
 		//private readonly IHtmlGenerator _generator;
 
@@ -708,12 +708,39 @@ namespace Alcazar.Web.Extensibility
 			else
 				buttonBuilder = buttonBuilder.Visible(button.IsVisible);
 
-			if (!string.IsNullOrEmpty(button.OnClickAction))
-				buttonBuilder = buttonBuilder.OnClick(button.OnClickAction);
+			if (!string.IsNullOrEmpty(button.OnClick))
+				buttonBuilder = buttonBuilder.OnClick(button.OnClick);
 
 			// Set the class
 			if (!string.IsNullOrEmpty(button.Class))
 				buttonBuilder = buttonBuilder.CssClass(button.Class);
+
+			// Transfer attributes
+
+			// HREF, url, and route values
+			if (!string.IsNullOrEmpty(button.Url))
+			{
+				// Use the URL as provided. We are NOT adding any route values, we assume these are tied to data of the grid row, and will be processed on the client side.
+				buttonBuilder.Option("url", button.Url);
+			}
+			else if (!string.IsNullOrEmpty(button.Action))
+			{
+				// Build the URL from its components. We are NOT adding any route values, we assume these are tied to data of the grid row, and will be processed on the client side.
+				string url = RouteUtilities.BuildUrl(_urlHelper, button.Url, button.Action, button.Controller, button.Area, null, null);
+				buttonBuilder.Option("url", url);
+			}
+
+			if ((!string.IsNullOrEmpty(button.Url) || !string.IsNullOrEmpty(button.Action) ) && string.IsNullOrEmpty(button.OnClick))
+			{
+				// If we have set the URL, and the click event is not handled, use the default click event which redirects to the page with mingled parameters
+				buttonBuilder = buttonBuilder.OnClick("onContainedButtonClicked");
+			}
+
+			// Set the route values and mingle values as options, we assume these are tied to data of the grid row, and will be processed on the client side.
+			foreach (string mingledKey in button.RouteValues.Keys)
+				buttonBuilder.Option($"route-{mingledKey}", button.RouteValues[mingledKey]);
+			foreach (string mingledKey in button.MingleValues.Keys)
+				buttonBuilder.Option($"mingled-{mingledKey}", button.MingleValues[mingledKey]);
 
 			// Not used currently
 			//.Template("<span>xxx</span>")
