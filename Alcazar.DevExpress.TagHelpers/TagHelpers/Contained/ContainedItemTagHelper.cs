@@ -1,9 +1,12 @@
 ﻿using Alcazar.Web.Extensibility;
+using Alcazar.Web.Utilities;
+using Amaqele.Web.Mvc.Security;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -60,6 +63,8 @@ namespace Alcazar.Web.Extensibility
 			string text = TranslateToProp(Text, ViewContext);
 			string value = TranslateToProp(Value, ViewContext);
 			string title = TranslateToProp(Title, ViewContext);
+			string confText = TranslateToProp(ConfirmationText, ViewContext);
+			string confTitle = TranslateToProp(ConfirmationTitle, ViewContext);
 
 			// Get the class attribute, if any
 			// Get all other attributes
@@ -81,7 +86,37 @@ namespace Alcazar.Web.Extensibility
 				Badge = Badge,
 				Href = Href,
 
-				// Actions
+				// Routing
+				Url = Url,
+				Action = Action,
+				Controller = Controller,
+				Area = Area,
+				BaseUrl = BaseUrl,
+				RouteValues = RouteValues,
+
+				// Mingled
+				MingleRoute = MingleRoute,
+				MingleValues = MingleValues,
+				MingleDataValues = MingleDataValues,
+				MingledValue = MingledValue,
+
+				// Ajax
+				IsAjax = IsAjax,
+				AjaxUpdate = AjaxUpdate,
+				AjaxConfirm = AjaxConfirm,
+				AjaxSuccess = AjaxSuccess,
+				AjaxFailure = AjaxFailure,
+				AjaxComplete = AjaxComplete,
+
+				// Confirmation
+				IsConfirmation = IsConfirmation,
+				ConfirmationTitle = confTitle,
+				ConfirmationText = confText,
+				ConfirmationAction = ConfirmationAction,
+				ConfirmationData = ConfirmationData,
+				ConfirmationDiv = ConfirmationDiv,
+
+				// Events
 				OnClick = OnClick,
 
 				// Item template
@@ -168,6 +203,168 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("data")]
 		public object Data { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedItemTagHelper properties: routing (asp-*)
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the URL for the route. If specified, this overrides the asp-* attributes.
+		/// </summary>
+		[HtmlAttributeName("href")]
+		public string Url { get; set; }
+
+		/// <summary>
+		/// Get or set the action name for the route. This is used together with the controller, area, and route properties to generate the URL for the route.
+		/// </summary>
+		[HtmlAttributeName("asp-action")]
+		public string Action { get; set; }
+
+		/// <summary>
+		/// Get or set the controller name for the route. This is used together with the action, area, and route properties to generate the URL for the route.
+		/// </summary>
+		[HtmlAttributeName("asp-controller")]
+		public string Controller { get; set; }
+
+		/// <summary>
+		/// Get or set the area name for the route. This is used together with the action, controller, and route properties to generate the URL for the route.
+		/// </summary>
+		[HtmlAttributeName("asp-area")]
+		public string Area { get; set; }
+
+		/// <summary>
+		/// Get or set the base URL for the route, which is used for the remote controller.
+		/// </summary>
+		[HtmlAttributeName("url")]
+		public string BaseUrl { get; set; }
+
+		/// <summary>
+		/// Get or set the route values for the route. This is used together with the action, controller, and area properties to generate the URL for the route.
+		/// The keys of the dictionary are specified as asp-route-{key} on the tag helper.
+		/// </summary>
+		[HtmlAttributeName("asp-all-route-data", DictionaryAttributePrefix = "asp-route-")]
+		public IDictionary<string, string> RouteValues { get; set; } = new Dictionary<string, string>();
+
+		/// <summary>
+		/// Get or set the name if the mingled route value. Defaults to 'id' which is the default parameter for most appliations.
+		/// </summary>
+		[HtmlAttributeName("mingle")]
+		public string MingleRoute { get; set; } = "id";
+
+		/// <summary>
+		/// Get or set mingled route value.
+		/// If set, this overrides all mingle-* attributes.
+		/// </summary>
+		[HtmlAttributeName("mingled")]
+		public string MingledValue { get; set; }
+
+		/// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// Attribute values are static values.
+		/// </summary> 
+		[HtmlAttributeName(DictionaryAttributePrefix = "mingle-")]
+		public IDictionary<string, string> MingleValues { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+		/// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// Attribute values are references to data properties, which makes these suitable for mingled values e.g. from row data in a data grid.
+		/// </summary> 
+		[HtmlAttributeName(DictionaryAttributePrefix = "mdata-")]
+		public IDictionary<string, string> MingleDataValues { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedItemTagHelper properties: ajax
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if this is an AJAX call.
+		/// </summary>
+		[HtmlAttributeName("ajax")]
+		public bool IsAjax { get; set; }
+
+		/// <summary>
+		/// Get or set the selector which containes the replaced or updated element (e.g. #result-div).
+		/// </summary>
+		[HtmlAttributeName("ajax-update")]
+		public string AjaxUpdate { get; set; }
+
+		/// <summary>
+		/// Get or set a confirmation indicator. Calls window.confirm(value)
+		/// </summary>
+		[HtmlAttributeName("ajax-confirm")]
+		public string AjaxConfirm { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke on completion of the AJAX call. Defaults to onAjaxComplete.
+		/// </summary>
+		[HtmlAttributeName("ajax-complete")]
+		public string AjaxComplete { get; set; } = "onAjaxComplete";
+
+		/// <summary>
+		/// Get or set the method to invoke on success of the AJAX call.
+		/// </summary>
+		[HtmlAttributeName("ajax-success")]
+		public string AjaxSuccess { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke on failure of the AJAX call. Defaults to onAjaxFailed.
+		/// </summary>
+		[HtmlAttributeName("ajax-failure")]
+		public string AjaxFailure { get; set; } = "onAjaxFailed";
+
+		// Not currently implemented
+		// public string AjaxUrl { get; set; }
+		// public string AjaxMethod { get; set; } = "POST";
+		// public string AjaxMode { get; set; } = "REPLACE";
+		// public string AjaxLoading { get; set; }
+		// public bool AjaxBegin { get; set; }
+		// public bool AjaxCache { get; set; } = false;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ContainedItemTagHelper properties: confirmation
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if this anchor wants a confirmation popup before being executed.
+		/// </summary>
+		[HtmlAttributeName("confirm")]
+		public bool IsConfirmation { get; set; }
+
+		/// <summary>
+		/// Get or set the title to be displayed on the confirmation popup.
+		/// </summary>
+		[HtmlAttributeName("confirm-title")]
+		public string ConfirmationTitle { get; set; }
+
+		/// <summary>
+		/// Get or set the text to be displayed on the confirmation popup.
+		/// </summary>
+		[HtmlAttributeName("confirm-text")]
+		public string ConfirmationText { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be called on the YES branch of the confirmation popup.
+		/// </summary>
+		[HtmlAttributeName("confirm-action")]
+		public string ConfirmationAction { get; set; }
+
+		/// <summary>
+		/// Get or set the data to be passed to the confirmation action.
+		/// </summary>
+		[HtmlAttributeName("confirm-data")]
+		public string ConfirmationData { get; set; }
+
+		/// <summary>
+		/// Get or set the selector used to obtain the HTML element hosting the confirmation action.
+		/// </summary>
+		[HtmlAttributeName("confirm-div")]
+		public string ConfirmationDiv { get; set; }
 
 		#endregion
 
@@ -329,14 +526,14 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set a badge for this item. This is a DX convention property, and sets a badge for the item.
 		/// </summary>
-		[HtmlAttributeName("badge")]
+		//[HtmlAttributeName("badge")]
 		[JsonPropertyName("badge")]
 		public string Badge { get; set; }
 
 		/// <summary>
 		/// Get or set a HREF for this item. This property sets the href for a page redirect, where the item is used like an <![CDATA[ <a> ]]> HTML anchor.
 		/// </summary>
-		[HtmlAttributeName("href")]
+		//[HtmlAttributeName("href")]
 		[JsonPropertyName("href")]
 		public string Href { get; set; }
 
@@ -383,31 +580,223 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the toolbar to place this item in.
 		/// </summary>
-		[HtmlAttributeName("toolbar")]
+		//[HtmlAttributeName("toolbar")]
 		public Toolbar Toolbar { get; set; }
 
 		/// <summary>
 		/// Get or set the location of the item in the popup.
 		/// </summary>
-		[HtmlAttributeName("location")]
+		//[HtmlAttributeName("location")]
 		public ToolbarItemLocation Location { get; set; }
 		/// <summary>
 		/// Get or set the mode in which this item may be placed into the popup menu.Defaults to <see cref="ToolbarItemLocateInMenuMode.Auto"/>.
 		/// </summary>
-		[HtmlAttributeName("menu")]
+		//[HtmlAttributeName("menu")]
 		public ToolbarItemLocateInMenuMode MenuMode { get; set; } = ToolbarItemLocateInMenuMode.Auto;
 
 		/// <summary>
 		/// Get or set the type of this (button) item. Defaults to <see cref="ButtonType.Normal"/>
 		/// </summary>
-		[HtmlAttributeName("button-type")]
+		//[HtmlAttributeName("button-type")]
 		public ButtonType ButtonType { get; set; } = ButtonType.Normal;
 
 		/// <summary>
 		/// Get or set the styling mode of this (button) item. Defaults to <see cref="ButtonStylingMode.Contained"/>.
 		/// </summary>
-		[HtmlAttributeName("styling")]
+		//[HtmlAttributeName("styling")]
 		public ButtonStylingMode ButtonStylingMode { get; set; } = ButtonStylingMode.Contained;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ItemModel properties: routing (asp-*)
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the URL for the route. If specified, this overrides the asp-* attributes.
+		/// </summary>
+		public string Url { get; set; }
+
+		/// <summary>
+		/// Get or set the action name for the route. This is used together with the controller, area, and route properties to generate the URL for the route.
+		/// </summary>
+		public string Action { get; set; }
+
+		/// <summary>
+		/// Get or set the controller name for the route. This is used together with the action, area, and route properties to generate the URL for the route.
+		/// </summary>
+		public string Controller { get; set; }
+
+		/// <summary>
+		/// Get or set the area name for the route. This is used together with the action, controller, and route properties to generate the URL for the route.
+		/// </summary>
+		public string Area { get; set; }
+
+		/// <summary>
+		/// Get or set the base URL for the route, which is used for the remote controller.
+		/// </summary>
+		public string BaseUrl { get; set; }
+
+		/// <summary>
+		/// Get URL parts (ID value and/or a query string) from <see cref="RouteValues"/>.
+		/// THis property ready builds an ID value and/or a query string, so that consumers dont need to to that themselves. 
+		/// </summary>
+		public (string, string) UrlParts
+		{
+			get
+			{
+				if (RouteValues != null && RouteValues.Any())
+				{
+					// Obtain the ID value, from a route value named 'id'
+					KeyValuePair<string, string> idPart = RouteValues.SingleOrDefault((rv) => rv.Key == MingleRoute);
+					string id = idPart.Value;
+
+					// OBtain the query string from the remaining route values, if any
+					IEnumerable<KeyValuePair<string, string>> queryPart = RouteValues.Where((rv) => rv.Key != MingleRoute);
+					string query = HttpUtilities.BuildQueryString(queryPart);
+
+					return (id, query);
+				}
+
+				return (null, null);
+			}
+		}
+
+		/// <summary>
+		/// Get or set the route values for the route. This is used together with the action, controller, and area properties to generate the URL for the route.
+		/// The keys of the dictionary are specified as asp-route-{key} on the tag helper.
+		/// </summary>
+		public IDictionary<string, string> RouteValues { get; set; }
+
+		/// <summary>
+		/// Get an indicator if there are any mingled values.
+		/// </summary>
+		public bool IsMingled
+		{
+			get { return !string.IsNullOrEmpty(MingledValue) || MingleDataValues != null && MingleDataValues.Any(); }
+		}
+
+
+		/// <summary>
+		/// Get or set the name if the mingled route value. Defaults to 'id' which is the default parameter for most appliations.
+		/// </summary>
+		public string MingleRoute { get; set; } = "id";
+
+		/// <summary>
+		/// Get or set mingled route value.
+		/// If explicitly set, this overrides all mingle-* attributes.
+		/// If not set, returns the mingled <see cref="MingleValues"/>.
+		/// This method cannot mingle <see cref="MingleDataValues"/>, as these depend on row data, which is only available for JS on the client side.
+		/// </summary>
+		public string MingledValue
+		{
+			get 
+			{
+				if (!string.IsNullOrEmpty(_mingledValue))
+					return _mingledValue;
+
+				if (MingleValues != null && MingleValues.Any())
+					return Mingler.Mingle(MingleValues);
+
+				return null;
+			}
+
+			set { _mingledValue = value; }
+		}
+
+		public string _mingledValue;
+
+		/// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// Attribute values are static values.
+		/// </summary> 
+		public IDictionary<string, string> MingleValues { get; set; }
+
+		/// <summary> 
+		/// Get or set mingled parameters in the format mingle-name='value', which will be mingled into a route value.
+		/// Attribute values are references to data properties, which makes these suitable for mingled values e.g. from row data in a data grid.
+		/// </summary> 
+		public IDictionary<string, string> MingleDataValues { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ItemModel properties: ajax
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if this is an AJAX call.
+		/// </summary>
+		public bool IsAjax { get; set; }
+
+		/// <summary>
+		/// Get or set the selector which containes the replaced or updated element (e.g. #result-div).
+		/// </summary>
+		public string AjaxUpdate { get; set; }
+
+		/// <summary>
+		/// Get or set a confirmation indicator. Calls window.confirm(value)
+		/// </summary>
+		public string AjaxConfirm { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke on completion of the AJAX call. Defaults to onAjaxComplete.
+		/// </summary>
+		public string AjaxComplete { get; set; } = "onAjaxComplete";
+
+		/// <summary>
+		/// Get or set the method to invoke on success of the AJAX call.
+		/// </summary>
+		public string AjaxSuccess { get; set; }
+
+		/// <summary>
+		/// Get or set the method to invoke on failure of the AJAX call. Defaults to onAjaxFailed.
+		/// </summary>
+		public string AjaxFailure { get; set; } = "onAjaxFailed";
+
+		// Not currently implemented
+		// public string AjaxUrl { get; set; }
+		// public string AjaxMethod { get; set; } = "POST";
+		// public string AjaxMode { get; set; } = "REPLACE";
+		// public string AjaxLoading { get; set; }
+		// public bool AjaxBegin { get; set; }
+		// public bool AjaxCache { get; set; } = false;
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region ItemModel properties: confirmation
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set an indicator if this anchor wants a confirmation popup before being executed.
+		/// </summary>
+		public bool IsConfirmation { get; set; }
+
+		/// <summary>
+		/// Get or set the title to be displayed on the confirmation popup.
+		/// </summary>
+		public string ConfirmationTitle { get; set; }
+
+		/// <summary>
+		/// Get or set the text to be displayed on the confirmation popup.
+		/// </summary>
+		public string ConfirmationText { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function to be called on the YES branch of the confirmation popup.
+		/// </summary>
+		public string ConfirmationAction { get; set; }
+
+		/// <summary>
+		/// Get or set the data to be passed to the confirmation action.
+		/// </summary>
+		public string ConfirmationData { get; set; }
+
+		/// <summary>
+		/// Get or set the selector used to obtain the HTML element hosting the confirmation action.
+		/// </summary>
+		public string ConfirmationDiv { get; set; }
 
 		#endregion
 
@@ -418,7 +807,7 @@ namespace Alcazar.Web.Extensibility
 		/// <summary>
 		/// Get or set the JS function to be executed when the button is clicked.
 		/// </summary>
-		[HtmlAttributeName("click")]
+		//[HtmlAttributeName("click")]
 		public string OnClick { get; set; }
 
 		#endregion

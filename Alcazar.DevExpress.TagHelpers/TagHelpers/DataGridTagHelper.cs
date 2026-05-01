@@ -550,9 +550,19 @@ namespace Alcazar.Web.Extensibility
 					lookup = lookup.DataSource(d => column.LookupDatasource.BuildDatasource(d));
 
 					// Not supported for trees? lookup = lookup.Grouped(true);
-					lookup = lookup.DataSourceOptions(o => o.Group(column.GroupExpression).Sort(config => config.AddSorting(column.DisplayExpression)));
-					lookup = lookup.ValueExpr(column.ValueExpression);
-					lookup = lookup.DisplayExpr(column.DisplayExpression);
+					lookup = lookup.DataSourceOptions(options =>
+					{
+						if (!string.IsNullOrEmpty(column.GroupExpression))
+							options = options.Group(column.GroupExpression);
+
+						if (!string.IsNullOrEmpty(column.DisplayExpression))
+							options = options.Sort(config => config.AddSorting(column.DisplayExpression));
+					});
+
+					if (!string.IsNullOrEmpty(column.ValueExpression))
+						lookup = lookup.ValueExpr(column.ValueExpression);
+					if (!string.IsNullOrEmpty(column.DisplayExpression))
+						lookup = lookup.DisplayExpr(column.DisplayExpression);
 				});
 			}
 

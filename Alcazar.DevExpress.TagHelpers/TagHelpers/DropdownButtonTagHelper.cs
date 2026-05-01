@@ -167,7 +167,6 @@ namespace Alcazar.Web.Extensibility
 			output.Content.SetHtmlContent(result);
 		}
 
-
 		private DropDownButtonBuilder ProcessCommon(DropDownButtonBuilder builder)
 		{
 			// Set the ID to a random value
@@ -275,16 +274,16 @@ namespace Alcazar.Web.Extensibility
 		public System.Collections.IEnumerable Items { get; set; }
 
 		/// <summary>
-		/// Get or set the name of the item property to be used as dropdown item key.
+		/// Get or set the name of the item property to be used as dropdown item key. Defaults to 'Value' which is convenient for embedded items.
 		/// </summary>
 		[HtmlAttributeName("key-expr")]
-		public string KeyExpression { get; set; }
+		public string KeyExpression { get; set; } = "Value";
 
 		/// <summary>
-		/// Get or set the name of the item property to be used as dropdown item display text.
+		/// Get or set the name of the item property to be used as dropdown item display text. Defaults to 'Text' which is convenient for embedded items.
 		/// </summary>
 		[HtmlAttributeName("display-expr")]
-		public string DisplayExpression { get; set; }
+		public string DisplayExpression { get; set; } = "Text";
 
 		/// <summary>
 		/// Get or set the class attribute for the control element.
