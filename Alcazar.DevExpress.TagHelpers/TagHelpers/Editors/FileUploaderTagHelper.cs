@@ -114,6 +114,9 @@ namespace Alcazar.Web.Extensibility
 			else
 				builder = builder.Accept(MimeTypes);
 
+			// Process events
+			builder = ProcessEvents(builder);
+
 			// Render the builder (into the content)
 			Render(context, output.Content, builder);
 		}
@@ -144,6 +147,27 @@ namespace Alcazar.Web.Extensibility
 			foreach (var attr in InputAttributes)
 				builder = builder.InputAttr(attr.Key, attr.Value?.ToString());
 
+			return builder;
+		}
+
+		private FileUploaderBuilder ProcessEvents(FileUploaderBuilder builder)
+		{
+			// Process file uploader events
+			if (!string.IsNullOrEmpty(OnValueChanged))
+				builder = builder.OnValueChanged(OnValueChanged);
+
+			if (!string.IsNullOrEmpty(OnFilesUploaded))
+				builder = builder.OnFilesUploaded(OnFilesUploaded);
+
+			if (!string.IsNullOrEmpty(OnUploadFailed))
+				builder = builder.OnUploadError(OnUploadFailed);
+
+			if (!string.IsNullOrEmpty(OnProgress))
+				builder = builder.OnProgress(OnProgress);
+
+			if (!string.IsNullOrEmpty(OnUploadStarted))
+				builder = builder.OnUploadStarted(OnUploadStarted);
+	
 			return builder;
 		}
 
@@ -206,6 +230,42 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("mode")]
 		public FileUploadMode Mode { get; set; } = FileUploadMode.UseForm;
 
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region FileUploaderTagHelper properties: events
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>
+		/// Get or set the JS function called when all files have been successfully uploaded.
+		/// </summary>
+		[HtmlAttributeName("uploaded")]
+		public string OnFilesUploaded { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called when a file upload fails.
+		/// </summary>
+		[HtmlAttributeName("upload-failed")]
+		public string OnUploadFailed { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called during file upload to report progress.
+		/// </summary>
+		[HtmlAttributeName("progress")]
+		public string OnProgress { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called when a file upload starts.
+		/// </summary>
+		[HtmlAttributeName("upload-started")]
+		public string OnUploadStarted { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region FileUploaderTagHelper properties
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		
 		const string _commonExts = "txt,csv,dat,bin,pdf,xls,xlsx,xml,xsl,html,cshtml,js,css,jpg,jpeg,png,gif,bmp";
 		const string _commonAccept = $"{ContentTypes.PlainText},{ContentTypes.Csv},{ContentTypes.Xls},{ContentTypes.Xlsx},{ContentTypes.Pdf},{ContentTypes.Xml},{ContentTypes.Html},{ContentTypes.XHtml},{ContentTypes.JavaScript},{ContentTypes.Css},{ContentTypes.Cshtml},{ContentTypes.Images}";
 

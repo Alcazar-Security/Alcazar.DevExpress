@@ -84,6 +84,9 @@ namespace Alcazar.Web.Extensibility
 			builder = builder.HideOnOutsideClick(IsHideOnOutsideClick);
 			builder = builder.ShowCloseButton(AllowClose);
 
+			// Allow to disable deferred rendering so popup content is in DOM immediately
+			builder = builder.DeferRendering(DeferRendering);
+
 			//builder = builder.Container("");
 
 			switch (PopupMode)
@@ -316,6 +319,14 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("hide")]
 		public bool IsHideOnOutsideClick { get; set; } = true;
 
+		/// <summary>
+		/// Get or set an indicator if rendering of the popup content is deferred until first show.
+		/// Set to <see langword="false"/> if the popup content must be in the DOM immediately.
+		/// Defaults to <see langword="true"/>.
+		/// </summary>
+		[HtmlAttributeName("defer")]
+		public bool DeferRendering { get; set; } = true;
+		
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
