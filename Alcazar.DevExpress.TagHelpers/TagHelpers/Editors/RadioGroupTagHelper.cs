@@ -79,12 +79,6 @@ namespace Alcazar.Web.Extensibility
 					.HoverStateEnabled(true);
 			}
 
-			// Process thedisabled state
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
-			}
-
 			// Process radio-group specific properties
 
 			DataSourceContext sourceContext = GetOrCreateContext<DataSourceContext>(context);
@@ -136,6 +130,12 @@ namespace Alcazar.Web.Extensibility
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
+
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
 
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))

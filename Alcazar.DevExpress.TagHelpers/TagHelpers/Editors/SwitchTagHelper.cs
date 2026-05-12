@@ -82,12 +82,6 @@ namespace Alcazar.Web.Extensibility
 					.HoverStateEnabled(true);
 			}
 
-			// Process thedisabled state
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
-			}
-
 			// Set the label text (From LabelText, For, Name, in that order)
 			string labelText = null;
 			if (!string.IsNullOrEmpty(LabelText))
@@ -114,6 +108,12 @@ namespace Alcazar.Web.Extensibility
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
+
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
 
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))

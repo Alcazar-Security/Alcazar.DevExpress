@@ -75,18 +75,36 @@ namespace Alcazar.Web.Extensibility
 			//	builder.Hint(title);
 			//}
 
+			if (!string.IsNullOrEmpty(UploadUrl))
+				builder = builder.UploadUrl(UploadUrl);
+
+			if (!string.IsNullOrEmpty(Dropzone))
+				builder = builder.DropZone(Dropzone);
+
+			if (!string.IsNullOrEmpty(DialogTrigger))
+				builder = builder.DialogTrigger(DialogTrigger);
+
+			if (AllowMultiple)
+				builder = builder.Multiple(true);
+
+			if (!ShowFileList)
+				builder = builder.ShowFileList(false);
+
+			if (MaxFileSize > 0)
+				builder = builder.MaxFileSize(MaxFileSize);
+
+			if (MinFileSize > 0)
+				builder = builder.MinFileSize(MinFileSize);
+
+			if (ChunkSize > 0)
+				builder = builder.ChunkSize(ChunkSize);
+
 			// Process the read-only state
 			if (IsReadonly)
 			{
 				builder = builder
 					.ReadOnly(true)
 					.HoverStateEnabled(true);
-			}
-
-			// Process thedisabled state
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
 			}
 
 			// Process file uploader specific properties
@@ -130,9 +148,17 @@ namespace Alcazar.Web.Extensibility
 			if (!string.IsNullOrEmpty(Name))
 				builder = builder.Name(Name);
 
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
+
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))
 				builder = builder.Width(Width);
+			if (!string.IsNullOrEmpty(Height))
+				builder = builder.Height(Height);
 
 			return builder;
 		}
@@ -152,7 +178,12 @@ namespace Alcazar.Web.Extensibility
 
 		private FileUploaderBuilder ProcessEvents(FileUploaderBuilder builder)
 		{
-			// Process file uploader events
+			if (!string.IsNullOrEmpty(OnInitialized))
+				builder = builder.OnInitialized(OnInitialized);
+
+			if (!string.IsNullOrEmpty(OnContentReady))
+				builder = builder.OnContentReady(OnContentReady);
+
 			if (!string.IsNullOrEmpty(OnValueChanged))
 				builder = builder.OnValueChanged(OnValueChanged);
 
@@ -167,7 +198,18 @@ namespace Alcazar.Web.Extensibility
 
 			if (!string.IsNullOrEmpty(OnUploadStarted))
 				builder = builder.OnUploadStarted(OnUploadStarted);
-	
+
+			if (!string.IsNullOrEmpty(OnUploadAborted))
+				builder = builder.OnUploadAborted(OnUploadAborted);
+
+			if (!string.IsNullOrEmpty(OnBeforeSend))
+				builder = builder.OnBeforeSend(OnBeforeSend);
+
+			if (!string.IsNullOrEmpty(OnDropZoneEnter))
+				builder = builder.OnDropZoneEnter(OnDropZoneEnter);
+			if (!string.IsNullOrEmpty(OnDropZoneLeave))
+				builder = builder.OnDropZoneLeave(OnDropZoneLeave);
+
 			return builder;
 		}
 
@@ -233,6 +275,56 @@ namespace Alcazar.Web.Extensibility
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+		#region FileUploaderTagHelper properties: behaviour
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
+		/// <summary>Get or set an indicator if multiple files can be selected. Defaults to false.</summary>
+		[HtmlAttributeName("multiple")]
+		public bool AllowMultiple { get; set; }
+
+		/// <summary>Get or set an indicator if the selected file list is shown. Defaults to true.</summary>
+		[HtmlAttributeName("show-list")]
+		public bool ShowFileList { get; set; } = true;
+
+		/// <summary>
+		/// Get or set the maximum file size in bytes. 0 means no limit.
+		/// </summary>
+		[HtmlAttributeName("max-size")]
+		public long MaxFileSize { get; set; }
+
+		/// <summary>
+		/// Get or set the minimum file size in bytes. 0 means no limit.
+		/// </summary>
+		[HtmlAttributeName("min-size")]
+		public long MinFileSize { get; set; }
+
+		/// <summary>
+		/// Get or set the chunk size in bytes for chunked uploads. 0 disables chunking.
+		/// </summary>
+		[HtmlAttributeName("chunk-size")]
+		public long ChunkSize { get; set; }
+
+		/// <summary>
+		/// Get or set the URL to upload files to. Required for UseButtons and Instantly modes.
+		/// </summary>
+		[HtmlAttributeName("upload-url")]
+		public string UploadUrl { get; set; }
+
+		/// <summary>
+		/// Get or set a CSS selector for a custom drop zone element.
+		/// </summary>
+		[HtmlAttributeName("dropzone")]
+		public string Dropzone { get; set; }
+
+		/// <summary>
+		/// Get or set the element selector which triggers the file dialog.
+		/// </summary>
+		[HtmlAttributeName("trigger")]
+		public string DialogTrigger { get; set; }
+
+		#endregion
+
+		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//                                                                                    
 		#region FileUploaderTagHelper properties: events
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
@@ -260,12 +352,36 @@ namespace Alcazar.Web.Extensibility
 		[HtmlAttributeName("upload-started")]
 		public string OnUploadStarted { get; set; }
 
+		/// <summary>
+		/// Get or set the JS function called when a file upload is aborted.
+		/// </summary>
+		[HtmlAttributeName("upload-aborted")]
+		public string OnUploadAborted { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called before the upload request is sent. Use to add custom headers.
+		/// </summary>
+		[HtmlAttributeName("before-send")]
+		public string OnBeforeSend { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called When the dropzone is entered.
+		/// </summary>
+		[HtmlAttributeName("dropzone-enter")]
+		public string OnDropZoneEnter { get; set; }
+
+		/// <summary>
+		/// Get or set the JS function called When the dropzone is left.
+		/// </summary>
+		[HtmlAttributeName("dropzone-leave")]
+		public string OnDropZoneLeave { get; set; }
+
 		#endregion
 
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 		#region FileUploaderTagHelper properties
 		//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-		
+
 		const string _commonExts = "txt,csv,dat,bin,pdf,xls,xlsx,xml,xsl,html,cshtml,js,css,jpg,jpeg,png,gif,bmp";
 		const string _commonAccept = $"{ContentTypes.PlainText},{ContentTypes.Csv},{ContentTypes.Xls},{ContentTypes.Xlsx},{ContentTypes.Pdf},{ContentTypes.Xml},{ContentTypes.Html},{ContentTypes.XHtml},{ContentTypes.JavaScript},{ContentTypes.Css},{ContentTypes.Cshtml},{ContentTypes.Images}";
 

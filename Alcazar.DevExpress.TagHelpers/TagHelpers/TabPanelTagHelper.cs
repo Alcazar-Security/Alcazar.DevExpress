@@ -114,11 +114,6 @@ namespace Alcazar.Web.Extensibility
 
 			builder = builder.SelectedIndex(SelectedIndex);
 
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
-			}
-
 			// Process text-box specific properties
 			//                     .Mask("+1 (X00) 000-0000")
 			builder = builder
@@ -134,6 +129,12 @@ namespace Alcazar.Web.Extensibility
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
+
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
 
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))

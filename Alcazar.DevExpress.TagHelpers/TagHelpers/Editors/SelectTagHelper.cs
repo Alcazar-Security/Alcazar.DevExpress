@@ -143,11 +143,6 @@ namespace Alcazar.Web.Extensibility
 					.HoverStateEnabled(true);
 			}
 
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
-			}
-
 			// Process text-box specific properties
 			//                     .Mask("+1 (X00) 000-0000")
 			if (_searchMode.HasValue)
@@ -210,14 +205,16 @@ namespace Alcazar.Web.Extensibility
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
 
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
+
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))
 				builder = builder.Width(Width);
 
-			// Seemingly can only add one attribute using this method
-			// When Name is set, and not For, then we have a hidden input field with the name=name attr, and the visible incput field with the id=name attr, and then the form post-back works (using value-expr and display-expr
-			// Now we just need to get For (and not Name) to work :)
-			// builder = builder.InputAttr("dx-field-name", Name);
 			return builder;
 		}
 

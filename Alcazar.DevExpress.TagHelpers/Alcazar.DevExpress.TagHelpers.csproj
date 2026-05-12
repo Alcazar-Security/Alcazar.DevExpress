@@ -51,6 +51,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\A\Alcazar.Web.Base\Alcazar.Web.Base.csproj" />
   </ItemGroup>
 

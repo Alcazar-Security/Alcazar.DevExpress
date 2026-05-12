@@ -222,17 +222,11 @@ namespace Alcazar.Web.Extensibility
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
 
-			// Set the width and height
-			//if (!string.IsNullOrEmpty(Width))
-			//	builder = builder.Width(Width);
-
-			//if (!string.IsNullOrEmpty(Height))
-			//	builder = builder.Height(Height);
-
-			// Set disabled state
+			// Visible and disabled
 			if (IsDisabled)
-				builder = builder.Disabled(true);
+				builder = builder.Disabled(IsDisabled);
 
+			// Set the width and height (N/A)
 			return builder;
 		}
 

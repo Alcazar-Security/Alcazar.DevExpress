@@ -99,12 +99,6 @@ namespace Alcazar.Web.Extensibility
 			// Enable opening calendar on text field click
 			builder = builder.OpenOnFieldClick(IsOpenOnFieldClick);
 
-			// Process the disabled state
-			if (IsDisabled)
-			{
-				builder = builder.Disabled(true);
-			}
-
 			// Process text-area specific properties
 			builder = ProcessFormat(builder, out string customFormat);
 
@@ -131,6 +125,12 @@ namespace Alcazar.Web.Extensibility
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
+
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
 
 			// Set the width and height
 			if (!string.IsNullOrEmpty(Width))

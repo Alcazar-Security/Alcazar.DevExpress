@@ -173,12 +173,6 @@ namespace Alcazar.Web.Extensibility
 		public string ShadingColor { get; set; }
 
 		/// <summary>
-		/// Get or set an indicator if the panel is visible.
-		/// </summary>
-		[HtmlAttributeName("visible")]
-		public bool IsVisible { get; set; }
-
-		/// <summary>
 		/// Get or set an indicator if panel indicator of the panel is shown.
 		/// Defaults to <see langword="true"/>.
 		/// </summary>

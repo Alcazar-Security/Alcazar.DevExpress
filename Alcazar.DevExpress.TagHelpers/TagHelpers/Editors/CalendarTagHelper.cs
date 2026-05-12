@@ -80,11 +80,6 @@ namespace Alcazar.Web.Extensibility
                     .HoverStateEnabled(true);
             }
 
-            if (IsDisabled)
-            {
-                builder = builder.Disabled(true);
-            }
-
             // Calendar specific properties - layout
             builder = builder.FirstDayOfWeek(FirstDay);
             builder = builder.ZoomLevel(ZoomLevel);
@@ -122,8 +117,14 @@ namespace Alcazar.Web.Extensibility
             string idValue = ID ?? Guid.NewGuid().ToString();
             builder = builder.ID(idValue);
 
-            // Set the width and height
-            if (!string.IsNullOrEmpty(Width))
+			// Visible and disabled
+			if (!IsVisible)
+				builder = builder.Visible(IsVisible);
+			if (IsDisabled)
+				builder = builder.Disabled(IsDisabled);
+
+			// Set the width and height
+			if (!string.IsNullOrEmpty(Width))
                 builder = builder.Width(Width);
 
             return builder;
