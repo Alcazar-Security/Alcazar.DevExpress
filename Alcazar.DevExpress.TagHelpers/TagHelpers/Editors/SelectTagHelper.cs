@@ -76,9 +76,6 @@ namespace Alcazar.Web.Extensibility
 			object value = ProcessFor();
 			value = ProcessForEnums(value);
 
-			// Apply the For attribute, or the corresponding direct values
-			builder = ApplyFor(builder, value);
-
 			// Process the title/hint, if it is set
 			builder = ProcessTitle(builder);
 
@@ -111,6 +108,10 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.DataSourceOptions(o => o
 					.Group(GroupExpression));
 			}
+
+			// AFTER adding items...
+			// Apply the For attribute, or the corresponding direct values
+			builder = ApplyFor(builder, value);
 
 			// Add buttons, but only if we have some
 			if (buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText))
