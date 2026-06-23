@@ -61,9 +61,6 @@ namespace Alcazar.Web.Extensibility
 			// Process the For attribute, if it is set
 			object value = ProcessFor();
 
-			// Apply the For attribute, or the corresponding direct values
-			builder = ApplyFor(builder, value);
-
 			// Process the title/hint, if it is set
 			if (!string.IsNullOrEmpty(Title))
 			{
@@ -113,6 +110,10 @@ namespace Alcazar.Web.Extensibility
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
 
+			// Apply the For attribute, or the corresponding direct values
+			// Do this AFTER the itemms have been added, so that we can match a value and select a button on load
+			builder = ApplyFor(builder, value);
+
 			builder = builder.Layout(Orientation);
 
 			// Event handlers
@@ -130,6 +131,9 @@ namespace Alcazar.Web.Extensibility
 			// Set the ID to a random value
 			string idValue = ID ?? Guid.NewGuid().ToString();
 			builder = builder.ID(idValue);
+
+			if (!string.IsNullOrEmpty(ValueExpr))
+				builder = builder.ValueExpr(ValueExpr);
 
 			// Visible and disabled
 			if (!IsVisible)
@@ -185,6 +189,15 @@ namespace Alcazar.Web.Extensibility
 		/// </summary>
 		[HtmlAttributeName("value")]
 		public string Value { get; set; }
+
+
+		/// <summary>
+		/// Get or set the value expression for this radio group.
+		/// DevExtreme defaults to matching by the whole item object rather than its value property, which might prevent selecting an item on load.
+		/// Set this property to <see cref="null"/> if you want whole item object matching.
+		/// </summary>
+		[HtmlAttributeName("value-expr")]
+		public string ValueExpr { get; set; } = "value";
 
 		/// <summary>
 		/// Get or set the custom text for the label. Defaults to the equivalent of 'DisplayNameFor', woth a fallback to <see cref="base.Name"/>.
