@@ -71,9 +71,6 @@ namespace Alcazar.Web.Extensibility
 			object value = ProcessFor();
 			System.Collections.IEnumerable values = ProcessForMultiEnums(value);
 
-			// Apply the For attribute, or the corresponding direct values
-			builder = ApplyFor(builder, values);
-
 			// Process the title/hint, if it is set
 			builder = ProcessTitle(builder);
 
@@ -95,6 +92,9 @@ namespace Alcazar.Web.Extensibility
 				// TODO maybe convert to datasource a la DxGrid
 				builder = builder.DataSource(d => sourceContext.Datasource.BuildDatasource(d));
 			}
+
+			// Apply the For attribute, or the corresponding direct values
+			builder = ApplyFor(builder, values);
 
 			// Add buttons, but only if we have some
 			if (buttonContext.Buttons.Any() || !string.IsNullOrEmpty(HelpText))

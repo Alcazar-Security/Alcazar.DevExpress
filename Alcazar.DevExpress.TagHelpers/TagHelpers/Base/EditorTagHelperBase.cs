@@ -165,41 +165,70 @@ namespace Alcazar.Web.Extensibility
 			return value;
 		}
 
+		/// <summary>
+		/// Convert a value to a suitable <see cref="System.Collections.IEnumerable"/> for editors which require the value to be a sequence (such as the tag box).
+		/// Works with typed and untyped enums, with strings, and with sequences of enums and strings.
+		/// </summary>
+		/// <param name="value"> The value to be displayed in the editor. </param>
+		/// <returns> The sequence of values to be displayed in the editor. </returns>
 		protected System.Collections.IEnumerable ProcessForMultiEnums(object value)
 		{
-			if (value != null)
-			{
-				// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
-				// Lets see if that works for other use cases
-				if (For.ModelExplorer.ModelType.IsEnum)
-				{
-					// Our bound property is an enum
-					if (value is Enum enumValue)
-					{
-						return enumValue.GetFlags(false)
-							.Select((o) => o?.ToString())
-							.ToArray();
-					}
-
-					return null;
-				}
-
-				else if (For.ModelExplorer.ModelType.IsArray)
-				{
-					// Our bound property is an array
-					Type elementType = For.ModelExplorer.ModelType.GetElementType();
-					if (elementType.IsEnum)
-					{
-						// Our bound property is an array of enums
-						// Convert to an array of strings
-						Array values = value as Array;
-						return values.OfType<Enum>()
-							.Select((o) => o?.ToString())
-							.ToArray();
-					}
-				}
-
+			if (value == null)
 				return null;
+
+			// Converting the return value to string. This is needed for enum values in a select-box, as the value would otherwise be translated to the int representation and then not set the inital value
+			// Lets see if that works for other use cases
+			if (For.ModelExplorer.ModelType.IsEnum)
+			{
+				// Our bound property is an enum, gets obtain its flag composution, and convert to a sequence of individual string values
+				if (value is Enum enumValue)
+				{
+					return enumValue.GetFlags(false)
+						.Select((o) => o?.ToString())
+						.ToArray();
+				}
+
+				// No value, cant return a thing
+				return null;
+			}
+
+			else if (For.ModelExplorer.ModelType == typeof(string))
+			{
+				// Our bound property is a plain string — break it up into parts using a default separator
+				if (value is string stringValue)
+				{
+					return stringValue.SplitSafe('|')
+						.ToArray();
+				}
+
+				// No value, cant return a thing
+				return null;
+			}
+
+			else if (For.ModelExplorer.ModelType.IsArray)
+			{
+				// Our bound property is an array
+				Type elementType = For.ModelExplorer.ModelType.GetElementType();
+				if (elementType.IsEnum)
+				{
+					// Our bound property is an array of enums, convert to an array of strings
+					Array values = value as Array;
+					return values.OfType<Enum>()
+						.Select((o) => o?.ToString())
+						.ToArray();
+				}
+
+				else if (elementType == typeof(string))
+				{
+					// Our bound property is an array of strings — return as-is
+					return value as Array;
+				}
+			}
+
+			else if (typeof(IEnumerable<string>).IsAssignableFrom(For.ModelExplorer.ModelType))
+			{
+				// Our bound property is IEnumerable<string> — return as-is
+				return value as System.Collections.IEnumerable;
 			}
 
 			return null;
